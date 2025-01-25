@@ -15,11 +15,17 @@ export const loginUser = async (credentials: {
 }) => {
   const response = await api.post('/usuarios/login', credentials);
 
-  const { token } = response.data;
-  if (token) {
-    localStorage.setItem('authToken', token); 
-  }
+  const { token, usuario_id, rol } = response.data;
 
+  if (token) {
+    localStorage.setItem('authToken', token);
+  }
+  if (usuario_id) {
+    localStorage.setItem('usuario_id', usuario_id.toString());
+  }
+  if (rol) {
+    localStorage.setItem('userRole', rol);
+  }
   return response.data;
 };
 

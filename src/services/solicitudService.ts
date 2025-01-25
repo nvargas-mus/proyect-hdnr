@@ -14,5 +14,30 @@ export const crearSolicitud = async (solicitudData: {
   generador_igual_cliente: boolean;
 }) => {
   const response = await api.post('/solicitudes', solicitudData);
-  return response.data; // Devuelve los datos de la solicitud creada
+  return response.data;
+};
+
+export const getClientesAsociados = async () => {
+  const response = await api.get('/usuarios/clientes/asociados');
+  return response.data;
+};
+
+export const getDirecciones = async (codigo_cliente_kunnr: number) => {
+  const response = await api.get(`/direcciones_cliente/${codigo_cliente_kunnr}`);
+  return response.data;
+};
+
+export const getContactos = async (codigo_cliente_kunnr: number) => {
+  const response = await api.get(`/contactos_clientes/${codigo_cliente_kunnr}`);
+  return response.data;
+};
+
+export const getDeclaraciones = async () => {
+  const response = await api.get('/declaraciones');
+  return response.data;
+};
+
+export const getGeneradores = async () => {
+  const response = await api.get('/generadores');
+  return response.data;
 };

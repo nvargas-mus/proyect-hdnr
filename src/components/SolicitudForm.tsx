@@ -1,9 +1,15 @@
-import React, { useState } from 'react';
-import { crearSolicitud } from '../services/solicitudService';
+import React, { useState, useEffect } from 'react';
+import {
+  crearSolicitud,
+  getClientesAsociados,
+  getDirecciones,
+  getContactos,
+  getDeclaraciones,
+} from '../services/solicitudService';
 
 const SolicitudForm = () => {
   const [formData, setFormData] = useState({
-    usuario_id: 0,
+    usuario_id: Number(localStorage.getItem('usuario_id')),
     codigo_cliente_kunnr: 0,
     fecha_servicio_solicitada: '',
     hora_servicio_solicitada: '',
@@ -13,13 +19,55 @@ const SolicitudForm = () => {
     contacto_cliente_id: 0,
     declaracion_id: 0,
     generador_id: 0,
-    generador_igual_cliente: false,
+    generador_igual_cliente: true,
   });
+
+  const [clientes, setClientes] = useState<any[]>([]);
+  const [direcciones, setDirecciones] = useState<any[]>([]);
+  const [contactos, setContactos] = useState<any[]>([]);
+  const [declaraciones, setDeclaraciones] = useState<any[]>([]);
 
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  useEffect(() => {
+    const fetchInitialData = async () => {
+      try {
+        const clientesData = await getClientesAsociados();
+        setClientes(clientesData);
+
+        const declaracionesData = await getDeclaraciones();
+        setDeclaraciones(declaracionesData);
+
+        console.log('Contactos cargados:', contactos);
+        console.log('Declaraciones cargadas:', declaraciones);
+      } catch (err) {
+        console.error('Error al cargar datos iniciales:', err);
+      }
+    };
+    fetchInitialData();
+  }, [contactos, declaraciones]);
+
+  useEffect(() => {
+    if (formData.codigo_cliente_kunnr) {
+      const fetchDetails = async () => {
+        try {
+          const direccionesData = await getDirecciones(formData.codigo_cliente_kunnr);
+          setDirecciones(direccionesData);
+
+          const contactosData = await getContactos(formData.codigo_cliente_kunnr);
+          setContactos(contactosData);
+        } catch (err) {
+          console.error('Error al cargar direcciones o contactos:', err);
+        }
+      };
+      fetchDetails();
+    }
+  }, [formData.codigo_cliente_kunnr]);
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+  ) => {
     const { name, value, type, checked } = e.target as HTMLInputElement;
     setFormData({
       ...formData,
@@ -35,6 +83,7 @@ const SolicitudForm = () => {
       setError('');
       console.log('Datos de la solicitud creada:', data);
     } catch (err) {
+      console.error('Error al crear la solicitud:', err);
       setError('Error al crear la solicitud. Verifica los datos e intenta nuevamente.');
       setMessage('');
     }
@@ -48,29 +97,24 @@ const SolicitudForm = () => {
             <h3 className="card-title text-center">Crear Solicitud de Servicio</h3>
             <form onSubmit={handleSubmit}>
               <div className="mb-3">
-                <label htmlFor="usuario_id" className="form-label">ID Usuario</label>
-                <input
-                  type="number"
-                  className="form-control"
-                  id="usuario_id"
-                  name="usuario_id"
-                  value={formData.usuario_id}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-              <div className="mb-3">
-                <label htmlFor="codigo_cliente_kunnr" className="form-label">Código Cliente</label>
-                <input
-                  type="number"
-                  className="form-control"
+                <label htmlFor="codigo_cliente_kunnr" className="form-label">Cliente</label>
+                <select
+                  className="form-select"
                   id="codigo_cliente_kunnr"
                   name="codigo_cliente_kunnr"
                   value={formData.codigo_cliente_kunnr}
                   onChange={handleChange}
                   required
-                />
+                >
+                  <option value="">Seleccione un cliente</option>
+                  {clientes.map((cliente) => (
+                    <option key={cliente.codigo} value={cliente.codigo}>
+                      {cliente.nombre} - {cliente.sucursal}
+                    </option>
+                  ))}
+                </select>
               </div>
+
               <div className="mb-3">
                 <label htmlFor="fecha_servicio_solicitada" className="form-label">Fecha de Servicio</label>
                 <input
@@ -83,6 +127,7 @@ const SolicitudForm = () => {
                   required
                 />
               </div>
+
               <div className="mb-3">
                 <label htmlFor="hora_servicio_solicitada" className="form-label">Hora de Servicio</label>
                 <input
@@ -95,6 +140,7 @@ const SolicitudForm = () => {
                   required
                 />
               </div>
+
               <div className="mb-3">
                 <label htmlFor="descripcion" className="form-label">Descripción</label>
                 <textarea
@@ -107,6 +153,7 @@ const SolicitudForm = () => {
                   required
                 ></textarea>
               </div>
+
               <div className="mb-3 form-check">
                 <input
                   type="checkbox"
@@ -118,68 +165,32 @@ const SolicitudForm = () => {
                 />
                 <label htmlFor="requiere_transporte" className="form-check-label">¿Requiere Transporte?</label>
               </div>
-              <div className="mb-3">
-                <label htmlFor="direccion_id" className="form-label">ID Dirección</label>
-                <input
-                  type="number"
-                  className="form-control"
-                  id="direccion_id"
-                  name="direccion_id"
-                  value={formData.direccion_id}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-              <div className="mb-3">
-                <label htmlFor="contacto_cliente_id" className="form-label">ID Contacto Cliente</label>
-                <input
-                  type="number"
-                  className="form-control"
-                  id="contacto_cliente_id"
-                  name="contacto_cliente_id"
-                  value={formData.contacto_cliente_id}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-              <div className="mb-3">
-                <label htmlFor="declaracion_id" className="form-label">ID Declaración</label>
-                <input
-                  type="number"
-                  className="form-control"
-                  id="declaracion_id"
-                  name="declaracion_id"
-                  value={formData.declaracion_id}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-              <div className="mb-3">
-                <label htmlFor="generador_id" className="form-label">ID Generador</label>
-                <input
-                  type="number"
-                  className="form-control"
-                  id="generador_id"
-                  name="generador_id"
-                  value={formData.generador_id}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-              <div className="mb-3 form-check">
-                <input
-                  type="checkbox"
-                  className="form-check-input"
-                  id="generador_igual_cliente"
-                  name="generador_igual_cliente"
-                  checked={formData.generador_igual_cliente}
-                  onChange={handleChange}
-                />
-                <label htmlFor="generador_igual_cliente" className="form-check-label">¿Generador igual al cliente?</label>
-              </div>
-              {error && <p className="text-danger">{error}</p>}
-              {message && <p className="text-success">{message}</p>}
+
+              {formData.requiere_transporte && (
+                <div className="mb-3">
+                  <label htmlFor="direccion_id" className="form-label">Dirección</label>
+                  <select
+                    className="form-select"
+                    id="direccion_id"
+                    name="direccion_id"
+                    value={formData.direccion_id}
+                    onChange={handleChange}
+                    required
+                  >
+                    <option value="">Seleccione una dirección</option>
+                    {direcciones.map((direccion) => (
+                      <option key={direccion.id} value={direccion.id}>
+                        {direccion.calle}, {direccion.numero}, {direccion.comuna}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
               <button type="submit" className="btn btn-primary w-100">Crear Solicitud</button>
+
+              {error && <p className="text-danger mt-3">{error}</p>}
+              {message && <p className="text-success mt-3">{message}</p>}
             </form>
           </div>
         </div>
@@ -189,3 +200,4 @@ const SolicitudForm = () => {
 };
 
 export default SolicitudForm;
+

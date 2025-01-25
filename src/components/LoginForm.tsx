@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { loginUser } from '../services/authService'; 
+import { loginUser } from '../services/authService';
 import { Link, useNavigate } from 'react-router-dom';
 
 const LoginForm = () => {
@@ -13,15 +13,20 @@ const LoginForm = () => {
     e.preventDefault();
     try {
       const response = await loginUser({ email, contrasena });
-      const { token } = response;
-      setMessage('Login exitoso.');
-      setError('');
+
+      const { token, userId } = response;
 
       localStorage.setItem('authToken', token);
+      localStorage.setItem('usuario_id', userId.toString());
 
+      setMessage('Login exitoso.');
+      setError('');
       navigate('/crear-solicitud');
-    } catch (err) {
-      setError('Credenciales inválidas. Intenta nuevamente.');
+    } catch (err: any) {
+      console.error('Error al iniciar sesión:', err);
+      const errorMessage =
+        err?.response?.data?.error || 'Error desconocido al iniciar sesión. Intenta nuevamente.';
+      setError(errorMessage);
       setMessage('');
     }
   };
@@ -70,5 +75,3 @@ const LoginForm = () => {
 };
 
 export default LoginForm;
-
-
