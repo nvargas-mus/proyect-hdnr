@@ -22,10 +22,12 @@ const LoginForm = () => {
       setMessage('Login exitoso.');
       setError('');
       navigate('/crear-solicitud');
-    } catch (err: any) {
+    } catch (err) {
       console.error('Error al iniciar sesión:', err);
       const errorMessage =
-        err?.response?.data?.error || 'Error desconocido al iniciar sesión. Intenta nuevamente.';
+        err instanceof Error && err.message
+          ? err.message
+          : 'Error desconocido al iniciar sesión. Intenta nuevamente.';
       setError(errorMessage);
       setMessage('');
     }

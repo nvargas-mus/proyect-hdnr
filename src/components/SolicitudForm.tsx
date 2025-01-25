@@ -7,6 +7,31 @@ import {
   getDeclaraciones,
 } from '../services/solicitudService';
 
+interface Cliente {
+  codigo: number;
+  nombre: string;
+  sucursal: string;
+}
+
+interface Direccion {
+  id: number;
+  calle: string;
+  numero: string;
+  comuna: string;
+}
+
+interface Contacto {
+  id: number;
+  nombre: string;
+  telefono: string;
+  email: string;
+}
+
+interface Declaracion {
+  id: number;
+  descripcion: string;
+}
+
 const SolicitudForm = () => {
   const [formData, setFormData] = useState({
     usuario_id: Number(localStorage.getItem('usuario_id')),
@@ -22,10 +47,10 @@ const SolicitudForm = () => {
     generador_igual_cliente: true,
   });
 
-  const [clientes, setClientes] = useState<any[]>([]);
-  const [direcciones, setDirecciones] = useState<any[]>([]);
-  const [contactos, setContactos] = useState<any[]>([]);
-  const [declaraciones, setDeclaraciones] = useState<any[]>([]);
+  const [clientes, setClientes] = useState<Cliente[]>([]);
+  const [direcciones, setDirecciones] = useState<Direccion[]>([]);
+  const [contactos, setContactos] = useState<Contacto[]>([]);
+  const [declaraciones, setDeclaraciones] = useState<Declaracion[]>([]);
 
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
@@ -38,15 +63,12 @@ const SolicitudForm = () => {
 
         const declaracionesData = await getDeclaraciones();
         setDeclaraciones(declaracionesData);
-
-        console.log('Contactos cargados:', contactos);
-        console.log('Declaraciones cargadas:', declaraciones);
       } catch (err) {
         console.error('Error al cargar datos iniciales:', err);
       }
     };
     fetchInitialData();
-  }, [contactos, declaraciones]);
+  }, []);
 
   useEffect(() => {
     if (formData.codigo_cliente_kunnr) {
@@ -129,6 +151,25 @@ const SolicitudForm = () => {
               </div>
 
               <div className="mb-3">
+                <label htmlFor="contacto_cliente_id" className="form-label">Contacto</label>
+                <select
+                  className="form-select"
+                  id="contacto_cliente_id"
+                  name="contacto_cliente_id"
+                  value={formData.contacto_cliente_id}
+                  onChange={handleChange}
+                  required
+                >
+                  <option value="">Seleccione un contacto</option>
+                  {contactos.map((contacto) => (
+                    <option key={contacto.id} value={contacto.id}>
+                      {contacto.nombre} - {contacto.email}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="mb-3">
                 <label htmlFor="hora_servicio_solicitada" className="form-label">Hora de Servicio</label>
                 <input
                   type="time"
@@ -186,6 +227,25 @@ const SolicitudForm = () => {
                   </select>
                 </div>
               )}
+
+              <div className="mb-3">
+                <label htmlFor="declaracion_id" className="form-label">Declaración</label>
+                <select
+                  className="form-select"
+                  id="declaracion_id"
+                  name="declaracion_id"
+                  value={formData.declaracion_id}
+                  onChange={handleChange}
+                  required
+                >
+                  <option value="">Seleccione una declaración</option>
+                  {declaraciones.map((declaracion) => (
+                    <option key={declaracion.id} value={declaracion.id}>
+                      {declaracion.descripcion}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
               <button type="submit" className="btn btn-primary w-100">Crear Solicitud</button>
 
