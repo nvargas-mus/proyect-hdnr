@@ -5,34 +5,32 @@ import {
   getDirecciones,
   getContactos,
   getDeclaraciones,
+  getGeneradores,
+  getMaterialesResiduos,
+  getMaterialesServicios,
+  getUnidadesReferenciales,
+  getTiposTransporte,
+  getCapacidadesTransporte,
+  completarSolicitud,
+  postDireccion,
+  postContacto,
 } from '../services/solicitudService';
-
-interface Cliente {
-  codigo: number;
-  nombre: string;
-  sucursal: string;
-}
-
-interface Direccion {
-  id: number;
-  calle: string;
-  numero: string;
-  comuna: string;
-}
-
-interface Contacto {
-  id: number;
-  nombre: string;
-  telefono: string;
-  email: string;
-}
-
-interface Declaracion {
-  id: number;
-  descripcion: string;
-}
+import {
+  Cliente,
+  Direccion,
+  Contacto,
+  Declaracion,
+  Generador,
+  Material,
+  Unidad,
+  TipoTransporte,
+  Capacidad,
+} from '../interfaces/solicitud';
 
 const SolicitudForm = () => {
+  const [step, setStep] = useState(1);
+  const [solicitudId, setSolicitudId] = useState<number | null>(null);
+
   const [formData, setFormData] = useState({
     usuario_id: Number(localStorage.getItem('usuario_id')),
     codigo_cliente_kunnr: 0,
@@ -43,24 +41,63 @@ const SolicitudForm = () => {
     direccion_id: 0,
     contacto_cliente_id: 0,
     declaracion_id: 0,
-    generador_id: 0,
     generador_igual_cliente: true,
+    generador_id: 0,
   });
 
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [direcciones, setDirecciones] = useState<Direccion[]>([]);
   const [contactos, setContactos] = useState<Contacto[]>([]);
   const [declaraciones, setDeclaraciones] = useState<Declaracion[]>([]);
+  const [generadores, setGeneradores] = useState<Generador[]>([]);
 
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+
+  const [completionData, setCompletionData] = useState({
+    codigo_material_matnr_residuo: '',
+    cantidad_declarada: '',
+    unidad_medida_id_residuo: '',
+    codigo_material_matnr_servicio: '',
+    cantidad_servicio: '',
+    unidad_venta_kmein: '',
+    tipo_transporte_id: '',
+    capacidad_id: '',
+    unidad_medida_id_transport: '',
+  });
+
+  const [materialesResiduos, setMaterialesResiduos] = useState<Material[]>([]);
+  const [materialesServicios, setMaterialesServicios] = useState<Material[]>([]);
+  const [unidades, setUnidades] = useState<Unidad[]>([]);
+  const [tiposTransporte, setTiposTransporte] = useState<TipoTransporte[]>([]);
+  const [capacidades, setCapacidades] = useState<Capacidad[]>([]);
+
+  const [showAddDireccionModal, setShowAddDireccionModal] = useState(false);
+  const [showAddContactoModal, setShowAddContactoModal] = useState(false);
+
+  const [newDireccion, setNewDireccion] = useState({
+    codigo_cliente_kunnr: formData.codigo_cliente_kunnr,
+    calle: '',
+    numero: '',
+    complemento: '',
+    comuna: '',
+    region: '',
+    contacto_terreno_id: 0,
+  });
+
+  const [newContacto, setNewContacto] = useState({
+    codigo_cliente_kunnr: formData.codigo_cliente_kunnr,
+    nombre: '',
+    telefono: '',
+    email: '',
+    referencia_id: 0,
+  });
 
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
         const clientesData = await getClientesAsociados();
         setClientes(clientesData);
-
         const declaracionesData = await getDeclaraciones();
         setDeclaraciones(declaracionesData);
       } catch (err) {
@@ -76,9 +113,10 @@ const SolicitudForm = () => {
         try {
           const direccionesData = await getDirecciones(formData.codigo_cliente_kunnr);
           setDirecciones(direccionesData);
-
           const contactosData = await getContactos(formData.codigo_cliente_kunnr);
           setContactos(contactosData);
+          setNewDireccion({ ...newDireccion, codigo_cliente_kunnr: formData.codigo_cliente_kunnr });
+          setNewContacto({ ...newContacto, codigo_cliente_kunnr: formData.codigo_cliente_kunnr });
         } catch (err) {
           console.error('Error al cargar direcciones o contactos:', err);
         }
@@ -87,13 +125,68 @@ const SolicitudForm = () => {
     }
   }, [formData.codigo_cliente_kunnr]);
 
+  useEffect(() => {
+    if (formData.generador_igual_cliente === false) {
+      const fetchGeneradores = async () => {
+        try {
+          const generadoresData = await getGeneradores();
+          setGeneradores(generadoresData);
+        } catch (err) {
+          console.error('Error al cargar generadores:', err);
+        }
+      };
+      fetchGeneradores();
+    }
+  }, [formData.generador_igual_cliente]);
+
+  useEffect(() => {
+    if (step === 2 && solicitudId) {
+      const fetchOptions = async () => {
+        try {
+          const residuosData = await getMaterialesResiduos(solicitudId);
+          setMaterialesResiduos(residuosData);
+          const unidadesData = await getUnidadesReferenciales();
+          setUnidades(unidadesData);
+          if (formData.requiere_transporte) {
+            const serviciosData = await getMaterialesServicios(solicitudId);
+            setMaterialesServicios(serviciosData);
+          } else {
+            const tiposData = await getTiposTransporte();
+            setTiposTransporte(tiposData);
+            const capacidadesData = await getCapacidadesTransporte();
+            setCapacidades(capacidadesData);
+          }
+        } catch (err) {
+          console.error('Error al cargar datos del segundo formulario:', err);
+        }
+      };
+      fetchOptions();
+    }
+  }, [step, solicitudId, formData.requiere_transporte]);
+
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
-    const { name, value, type, checked } = e.target as HTMLInputElement;
+    const { name, value, type } = e.target;
+    let newValue: any = value;
+    if (type === 'checkbox') {
+      newValue = (e.target as HTMLInputElement).checked;
+    } else if (type === 'radio' && name === 'generador_igual_cliente') {
+      newValue = value === 'true';
+    }
     setFormData({
       ...formData,
-      [name]: type === 'checkbox' ? checked : value,
+      [name]: newValue,
+    });
+  };
+
+  const handleCompletionChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    const { name, value } = e.target;
+    setCompletionData({
+      ...completionData,
+      [name]: value,
     });
   };
 
@@ -101,9 +194,10 @@ const SolicitudForm = () => {
     e.preventDefault();
     try {
       const data = await crearSolicitud(formData);
-      setMessage('Solicitud creada exitosamente.');
+      setMessage('Solicitud creada exitosamente. Por favor, complete la información adicional.');
       setError('');
-      console.log('Datos de la solicitud creada:', data);
+      setSolicitudId(data.solicitud_id);
+      setStep(2);
     } catch (err) {
       console.error('Error al crear la solicitud:', err);
       setError('Error al crear la solicitud. Verifica los datos e intenta nuevamente.');
@@ -111,153 +205,752 @@ const SolicitudForm = () => {
     }
   };
 
+  const handleCompletionSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const dataToSend = {
+        solicitud_id: solicitudId,
+        codigo_material_matnr_residuo: completionData.codigo_material_matnr_residuo,
+        cantidad_declarada: completionData.cantidad_declarada,
+        unidad_medida_id_residuo: completionData.unidad_medida_id_residuo,
+        ...(formData.requiere_transporte
+          ? {
+              codigo_material_matnr_servicio: completionData.codigo_material_matnr_servicio,
+              cantidad_servicio: completionData.cantidad_servicio,
+              unidad_venta_kmein: completionData.unidad_venta_kmein,
+            }
+          : {
+              tipo_transporte_id: completionData.tipo_transporte_id,
+              capacidad_id: completionData.capacidad_id,
+              unidad_medida_id_transport: completionData.unidad_medida_id_transport,
+            }),
+      };
+      await completarSolicitud(dataToSend);
+      alert('Solicitud completada exitosamente.');
+    } catch (err) {
+      console.error('Error al completar la solicitud:', err);
+      alert('Error al completar la solicitud. Verifica los datos e intenta nuevamente.');
+    }
+  };
+
+  const handleDireccionChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    const { name, value } = e.target;
+    setNewDireccion({
+      ...newDireccion,
+      [name]: value,
+    });
+  };
+
+  const handleContactoChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    const { name, value } = e.target;
+    setNewContacto({
+      ...newContacto,
+      [name]: value,
+    });
+  };
+
+  const handleSubmitDireccion = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const data = await postDireccion(newDireccion);
+      const direccionesActualizadas = await getDirecciones(formData.codigo_cliente_kunnr);
+      setDirecciones(direccionesActualizadas);
+      setFormData({
+        ...formData,
+        direccion_id: data.id,
+      });
+      setShowAddDireccionModal(false);
+    } catch (error) {
+      console.error('Error al agregar dirección:', error);
+      alert('Error al agregar dirección.');
+    }
+  };
+
+  const handleSubmitContacto = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const data = await postContacto(newContacto);
+      const contactosActualizados = await getContactos(formData.codigo_cliente_kunnr);
+      setContactos(contactosActualizados);
+      setFormData({
+        ...formData,
+        contacto_cliente_id: data.id,
+      });
+      setShowAddContactoModal(false);
+    } catch (error) {
+      console.error('Error al agregar contacto:', error);
+      alert('Error al agregar contacto.');
+    }
+  };
+
   return (
     <div className="container mt-5">
-      <div className="row justify-content-center">
-        <div className="col-md-8">
-          <div className="card p-4">
-            <h3 className="card-title text-center">Crear Solicitud de Servicio</h3>
-            <form onSubmit={handleSubmit}>
-              <div className="mb-3">
-                <label htmlFor="codigo_cliente_kunnr" className="form-label">Cliente</label>
-                <select
-                  className="form-select"
-                  id="codigo_cliente_kunnr"
-                  name="codigo_cliente_kunnr"
-                  value={formData.codigo_cliente_kunnr}
-                  onChange={handleChange}
-                  required
-                >
-                  <option value="">Seleccione un cliente</option>
-                  {clientes.map((cliente) => (
-                    <option key={cliente.codigo} value={cliente.codigo}>
-                      {cliente.nombre} - {cliente.sucursal}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="mb-3">
-                <label htmlFor="fecha_servicio_solicitada" className="form-label">Fecha de Servicio</label>
-                <input
-                  type="date"
-                  className="form-control"
-                  id="fecha_servicio_solicitada"
-                  name="fecha_servicio_solicitada"
-                  value={formData.fecha_servicio_solicitada}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-
-              <div className="mb-3">
-                <label htmlFor="contacto_cliente_id" className="form-label">Contacto</label>
-                <select
-                  className="form-select"
-                  id="contacto_cliente_id"
-                  name="contacto_cliente_id"
-                  value={formData.contacto_cliente_id}
-                  onChange={handleChange}
-                  required
-                >
-                  <option value="">Seleccione un contacto</option>
-                  {contactos.map((contacto) => (
-                    <option key={contacto.id} value={contacto.id}>
-                      {contacto.nombre} - {contacto.email}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="mb-3">
-                <label htmlFor="hora_servicio_solicitada" className="form-label">Hora de Servicio</label>
-                <input
-                  type="time"
-                  className="form-control"
-                  id="hora_servicio_solicitada"
-                  name="hora_servicio_solicitada"
-                  value={formData.hora_servicio_solicitada}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-
-              <div className="mb-3">
-                <label htmlFor="descripcion" className="form-label">Descripción</label>
-                <textarea
-                  className="form-control"
-                  id="descripcion"
-                  name="descripcion"
-                  value={formData.descripcion}
-                  onChange={handleChange}
-                  rows={3}
-                  required
-                ></textarea>
-              </div>
-
-              <div className="mb-3 form-check">
-                <input
-                  type="checkbox"
-                  className="form-check-input"
-                  id="requiere_transporte"
-                  name="requiere_transporte"
-                  checked={formData.requiere_transporte}
-                  onChange={handleChange}
-                />
-                <label htmlFor="requiere_transporte" className="form-check-label">¿Requiere Transporte?</label>
-              </div>
-
-              {formData.requiere_transporte && (
+      {step === 1 && (
+        <div className="row justify-content-center">
+          <div className="col-md-8">
+            <div className="card p-4">
+              <h3 className="card-title text-center">Crear Solicitud de Servicio</h3>
+              <form onSubmit={handleSubmit}>
+                {/* Selección de cliente */}
                 <div className="mb-3">
-                  <label htmlFor="direccion_id" className="form-label">Dirección</label>
+                  <label htmlFor="codigo_cliente_kunnr" className="form-label">
+                    Cliente
+                  </label>
                   <select
                     className="form-select"
-                    id="direccion_id"
-                    name="direccion_id"
-                    value={formData.direccion_id}
+                    id="codigo_cliente_kunnr"
+                    name="codigo_cliente_kunnr"
+                    value={formData.codigo_cliente_kunnr}
                     onChange={handleChange}
                     required
                   >
-                    <option value="">Seleccione una dirección</option>
-                    {direcciones.map((direccion) => (
-                      <option key={direccion.id} value={direccion.id}>
-                        {direccion.calle}, {direccion.numero}, {direccion.comuna}
+                    <option value="">Seleccione un cliente</option>
+                    {clientes.map((cliente) => (
+                      <option key={cliente.codigo} value={cliente.codigo}>
+                        {cliente.nombre} - {cliente.sucursal}
                       </option>
                     ))}
                   </select>
                 </div>
-              )}
 
-              <div className="mb-3">
-                <label htmlFor="declaracion_id" className="form-label">Declaración</label>
-                <select
-                  className="form-select"
-                  id="declaracion_id"
-                  name="declaracion_id"
-                  value={formData.declaracion_id}
-                  onChange={handleChange}
-                  required
-                >
-                  <option value="">Seleccione una declaración</option>
-                  {declaraciones.map((declaracion) => (
-                    <option key={declaracion.id} value={declaracion.id}>
-                      {declaracion.descripcion}
-                    </option>
-                  ))}
-                </select>
-              </div>
+                {/* Fecha de servicio */}
+                <div className="mb-3">
+                  <label htmlFor="fecha_servicio_solicitada" className="form-label">
+                    Fecha de Servicio
+                  </label>
+                  <input
+                    type="date"
+                    className="form-control"
+                    id="fecha_servicio_solicitada"
+                    name="fecha_servicio_solicitada"
+                    value={formData.fecha_servicio_solicitada}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
 
-              <button type="submit" className="btn btn-primary w-100">Crear Solicitud</button>
+                {/* Hora de servicio */}
+                <div className="mb-3">
+                  <label htmlFor="hora_servicio_solicitada" className="form-label">
+                    Hora de Servicio
+                  </label>
+                  <input
+                    type="time"
+                    className="form-control"
+                    id="hora_servicio_solicitada"
+                    name="hora_servicio_solicitada"
+                    value={formData.hora_servicio_solicitada}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
 
-              {error && <p className="text-danger mt-3">{error}</p>}
-              {message && <p className="text-success mt-3">{message}</p>}
-            </form>
+                {/* Descripción */}
+                <div className="mb-3">
+                  <label htmlFor="descripcion" className="form-label">
+                    Descripción
+                  </label>
+                  <textarea
+                    className="form-control"
+                    id="descripcion"
+                    name="descripcion"
+                    value={formData.descripcion}
+                    onChange={handleChange}
+                    rows={3}
+                    required
+                  ></textarea>
+                </div>
+
+                {/* Requiere transporte */}
+                <div className="mb-3 form-check">
+                  <input
+                    type="checkbox"
+                    className="form-check-input"
+                    id="requiere_transporte"
+                    name="requiere_transporte"
+                    checked={formData.requiere_transporte}
+                    onChange={handleChange}
+                  />
+                  <label htmlFor="requiere_transporte" className="form-check-label">
+                    ¿Requiere Transporte?
+                  </label>
+                </div>
+
+                {/* Campo Dirección (solo si requiere_transporte es true) */}
+                {formData.requiere_transporte && (
+                  <div className="mb-3">
+                    <label htmlFor="direccion_id" className="form-label">
+                      Dirección
+                    </label>
+                    <div className="input-group">
+                      <select
+                        className="form-select"
+                        id="direccion_id"
+                        name="direccion_id"
+                        value={formData.direccion_id}
+                        onChange={handleChange}
+                        required
+                      >
+                        <option value="">Seleccione una dirección</option>
+                        {direcciones.map((direccion) => (
+                          <option key={direccion.id} value={direccion.id}>
+                            {direccion.calle}, {direccion.numero}, {direccion.comuna}
+                          </option>
+                        ))}
+                      </select>
+                      <button
+                        type="button"
+                        className="btn btn-outline-secondary"
+                        onClick={() => setShowAddDireccionModal(true)}
+                      >
+                        Agregar Dirección
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Campo Contacto */}
+                <div className="mb-3">
+                  <label htmlFor="contacto_cliente_id" className="form-label">
+                    Contacto
+                  </label>
+                  <div className="input-group">
+                    <select
+                      className="form-select"
+                      id="contacto_cliente_id"
+                      name="contacto_cliente_id"
+                      value={formData.contacto_cliente_id}
+                      onChange={handleChange}
+                      required
+                    >
+                      <option value="">Seleccione un contacto</option>
+                      {contactos.map((contacto) => (
+                        <option key={contacto.id} value={contacto.id}>
+                          {contacto.nombre} - {contacto.email}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      className="btn btn-outline-secondary"
+                      onClick={() => setShowAddContactoModal(true)}
+                    >
+                      Agregar Contacto
+                    </button>
+                  </div>
+                </div>
+
+                {/* Campo Declaración */}
+                <div className="mb-3">
+                  <label htmlFor="declaracion_id" className="form-label">
+                    Declaración
+                  </label>
+                  <select
+                    className="form-select"
+                    id="declaracion_id"
+                    name="declaracion_id"
+                    value={formData.declaracion_id}
+                    onChange={handleChange}
+                    required
+                  >
+                    <option value="">Seleccione una declaración</option>
+                    {declaraciones.map((declaracion) => (
+                      <option key={declaracion.id} value={declaracion.id}>
+                        {declaracion.descripcion}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Campo Generador */}
+                <div className="mb-3">
+                  <label className="form-label">
+                    ¿El cliente es el generador del residuo?
+                  </label>
+                  <div>
+                    <input
+                      type="radio"
+                      id="generadorSi"
+                      name="generador_igual_cliente"
+                      value="true"
+                      checked={formData.generador_igual_cliente === true}
+                      onChange={handleChange}
+                    />
+                    <label htmlFor="generadorSi" className="me-2">
+                      Sí
+                    </label>
+                    <input
+                      type="radio"
+                      id="generadorNo"
+                      name="generador_igual_cliente"
+                      value="false"
+                      checked={formData.generador_igual_cliente === false}
+                      onChange={handleChange}
+                    />
+                    <label htmlFor="generadorNo">No</label>
+                  </div>
+                </div>
+                {!formData.generador_igual_cliente && (
+                  <div className="mb-3">
+                    <label htmlFor="generador_id" className="form-label">
+                      Generador
+                    </label>
+                    <div className="input-group">
+                      <select
+                        className="form-select"
+                        id="generador_id"
+                        name="generador_id"
+                        value={formData.generador_id}
+                        onChange={handleChange}
+                        required
+                      >
+                        <option value="">Seleccione un generador</option>
+                        {generadores.map((generador) => (
+                          <option key={generador.id} value={generador.id}>
+                            {generador.nombre}
+                          </option>
+                        ))}
+                      </select>
+                      <button
+                        type="button"
+                        className="btn btn-outline-secondary"
+                        onClick={() =>
+                          alert('Funcionalidad para agregar generador pendiente de implementar.')
+                        }
+                      >
+                        Agregar Generador
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                <button type="submit" className="btn btn-primary w-100">
+                  Crear Solicitud
+                </button>
+
+                {error && <p className="text-danger mt-3">{error}</p>}
+                {message && <p className="text-success mt-3">{message}</p>}
+              </form>
+            </div>
           </div>
         </div>
-      </div>
+      )}
+
+      {/* Segundo formulario: Completar Solicitud */}
+      {step === 2 && solicitudId && (
+        <div className="row justify-content-center">
+          <div className="col-md-8">
+            <div className="card p-4">
+              <h3 className="card-title text-center">
+                Completar Solicitud (ID: {solicitudId})
+              </h3>
+              <form onSubmit={handleCompletionSubmit}>
+                {/* Sección de Residuos */}
+                <h5>Información de Residuos</h5>
+                <div className="mb-3">
+                  <label htmlFor="codigo_material_matnr_residuo" className="form-label">
+                    Código Material Residuo
+                  </label>
+                  <select
+                    className="form-select"
+                    id="codigo_material_matnr_residuo"
+                    name="codigo_material_matnr_residuo"
+                    value={completionData.codigo_material_matnr_residuo}
+                    onChange={handleCompletionChange}
+                    required
+                  >
+                    <option value="">Seleccione un material residuo</option>
+                    {materialesResiduos.map((material) => (
+                      <option key={material.matnr} value={material.matnr}>
+                        {material.descripcion}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="mb-3">
+                  <label htmlFor="cantidad_declarada" className="form-label">
+                    Cantidad Declarada
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    className="form-control"
+                    id="cantidad_declarada"
+                    name="cantidad_declarada"
+                    value={completionData.cantidad_declarada}
+                    onChange={handleCompletionChange}
+                    required
+                  />
+                </div>
+                <div className="mb-3">
+                  <label htmlFor="unidad_medida_id_residuo" className="form-label">
+                    Unidad de Medida
+                  </label>
+                  <select
+                    className="form-select"
+                    id="unidad_medida_id_residuo"
+                    name="unidad_medida_id_residuo"
+                    value={completionData.unidad_medida_id_residuo}
+                    onChange={handleCompletionChange}
+                    required
+                  >
+                    <option value="">Seleccione una unidad</option>
+                    {unidades.map((unidad) => (
+                      <option key={unidad.id} value={unidad.id}>
+                        {unidad.descripcion}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {formData.requiere_transporte ? (
+                  <>
+                    <h5>Información de Material de Servicio</h5>
+                    <div className="mb-3">
+                      <label htmlFor="codigo_material_matnr_servicio" className="form-label">
+                        Código Material Servicio
+                      </label>
+                      <select
+                        className="form-select"
+                        id="codigo_material_matnr_servicio"
+                        name="codigo_material_matnr_servicio"
+                        value={completionData.codigo_material_matnr_servicio}
+                        onChange={handleCompletionChange}
+                        required
+                      >
+                        <option value="">Seleccione un material servicio</option>
+                        {materialesServicios.map((material) => (
+                          <option key={material.matnr} value={material.matnr}>
+                            {material.descripcion}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="mb-3">
+                      <label htmlFor="cantidad_servicio" className="form-label">
+                        Cantidad Servicio
+                      </label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        className="form-control"
+                        id="cantidad_servicio"
+                        name="cantidad_servicio"
+                        value={completionData.cantidad_servicio}
+                        onChange={handleCompletionChange}
+                        required
+                      />
+                    </div>
+                    <div className="mb-3">
+                      <label htmlFor="unidad_venta_kmein" className="form-label">
+                        Unidad de Venta
+                      </label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        id="unidad_venta_kmein"
+                        name="unidad_venta_kmein"
+                        value={completionData.unidad_venta_kmein}
+                        readOnly
+                      />
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <h5>Información de Transporte</h5>
+                    <div className="mb-3">
+                      <label htmlFor="tipo_transporte_id" className="form-label">
+                        Tipo de Transporte
+                      </label>
+                      <select
+                        className="form-select"
+                        id="tipo_transporte_id"
+                        name="tipo_transporte_id"
+                        value={completionData.tipo_transporte_id}
+                        onChange={handleCompletionChange}
+                        required
+                      >
+                        <option value="">Seleccione un tipo de transporte</option>
+                        {tiposTransporte.map((tipo) => (
+                          <option key={tipo.id} value={tipo.id}>
+                            {tipo.descripcion}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="mb-3">
+                      <label htmlFor="capacidad_id" className="form-label">
+                        Capacidad
+                      </label>
+                      <select
+                        className="form-select"
+                        id="capacidad_id"
+                        name="capacidad_id"
+                        value={completionData.capacidad_id}
+                        onChange={handleCompletionChange}
+                        required
+                      >
+                        <option value="">Seleccione una capacidad</option>
+                        {capacidades.map((capacidad) => (
+                          <option key={capacidad.id} value={capacidad.id}>
+                            {capacidad.descripcion}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="mb-3">
+                      <label htmlFor="unidad_medida_id_transport" className="form-label">
+                        Unidad de Medida
+                      </label>
+                      <select
+                        className="form-select"
+                        id="unidad_medida_id_transport"
+                        name="unidad_medida_id_transport"
+                        value={completionData.unidad_medida_id_transport}
+                        onChange={handleCompletionChange}
+                        required
+                      >
+                        <option value="">Seleccione una unidad</option>
+                        {unidades.map((unidad) => (
+                          <option key={unidad.id} value={unidad.id}>
+                            {unidad.descripcion}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </>
+                )}
+                <button type="submit" className="btn btn-primary w-100">
+                  Completar Solicitud
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal para Agregar Dirección */}
+      {showAddDireccionModal && (
+        <>
+          <div className="modal-backdrop fade show"></div>
+          <div className="modal show d-block" tabIndex={-1}>
+            <div className="modal-dialog">
+              <div className="modal-content">
+                <form onSubmit={handleSubmitDireccion}>
+                  <div className="modal-header">
+                    <h5 className="modal-title">Agregar Dirección</h5>
+                    <button
+                      type="button"
+                      className="btn-close"
+                      onClick={() => setShowAddDireccionModal(false)}
+                    ></button>
+                  </div>
+                  <div className="modal-body">
+                    <div className="mb-3">
+                      <label htmlFor="calle" className="form-label">
+                        Calle
+                      </label>
+                      <input
+                        type="text"
+                        id="calle"
+                        name="calle"
+                        value={newDireccion.calle}
+                        onChange={handleDireccionChange}
+                        className="form-control"
+                        required
+                      />
+                    </div>
+                    <div className="mb-3">
+                      <label htmlFor="numero" className="form-label">
+                        Número
+                      </label>
+                      <input
+                        type="text"
+                        id="numero"
+                        name="numero"
+                        value={newDireccion.numero}
+                        onChange={handleDireccionChange}
+                        className="form-control"
+                        required
+                      />
+                    </div>
+                    <div className="mb-3">
+                      <label htmlFor="complemento" className="form-label">
+                        Complemento
+                      </label>
+                      <input
+                        type="text"
+                        id="complemento"
+                        name="complemento"
+                        value={newDireccion.complemento}
+                        onChange={handleDireccionChange}
+                        className="form-control"
+                      />
+                    </div>
+                    <div className="mb-3">
+                      <label htmlFor="comuna" className="form-label">
+                        Comuna
+                      </label>
+                      <input
+                        type="text"
+                        id="comuna"
+                        name="comuna"
+                        value={newDireccion.comuna}
+                        onChange={handleDireccionChange}
+                        className="form-control"
+                        required
+                      />
+                    </div>
+                    <div className="mb-3">
+                      <label htmlFor="region" className="form-label">
+                        Región
+                      </label>
+                      <input
+                        type="text"
+                        id="region"
+                        name="region"
+                        value={newDireccion.region}
+                        onChange={handleDireccionChange}
+                        className="form-control"
+                        required
+                      />
+                    </div>
+                    <div className="mb-3">
+                      <label htmlFor="contacto_terreno_id" className="form-label">
+                        Contacto Terreno
+                      </label>
+                      <div className="input-group">
+                        <select
+                          id="contacto_terreno_id"
+                          name="contacto_terreno_id"
+                          value={newDireccion.contacto_terreno_id}
+                          onChange={handleDireccionChange}
+                          className="form-select"
+                          required
+                        >
+                          <option value="">Seleccione un contacto</option>
+                          {contactos.map((contacto) => (
+                            <option key={contacto.id} value={contacto.id}>
+                              {contacto.nombre} - {contacto.email}
+                            </option>
+                          ))}
+                        </select>
+                        <button
+                          type="button"
+                          className="btn btn-outline-secondary"
+                          onClick={() => setShowAddContactoModal(true)}
+                        >
+                          Agregar Contacto
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="modal-footer">
+                    <button type="submit" className="btn btn-primary">
+                      Guardar Dirección
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Modal para Agregar Contacto */}
+      {showAddContactoModal && (
+        <>
+          <div className="modal-backdrop fade show"></div>
+          <div className="modal show d-block" tabIndex={-1}>
+            <div className="modal-dialog">
+              <div className="modal-content">
+                <form onSubmit={handleSubmitContacto}>
+                  <div className="modal-header">
+                    <h5 className="modal-title">Agregar Contacto</h5>
+                    <button
+                      type="button"
+                      className="btn-close"
+                      onClick={() => setShowAddContactoModal(false)}
+                    ></button>
+                  </div>
+                  <div className="modal-body">
+                    <div className="mb-3">
+                      <label htmlFor="nombre" className="form-label">
+                        Nombre
+                      </label>
+                      <input
+                        type="text"
+                        id="nombre"
+                        name="nombre"
+                        value={newContacto.nombre}
+                        onChange={handleContactoChange}
+                        className="form-control"
+                        required
+                      />
+                    </div>
+                    <div className="mb-3">
+                      <label htmlFor="telefono" className="form-label">
+                        Teléfono
+                      </label>
+                      <input
+                        type="text"
+                        id="telefono"
+                        name="telefono"
+                        value={newContacto.telefono}
+                        onChange={handleContactoChange}
+                        className="form-control"
+                        required
+                      />
+                    </div>
+                    <div className="mb-3">
+                      <label htmlFor="email" className="form-label">
+                        Email
+                      </label>
+                      <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        value={newContacto.email}
+                        onChange={handleContactoChange}
+                        className="form-control"
+                        required
+                      />
+                    </div>
+                    <div className="mb-3">
+                      <label htmlFor="referencia_id" className="form-label">
+                        Referencia
+                      </label>
+                      <select
+                        id="referencia_id"
+                        name="referencia_id"
+                        value={newContacto.referencia_id}
+                        onChange={handleContactoChange}
+                        className="form-select"
+                        required
+                      >
+                        <option value="">Seleccione una referencia</option>
+                        <option value={1}>Referencia 1</option>
+                        <option value={2}>Referencia 2</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="modal-footer">
+                    <button type="submit" className="btn btn-primary">
+                      Guardar Contacto
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 };
 
 export default SolicitudForm;
-
