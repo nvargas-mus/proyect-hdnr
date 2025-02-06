@@ -6,12 +6,6 @@ import {
   getContactos,
   getDeclaraciones,
   getGeneradores,
-  getMaterialesResiduos,
-  getMaterialesServicios,
-  getUnidadesReferenciales,
-  getTiposTransporte,
-  getCapacidadesTransporte,
-  completarSolicitud,
   postDireccion,
   postContacto,
 } from '../services/solicitudService';
@@ -21,11 +15,8 @@ import {
   Contacto,
   Declaracion,
   Generador,
-  Material,
-  Unidad,
-  TipoTransporte,
-  Capacidad,
 } from '../interfaces/solicitud';
+import SolicitudCompletionForm from './SolicitudCompletionForm';
 
 const SolicitudForm = () => {
   const [step, setStep] = useState(1);
@@ -53,24 +44,6 @@ const SolicitudForm = () => {
 
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
-
-  const [completionData, setCompletionData] = useState({
-    codigo_material_matnr_residuo: '',
-    cantidad_declarada: '',
-    unidad_medida_id_residuo: '',
-    codigo_material_matnr_servicio: '',
-    cantidad_servicio: '',
-    unidad_venta_kmein: '',
-    tipo_transporte_id: '',
-    capacidad_id: '',
-    unidad_medida_id_transport: '',
-  });
-
-  const [materialesResiduos, setMaterialesResiduos] = useState<Material[]>([]);
-  const [materialesServicios, setMaterialesServicios] = useState<Material[]>([]);
-  const [unidades, setUnidades] = useState<Unidad[]>([]);
-  const [tiposTransporte, setTiposTransporte] = useState<TipoTransporte[]>([]);
-  const [capacidades, setCapacidades] = useState<Capacidad[]>([]);
 
   const [showAddDireccionModal, setShowAddDireccionModal] = useState(false);
   const [showAddContactoModal, setShowAddContactoModal] = useState(false);
@@ -103,7 +76,7 @@ const SolicitudForm = () => {
           sucursal: cliente.sucursal_name2,
         }));
         setClientes(mappedClientes);
-  
+
         const declaracionesData = await getDeclaraciones();
         const mappedDeclaraciones = declaracionesData.map((decl: any) => ({
           id: decl.declaracion_id,
@@ -116,8 +89,7 @@ const SolicitudForm = () => {
     };
     fetchInitialData();
   }, []);
-  
-  
+
   useEffect(() => {
     if (formData.codigo_cliente_kunnr) {
       const fetchDetails = async () => {
@@ -150,31 +122,6 @@ const SolicitudForm = () => {
     }
   }, [formData.generador_igual_cliente]);
 
-  useEffect(() => {
-    if (step === 2 && solicitudId) {
-      const fetchOptions = async () => {
-        try {
-          const residuosData = await getMaterialesResiduos(solicitudId);
-          setMaterialesResiduos(residuosData);
-          const unidadesData = await getUnidadesReferenciales();
-          setUnidades(unidadesData);
-          if (formData.requiere_transporte) {
-            const serviciosData = await getMaterialesServicios(solicitudId);
-            setMaterialesServicios(serviciosData);
-          } else {
-            const tiposData = await getTiposTransporte();
-            setTiposTransporte(tiposData);
-            const capacidadesData = await getCapacidadesTransporte();
-            setCapacidades(capacidadesData);
-          }
-        } catch (err) {
-          console.error('Error al cargar datos del segundo formulario:', err);
-        }
-      };
-      fetchOptions();
-    }
-  }, [step, solicitudId, formData.requiere_transporte]);
-
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
@@ -191,16 +138,6 @@ const SolicitudForm = () => {
     });
   };
 
-  const handleCompletionChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
-    const { name, value } = e.target;
-    setCompletionData({
-      ...completionData,
-      [name]: value,
-    });
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -213,34 +150,6 @@ const SolicitudForm = () => {
       console.error('Error al crear la solicitud:', err);
       setError('Error al crear la solicitud. Verifica los datos e intenta nuevamente.');
       setMessage('');
-    }
-  };
-
-  const handleCompletionSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      const dataToSend = {
-        solicitud_id: solicitudId,
-        codigo_material_matnr_residuo: completionData.codigo_material_matnr_residuo,
-        cantidad_declarada: completionData.cantidad_declarada,
-        unidad_medida_id_residuo: completionData.unidad_medida_id_residuo,
-        ...(formData.requiere_transporte
-          ? {
-              codigo_material_matnr_servicio: completionData.codigo_material_matnr_servicio,
-              cantidad_servicio: completionData.cantidad_servicio,
-              unidad_venta_kmein: completionData.unidad_venta_kmein,
-            }
-          : {
-              tipo_transporte_id: completionData.tipo_transporte_id,
-              capacidad_id: completionData.capacidad_id,
-              unidad_medida_id_transport: completionData.unidad_medida_id_transport,
-            }),
-      };
-      await completarSolicitud(dataToSend);
-      alert('Solicitud completada exitosamente.');
-    } catch (err) {
-      console.error('Error al completar la solicitud:', err);
-      alert('Error al completar la solicitud. Verifica los datos e intenta nuevamente.');
     }
   };
 
@@ -320,10 +229,10 @@ const SolicitudForm = () => {
                     required
                   >
                     <option value={0}>Seleccione cliente</option>
-                      {clientes.map((cliente) => (
-                        <option key={cliente.codigo} value={cliente.codigo}>
-                          {cliente.codigo} - {cliente.nombre} - {cliente.sucursal}
-                        </option>
+                    {clientes.map((cliente) => (
+                      <option key={cliente.codigo} value={cliente.codigo}>
+                        {cliente.codigo} - {cliente.nombre} - {cliente.sucursal}
+                      </option>
                     ))}
                   </select>
                 </div>
@@ -436,7 +345,6 @@ const SolicitudForm = () => {
                       name="contacto_cliente_id"
                       value={formData.contacto_cliente_id}
                       onChange={handleChange}
-                      required
                     >
                       <option value="">Seleccione un contacto</option>
                       {contactos.map((contacto) => (
@@ -551,197 +459,12 @@ const SolicitudForm = () => {
         </div>
       )}
 
-      {/* Segundo formulario: Completar Solicitud */}
+      {/* Segundo formulario: Componente para Completar Solicitud */}
       {step === 2 && solicitudId && (
-        <div className="row justify-content-center">
-          <div className="col-md-8">
-            <div className="card p-4">
-              <h3 className="card-title text-center">
-                Completar Solicitud (ID: {solicitudId})
-              </h3>
-              <form onSubmit={handleCompletionSubmit}>
-                {/* Sección de Residuos */}
-                <h5>Información de Residuos</h5>
-                <div className="mb-3">
-                  <label htmlFor="codigo_material_matnr_residuo" className="form-label">
-                    Código Material Residuo
-                  </label>
-                  <select
-                    className="form-select"
-                    id="codigo_material_matnr_residuo"
-                    name="codigo_material_matnr_residuo"
-                    value={completionData.codigo_material_matnr_residuo}
-                    onChange={handleCompletionChange}
-                    required
-                  >
-                    <option value="">Seleccione un material residuo</option>
-                    {materialesResiduos.map((material) => (
-                      <option key={material.matnr} value={material.matnr}>
-                        {material.descripcion}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="mb-3">
-                  <label htmlFor="cantidad_declarada" className="form-label">
-                    Cantidad Declarada
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    className="form-control"
-                    id="cantidad_declarada"
-                    name="cantidad_declarada"
-                    value={completionData.cantidad_declarada}
-                    onChange={handleCompletionChange}
-                    required
-                  />
-                </div>
-                <div className="mb-3">
-                  <label htmlFor="unidad_medida_id_residuo" className="form-label">
-                    Unidad de Medida
-                  </label>
-                  <select
-                    className="form-select"
-                    id="unidad_medida_id_residuo"
-                    name="unidad_medida_id_residuo"
-                    value={completionData.unidad_medida_id_residuo}
-                    onChange={handleCompletionChange}
-                    required
-                  >
-                    <option value="">Seleccione una unidad</option>
-                    {unidades.map((unidad) => (
-                      <option key={unidad.id} value={unidad.id}>
-                        {unidad.descripcion}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {formData.requiere_transporte ? (
-                  <>
-                    <h5>Información de Material de Servicio</h5>
-                    <div className="mb-3">
-                      <label htmlFor="codigo_material_matnr_servicio" className="form-label">
-                        Código Material Servicio
-                      </label>
-                      <select
-                        className="form-select"
-                        id="codigo_material_matnr_servicio"
-                        name="codigo_material_matnr_servicio"
-                        value={completionData.codigo_material_matnr_servicio}
-                        onChange={handleCompletionChange}
-                        required
-                      >
-                        <option value="">Seleccione un material servicio</option>
-                        {materialesServicios.map((material) => (
-                          <option key={material.matnr} value={material.matnr}>
-                            {material.descripcion}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="mb-3">
-                      <label htmlFor="cantidad_servicio" className="form-label">
-                        Cantidad Servicio
-                      </label>
-                      <input
-                        type="number"
-                        step="0.01"
-                        className="form-control"
-                        id="cantidad_servicio"
-                        name="cantidad_servicio"
-                        value={completionData.cantidad_servicio}
-                        onChange={handleCompletionChange}
-                        required
-                      />
-                    </div>
-                    <div className="mb-3">
-                      <label htmlFor="unidad_venta_kmein" className="form-label">
-                        Unidad de Venta
-                      </label>
-                      <input
-                        type="text"
-                        className="form-control"
-                        id="unidad_venta_kmein"
-                        name="unidad_venta_kmein"
-                        value={completionData.unidad_venta_kmein}
-                        readOnly
-                      />
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <h5>Información de Transporte</h5>
-                    <div className="mb-3">
-                      <label htmlFor="tipo_transporte_id" className="form-label">
-                        Tipo de Transporte
-                      </label>
-                      <select
-                        className="form-select"
-                        id="tipo_transporte_id"
-                        name="tipo_transporte_id"
-                        value={completionData.tipo_transporte_id}
-                        onChange={handleCompletionChange}
-                        required
-                      >
-                        <option value="">Seleccione un tipo de transporte</option>
-                        {tiposTransporte.map((tipo) => (
-                          <option key={tipo.id} value={tipo.id}>
-                            {tipo.descripcion}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="mb-3">
-                      <label htmlFor="capacidad_id" className="form-label">
-                        Capacidad
-                      </label>
-                      <select
-                        className="form-select"
-                        id="capacidad_id"
-                        name="capacidad_id"
-                        value={completionData.capacidad_id}
-                        onChange={handleCompletionChange}
-                        required
-                      >
-                        <option value="">Seleccione una capacidad</option>
-                        {capacidades.map((capacidad) => (
-                          <option key={capacidad.id} value={capacidad.id}>
-                            {capacidad.descripcion}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="mb-3">
-                      <label htmlFor="unidad_medida_id_transport" className="form-label">
-                        Unidad de Medida
-                      </label>
-                      <select
-                        className="form-select"
-                        id="unidad_medida_id_transport"
-                        name="unidad_medida_id_transport"
-                        value={completionData.unidad_medida_id_transport}
-                        onChange={handleCompletionChange}
-                        required
-                      >
-                        <option value="">Seleccione una unidad</option>
-                        {unidades.map((unidad) => (
-                          <option key={unidad.id} value={unidad.id}>
-                            {unidad.descripcion}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  </>
-                )}
-                <button type="submit" className="btn btn-primary w-100">
-                  Completar Solicitud
-                </button>
-              </form>
-            </div>
-          </div>
-        </div>
+        <SolicitudCompletionForm 
+          solicitudId={solicitudId} 
+          requiereTransporte={formData.requiere_transporte} 
+        />
       )}
 
       {/* Modal para Agregar Dirección */}
@@ -965,3 +688,4 @@ const SolicitudForm = () => {
 };
 
 export default SolicitudForm;
+
