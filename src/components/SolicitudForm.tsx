@@ -97,16 +97,27 @@ const SolicitudForm = () => {
     const fetchInitialData = async () => {
       try {
         const clientesData = await getClientesAsociados();
-        setClientes(clientesData);
+        const mappedClientes = clientesData.map((cliente: any) => ({
+          codigo: cliente.codigo_cliente_kunnr,
+          nombre: cliente.nombre_name1,
+          sucursal: cliente.sucursal_name2,
+        }));
+        setClientes(mappedClientes);
+  
         const declaracionesData = await getDeclaraciones();
-        setDeclaraciones(declaracionesData);
+        const mappedDeclaraciones = declaracionesData.map((decl: any) => ({
+          id: decl.declaracion_id,
+          descripcion: decl.declaracion_nombre,
+        }));
+        setDeclaraciones(mappedDeclaraciones);
       } catch (err) {
         console.error('Error al cargar datos iniciales:', err);
       }
     };
     fetchInitialData();
   }, []);
-
+  
+  
   useEffect(() => {
     if (formData.codigo_cliente_kunnr) {
       const fetchDetails = async () => {
@@ -308,11 +319,11 @@ const SolicitudForm = () => {
                     onChange={handleChange}
                     required
                   >
-                    <option value="">Seleccione un cliente</option>
-                    {clientes.map((cliente) => (
-                      <option key={cliente.codigo} value={cliente.codigo}>
-                        {cliente.nombre} - {cliente.sucursal}
-                      </option>
+                    <option value={0}>Seleccione cliente</option>
+                      {clientes.map((cliente) => (
+                        <option key={cliente.codigo} value={cliente.codigo}>
+                          {cliente.codigo} - {cliente.nombre} - {cliente.sucursal}
+                        </option>
                     ))}
                   </select>
                 </div>
