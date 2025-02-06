@@ -32,7 +32,7 @@ const Navbar: React.FC = () => {
     <nav className="navbar navbar-light bg-light">
       <div className="container">
         <a className="navbar-brand" href="#">
-          MiApp
+          Hidronor
         </a>
         {isLoggedIn && (
           <button className="btn btn-outline-danger" onClick={handleLogout}>
