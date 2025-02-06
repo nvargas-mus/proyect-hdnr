@@ -13,11 +13,13 @@ const LoginForm = () => {
     e.preventDefault();
     try {
       const response = await loginUser({ email, contrasena });
-
       const { token, userId } = response;
 
       localStorage.setItem('authToken', token);
       localStorage.setItem('usuario_id', userId.toString());
+      localStorage.setItem('user_email', email);
+
+      window.dispatchEvent(new Event('localStorageUpdated'));
 
       setMessage('Login exitoso.');
       setError('');
@@ -41,7 +43,9 @@ const LoginForm = () => {
             <h3 className="card-title text-center">Login</h3>
             <form onSubmit={handleLogin}>
               <div className="mb-3">
-                <label htmlFor="email" className="form-label">Correo Electrónico</label>
+                <label htmlFor="email" className="form-label">
+                  Correo Electrónico
+                </label>
                 <input
                   type="email"
                   className="form-control"
@@ -52,7 +56,9 @@ const LoginForm = () => {
                 />
               </div>
               <div className="mb-3">
-                <label htmlFor="contrasena" className="form-label">Contraseña</label>
+                <label htmlFor="contrasena" className="form-label">
+                  Contraseña
+                </label>
                 <input
                   type="password"
                   className="form-control"
@@ -64,10 +70,14 @@ const LoginForm = () => {
               </div>
               {error && <p className="text-danger">{error}</p>}
               {message && <p className="text-success">{message}</p>}
-              <button type="submit" className="btn btn-primary w-100">Iniciar Sesión</button>
+              <button type="submit" className="btn btn-primary w-100">
+                Iniciar Sesión
+              </button>
             </form>
             <div className="text-center mt-3">
-              <p>¿No tienes una cuenta? <Link to="/register">Regístrate aquí</Link></p>
+              <p>
+                ¿No tienes una cuenta? <Link to="/register">Regístrate aquí</Link>
+              </p>
             </div>
           </div>
         </div>
@@ -77,3 +87,5 @@ const LoginForm = () => {
 };
 
 export default LoginForm;
+
+
