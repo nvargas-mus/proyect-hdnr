@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import Logo from '../assets/logo.png';
 
 const Navbar: React.FC = () => {
   const navigate = useNavigate();
@@ -24,7 +25,6 @@ const Navbar: React.FC = () => {
     localStorage.removeItem('usuario_id');
     localStorage.removeItem('user_email');
     setIsLoggedIn(false);
-
     navigate('/');
   };
 
@@ -32,7 +32,7 @@ const Navbar: React.FC = () => {
     <nav className="navbar navbar-light bg-light">
       <div className="container">
         <a className="navbar-brand" href="#">
-          Hidronor
+          <img src={Logo} alt="Hidronor" style={{ height: '50px' }} />
         </a>
         {isLoggedIn && (
           <button className="btn btn-outline-danger" onClick={handleLogout}>
@@ -45,6 +45,7 @@ const Navbar: React.FC = () => {
 };
 
 export default Navbar;
+
 
 
 
