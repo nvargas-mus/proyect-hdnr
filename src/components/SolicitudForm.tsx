@@ -91,13 +91,33 @@ const SolicitudForm = () => {
   }, []);
 
   useEffect(() => {
-    if (formData.codigo_cliente_kunnr) {
+    if (formData.codigo_cliente_kunnr && formData.codigo_cliente_kunnr !== 0) {
       const fetchDetails = async () => {
         try {
-          const direccionesData = await getDirecciones(formData.codigo_cliente_kunnr);
-          setDirecciones(direccionesData);
-          const contactosData = await getContactos(formData.codigo_cliente_kunnr);
-          setContactos(contactosData);
+          const direccionesData = await getDirecciones();
+          console.log('Direcciones recibidas:', direccionesData);
+          const mappedDirecciones = direccionesData.map((direccion: any) => ({
+            id: direccion.direccion_id,
+            calle: direccion.calle,
+            numero: direccion.numero,
+            complemento: direccion.complemento,
+            comuna: direccion.comuna,
+            region: direccion.region,
+            contacto_terreno_id: direccion.contacto_terreno_id,
+          }));
+          setDirecciones(mappedDirecciones);
+
+          const contactosData = await getContactos();
+          console.log('Contactos recibidos:', contactosData);
+          const mappedContactos = contactosData.map((contacto: any) => ({
+            id: contacto.contacto_id,
+            nombre: contacto.nombre,
+            telefono: contacto.telefono,
+            email: contacto.email,
+            referencia_id: contacto.referencia_id,
+          }));
+          setContactos(mappedContactos);
+
           setNewDireccion({ ...newDireccion, codigo_cliente_kunnr: formData.codigo_cliente_kunnr });
           setNewContacto({ ...newContacto, codigo_cliente_kunnr: formData.codigo_cliente_kunnr });
         } catch (err) {
@@ -177,8 +197,17 @@ const SolicitudForm = () => {
     e.preventDefault();
     try {
       const data = await postDireccion(newDireccion);
-      const direccionesActualizadas = await getDirecciones(formData.codigo_cliente_kunnr);
-      setDirecciones(direccionesActualizadas);
+      const direccionesActualizadas = await getDirecciones();
+      const mappedDirecciones = direccionesActualizadas.map((direccion: any) => ({
+        id: direccion.direccion_id,
+        calle: direccion.calle,
+        numero: direccion.numero,
+        complemento: direccion.complemento,
+        comuna: direccion.comuna,
+        region: direccion.region,
+        contacto_terreno_id: direccion.contacto_terreno_id,
+      }));
+      setDirecciones(mappedDirecciones);
       setFormData({
         ...formData,
         direccion_id: data.id,
@@ -194,8 +223,15 @@ const SolicitudForm = () => {
     e.preventDefault();
     try {
       const data = await postContacto(newContacto);
-      const contactosActualizados = await getContactos(formData.codigo_cliente_kunnr);
-      setContactos(contactosActualizados);
+      const contactosActualizados = await getContactos();
+      const mappedContactos = contactosActualizados.map((contacto: any) => ({
+        id: contacto.contacto_id,
+        nombre: contacto.nombre,
+        telefono: contacto.telefono,
+        email: contacto.email,
+        referencia_id: contacto.referencia_id,
+      }));
+      setContactos(mappedContactos);
       setFormData({
         ...formData,
         contacto_cliente_id: data.id,
@@ -225,7 +261,12 @@ const SolicitudForm = () => {
                     id="codigo_cliente_kunnr"
                     name="codigo_cliente_kunnr"
                     value={formData.codigo_cliente_kunnr}
-                    onChange={handleChange}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        codigo_cliente_kunnr: Number(e.target.value),
+                      })
+                    }
                     required
                   >
                     <option value={0}>Seleccione cliente</option>
@@ -300,7 +341,7 @@ const SolicitudForm = () => {
                   </label>
                 </div>
 
-                {/* Campo Dirección (solo si requiere_transporte es true) */}
+                {/* Campo Dirección: se muestra SOLO si requiere transporte */}
                 {formData.requiere_transporte && (
                   <div className="mb-3">
                     <label htmlFor="direccion_id" className="form-label">
@@ -688,4 +729,3 @@ const SolicitudForm = () => {
 };
 
 export default SolicitudForm;
-

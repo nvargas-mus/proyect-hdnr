@@ -22,13 +22,13 @@ export const getClientesAsociados = async () => {
   return response.data;
 };
 
-export const getDirecciones = async (codigo_cliente_kunnr: number) => {
-  const response = await api.get(`/direcciones_cliente/${codigo_cliente_kunnr}`);
+export const getDirecciones = async () => {
+  const response = await api.get('/direcciones_cliente');
   return response.data;
 };
 
-export const getContactos = async (codigo_cliente_kunnr: number) => {
-  const response = await api.get(`/contactos_clientes/${codigo_cliente_kunnr}`);
+export const getContactos = async () => {
+  const response = await api.get('/contactos_clientes');
   return response.data;
 };
 
@@ -53,7 +53,7 @@ export const getMaterialesServicios = async (solicitudId: number) => {
 };
 
 export const getUnidadesReferenciales = async () => {
-  const response = await api.get('/unidades_referenciales');
+  const response = await api.get('/unidadesReferenciales');
   return response.data;
 };
 
@@ -93,5 +93,15 @@ export const postContacto = async (contactoData: {
   referencia_id: number;
 }) => {
   const response = await api.post('/contactos_clientes', contactoData);
+  return response.data;
+};
+
+export const crearSolicitudMateriales = async (data: {
+  solicitud_id: number;
+  codigo_material_matnr: number;
+  cantidad_declarada: number;
+  unidad_medida_id: number;
+}) => {
+  const response = await api.post('/solicitud_materiales', data);
   return response.data;
 };

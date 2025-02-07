@@ -5,7 +5,7 @@ import {
   getUnidadesReferenciales, 
   getTiposTransporte, 
   getCapacidadesTransporte, 
-  completarSolicitud 
+  crearSolicitudMateriales 
 } from '../services/solicitudService';
 
 interface SolicitudCompletionFormProps {
@@ -59,21 +59,21 @@ const SolicitudCompletionForm: React.FC<SolicitudCompletionFormProps> = ({ solic
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData({...formData, [name]: value});
+    setFormData({ ...formData, [name]: value });
   };
 
   const handleServicioChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedCode = e.target.value;
-    const selectedServicio = servicios.find(s => String(s.matnr) === selectedCode);
+    const selectedServicio = servicios.find(s => String(s.material_matnr) === selectedCode);
     const unidadVenta = selectedServicio ? selectedServicio.unidad_venta_kmein : '';
-    setFormData({...formData, codigo_material_matnr_servicio: selectedCode, unidad_venta_kmein: unidadVenta});
+    setFormData({ ...formData, codigo_material_matnr_servicio: selectedCode, unidad_venta_kmein: unidadVenta });
   };
 
   const handleCapacidadChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedCapacidadId = e.target.value;
     const selectedCapacidad = capacidades.find(c => String(c.id) === selectedCapacidadId);
     const unidadMedida = selectedCapacidad ? selectedCapacidad.unidad_medida_id : '';
-    setFormData({...formData, capacidad_id: selectedCapacidadId, unidad_medida_id_transport: unidadMedida});
+    setFormData({ ...formData, capacidad_id: selectedCapacidadId, unidad_medida_id_transport: unidadMedida });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -81,23 +81,12 @@ const SolicitudCompletionForm: React.FC<SolicitudCompletionFormProps> = ({ solic
     try {
       const dataToSend = {
         solicitud_id: solicitudId,
-        codigo_material_matnr_residuo: formData.codigo_material_matnr_residuo,
-        cantidad_declarada: formData.cantidad_declarada,
-        unidad_medida_id_residuo: formData.unidad_medida_id_residuo,
-        ...(requiereTransporte
-          ? {
-              codigo_material_matnr_servicio: formData.codigo_material_matnr_servicio,
-              cantidad_servicio: formData.cantidad_servicio,
-              unidad_venta_kmein: formData.unidad_venta_kmein,
-            }
-          : {
-              tipo_transporte_id: formData.tipo_transporte_id,
-              capacidad_id: formData.capacidad_id,
-              unidad_medida_id_transport: formData.unidad_medida_id_transport,
-            })
+        codigo_material_matnr: Number(formData.codigo_material_matnr_residuo),
+        cantidad_declarada: Number(formData.cantidad_declarada),
+        unidad_medida_id: Number(formData.unidad_medida_id_residuo)
       };
 
-      await completarSolicitud(dataToSend);
+      await crearSolicitudMateriales(dataToSend);
       alert('Solicitud completada exitosamente.');
     } catch (err) {
       console.error('Error al completar la solicitud:', err);
@@ -106,147 +95,190 @@ const SolicitudCompletionForm: React.FC<SolicitudCompletionFormProps> = ({ solic
   };
 
   return (
-    <div>
-      <h2>Completar Solicitud</h2>
-      <form onSubmit={handleSubmit}>
-        {/* Campo oculto para solicitud_id */}
-        <input type="hidden" name="solicitud_id" value={solicitudId} />
+    <div className="container mt-5">
+      <div className="row justify-content-center">
+        <div className="col-md-8">
+          <div className="card p-4">
+            <h3 className="card-title text-center">
+              Completar Solicitud (ID: {solicitudId})
+            </h3>
+            <form onSubmit={handleSubmit}>
+              {/* Campo oculto para solicitud_id */}
+              <input type="hidden" name="solicitud_id" value={solicitudId} />
 
-        <h3>Información de Residuo</h3>
-        <div>
-          <label>Código Material Residuo:</label>
-          <select
-            name="codigo_material_matnr_residuo"
-            value={formData.codigo_material_matnr_residuo}
-            onChange={handleChange}
-            required
-          >
-            <option value="">Seleccione</option>
-            {residuos.map((item) => (
-              <option key={item.matnr} value={item.matnr}>
-                {item.matnr} - {item.descripcion}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label>Cantidad Declarada:</label>
-          <input
-            type="number"
-            step="0.01"
-            name="cantidad_declarada"
-            value={formData.cantidad_declarada}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        <div>
-          <label>Unidad Medida Residuo:</label>
-          <select
-            name="unidad_medida_id_residuo"
-            value={formData.unidad_medida_id_residuo}
-            onChange={handleChange}
-            required
-          >
-            <option value="">Seleccione</option>
-            {unidades.map((uni) => (
-              <option key={uni.id} value={uni.id}>
-                {uni.descripcion}
-              </option>
-            ))}
-          </select>
-        </div>
+              <h4>Información de Residuo</h4>
+              <div className="mb-3">
+                <label htmlFor="codigo_material_matnr_residuo" className="form-label">
+                  Código Material Residuo:
+                </label>
+                <select
+                  name="codigo_material_matnr_residuo"
+                  className="form-select"
+                  value={formData.codigo_material_matnr_residuo}
+                  onChange={handleChange}
+                  required
+                >
+                  <option value="">Seleccione</option>
+                  {residuos.map((item, index) => (
+                    <option key={`${item.material_matnr}-${index}`} value={item.material_matnr}>
+                      {item.material_matnr} - {item.nombre_material_maktg}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="mb-3">
+                <label htmlFor="cantidad_declarada" className="form-label">
+                  Cantidad Declarada:
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  name="cantidad_declarada"
+                  className="form-control"
+                  value={formData.cantidad_declarada}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+              <div className="mb-3">
+                <label htmlFor="unidad_medida_id_residuo" className="form-label">
+                  Unidad Medida Residuo:
+                </label>
+                <select
+                  name="unidad_medida_id_residuo"
+                  className="form-select"
+                  value={formData.unidad_medida_id_residuo}
+                  onChange={handleChange}
+                  required
+                >
+                  <option value="">Seleccione</option>
+                  {unidades.map((uni, index) => (
+                    <option key={`${uni.unidad_medida_id}-${index}`} value={uni.unidad_medida_id}>
+                      {uni.nombre_unidad}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-        {requiereTransporte ? (
-          <>
-            <h3>Información de Servicio</h3>
-            <div>
-              <label>Código Material Servicio:</label>
-              <select
-                name="codigo_material_matnr_servicio"
-                value={formData.codigo_material_matnr_servicio}
-                onChange={handleServicioChange}
-                required
-              >
-                <option value="">Seleccione</option>
-                {servicios.map((item) => (
-                  <option key={item.matnr} value={item.matnr}>
-                    {item.matnr} - {item.descripcion}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label>Cantidad Servicio:</label>
-              <input
-                type="number"
-                step="0.01"
-                name="cantidad_servicio"
-                value={formData.cantidad_servicio}
-                onChange={handleChange}
-                required
-              />
-            </div>
-            <div>
-              <label>Unidad de Venta (automático):</label>
-              <input
-                type="text"
-                name="unidad_venta_kmein"
-                value={formData.unidad_venta_kmein}
-                readOnly
-              />
-            </div>
-          </>
-        ) : (
-          <>
-            <h3>Información de Transporte</h3>
-            <div>
-              <label>Tipo de Transporte:</label>
-              <select
-                name="tipo_transporte_id"
-                value={formData.tipo_transporte_id}
-                onChange={handleChange}
-                required
-              >
-                <option value="">Seleccione</option>
-                {tiposTransporte.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.descripcion}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label>Capacidad:</label>
-              <select
-                name="capacidad_id"
-                value={formData.capacidad_id}
-                onChange={handleCapacidadChange}
-                required
-              >
-                <option value="">Seleccione</option>
-                {capacidades.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.descripcion}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label>Unidad Medida Transporte (automático):</label>
-              <input
-                type="text"
-                name="unidad_medida_id_transport"
-                value={formData.unidad_medida_id_transport}
-                readOnly
-              />
-            </div>
-          </>
-        )}
-        <button type="submit">Completar Solicitud</button>
-      </form>
+              {requiereTransporte ? (
+                <>
+                  <h4>Información de Servicio</h4>
+                  <div className="mb-3">
+                    <label htmlFor="codigo_material_matnr_servicio" className="form-label">
+                      Código Material Servicio:
+                    </label>
+                    <select
+                      name="codigo_material_matnr_servicio"
+                      className="form-select"
+                      value={formData.codigo_material_matnr_servicio}
+                      onChange={handleServicioChange}
+                      required
+                    >
+                      <option value="">Seleccione</option>
+                      {servicios.map((item, index) => (
+                        <option key={`${item.material_matnr}-${index}`} value={item.material_matnr}>
+                          {item.material_matnr} - {item.nombre_material_maktg}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="mb-3">
+                    <label htmlFor="cantidad_servicio" className="form-label">
+                      Cantidad Servicio:
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      name="cantidad_servicio"
+                      className="form-control"
+                      value={formData.cantidad_servicio}
+                      onChange={handleChange}
+                      required
+                    />
+                  </div>
+                  <div className="mb-3">
+                    <label htmlFor="unidad_venta_kmein" className="form-label">
+                      Unidad de Venta (automático):
+                    </label>
+                    <input
+                      type="text"
+                      name="unidad_venta_kmein"
+                      className="form-control"
+                      value={formData.unidad_venta_kmein}
+                      readOnly
+                    />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <h4>Información de Transporte</h4>
+                  <div className="mb-3">
+                    <label htmlFor="tipo_transporte_id" className="form-label">
+                      Tipo de Transporte:
+                    </label>
+                    <select
+                      name="tipo_transporte_id"
+                      className="form-select"
+                      value={formData.tipo_transporte_id}
+                      onChange={handleChange}
+                      required
+                    >
+                      <option value="">Seleccione</option>
+                      {tiposTransporte.map((item, index) => (
+                        <option key={`${item.id}-${index}`} value={item.id}>
+                          {item.descripcion}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="mb-3">
+                    <label htmlFor="capacidad_id" className="form-label">
+                      Capacidad:
+                    </label>
+                    <select
+                      name="capacidad_id"
+                      className="form-select"
+                      value={formData.capacidad_id}
+                      onChange={handleCapacidadChange}
+                      required
+                    >
+                      <option value="">Seleccione</option>
+                      {capacidades.map((item, index) => (
+                        <option key={`${item.id}-${index}`} value={item.id}>
+                          {item.descripcion}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="mb-3">
+                    <label htmlFor="unidad_medida_id_transport" className="form-label">
+                      Unidad Medida Transporte (automático):
+                    </label>
+                    <input
+                      type="text"
+                      name="unidad_medida_id_transport"
+                      className="form-control"
+                      value={formData.unidad_medida_id_transport}
+                      readOnly
+                    />
+                  </div>
+                </>
+              )}
+
+              <button type="submit" className="btn btn-primary w-100">
+                Completar Solicitud
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
 
 export default SolicitudCompletionForm;
+
+
+
+
+
