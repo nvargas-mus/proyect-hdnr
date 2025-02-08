@@ -7,7 +7,7 @@ export const crearSolicitud = async (solicitudData: {
   hora_servicio_solicitada: string;
   descripcion: string;
   requiere_transporte: boolean;
-  direccion_id: number;
+  direccion_id: number | null; 
   contacto_cliente_id: number;
   declaracion_id: number;
   generador_id: number;
@@ -16,6 +16,7 @@ export const crearSolicitud = async (solicitudData: {
   const response = await api.post('/solicitudes', solicitudData);
   return response.data;
 };
+
 
 export const getClientesAsociados = async () => {
   const response = await api.get('/usuarios/clientes/asociados');
@@ -58,12 +59,12 @@ export const getUnidadesReferenciales = async () => {
 };
 
 export const getTiposTransporte = async () => {
-  const response = await api.get('/tipos_transporte');
+  const response = await api.get('/tiposTransporte');
   return response.data;
 };
 
 export const getCapacidadesTransporte = async () => {
-  const response = await api.get('/capacidades_transporte');
+  const response = await api.get('/capacidadesTransporte');
   return response.data;
 };
 

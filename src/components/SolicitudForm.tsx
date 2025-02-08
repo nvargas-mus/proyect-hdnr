@@ -22,14 +22,26 @@ const SolicitudForm = () => {
   const [step, setStep] = useState(1);
   const [solicitudId, setSolicitudId] = useState<number | null>(null);
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    usuario_id: number;
+    codigo_cliente_kunnr: number;
+    fecha_servicio_solicitada: string;
+    hora_servicio_solicitada: string;
+    descripcion: string;
+    requiere_transporte: boolean;
+    direccion_id: number | null; 
+    contacto_cliente_id: number;
+    declaracion_id: number;
+    generador_igual_cliente: boolean;
+    generador_id: number;
+  }>({
     usuario_id: Number(localStorage.getItem('usuario_id')),
     codigo_cliente_kunnr: 0,
     fecha_servicio_solicitada: '',
     hora_servicio_solicitada: '',
     descripcion: '',
     requiere_transporte: false,
-    direccion_id: 0,
+    direccion_id: null,   
     contacto_cliente_id: 0,
     declaracion_id: 0,
     generador_igual_cliente: true,
@@ -95,7 +107,6 @@ const SolicitudForm = () => {
       const fetchDetails = async () => {
         try {
           const direccionesData = await getDirecciones();
-          console.log('Direcciones recibidas:', direccionesData);
           const mappedDirecciones = direccionesData.map((direccion: any) => ({
             id: direccion.direccion_id,
             calle: direccion.calle,
@@ -108,7 +119,6 @@ const SolicitudForm = () => {
           setDirecciones(mappedDirecciones);
 
           const contactosData = await getContactos();
-          console.log('Contactos recibidos:', contactosData);
           const mappedContactos = contactosData.map((contacto: any) => ({
             id: contacto.contacto_id,
             nombre: contacto.nombre,
@@ -118,8 +128,14 @@ const SolicitudForm = () => {
           }));
           setContactos(mappedContactos);
 
-          setNewDireccion({ ...newDireccion, codigo_cliente_kunnr: formData.codigo_cliente_kunnr });
-          setNewContacto({ ...newContacto, codigo_cliente_kunnr: formData.codigo_cliente_kunnr });
+          setNewDireccion({
+            ...newDireccion,
+            codigo_cliente_kunnr: formData.codigo_cliente_kunnr,
+          });
+          setNewContacto({
+            ...newContacto,
+            codigo_cliente_kunnr: formData.codigo_cliente_kunnr,
+          });
         } catch (err) {
           console.error('Error al cargar direcciones o contactos:', err);
         }
@@ -152,16 +168,22 @@ const SolicitudForm = () => {
     } else if (type === 'radio' && name === 'generador_igual_cliente') {
       newValue = value === 'true';
     }
-    setFormData({
-      ...formData,
+    setFormData((prev) => ({
+      ...prev,
       [name]: newValue,
-    });
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const data = await crearSolicitud(formData);
+      const payload = { ...formData };
+
+      if (!payload.requiere_transporte) {
+        payload.direccion_id = null;
+      }
+
+      const data = await crearSolicitud(payload);
       setMessage('Solicitud creada exitosamente. Por favor, complete la información adicional.');
       setError('');
       setSolicitudId(data.solicitud_id);
@@ -177,20 +199,10 @@ const SolicitudForm = () => {
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
-    setNewDireccion({
-      ...newDireccion,
+    setNewDireccion((prev) => ({
+      ...prev,
       [name]: value,
-    });
-  };
-
-  const handleContactoChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
-    const { name, value } = e.target;
-    setNewContacto({
-      ...newContacto,
-      [name]: value,
-    });
+    }));
   };
 
   const handleSubmitDireccion = async (e: React.FormEvent) => {
@@ -208,15 +220,25 @@ const SolicitudForm = () => {
         contacto_terreno_id: direccion.contacto_terreno_id,
       }));
       setDirecciones(mappedDirecciones);
-      setFormData({
-        ...formData,
+      setFormData((prev) => ({
+        ...prev,
         direccion_id: data.id,
-      });
+      }));
       setShowAddDireccionModal(false);
     } catch (error) {
       console.error('Error al agregar dirección:', error);
       alert('Error al agregar dirección.');
     }
+  };
+
+  const handleContactoChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    const { name, value } = e.target;
+    setNewContacto((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
   const handleSubmitContacto = async (e: React.FormEvent) => {
@@ -232,10 +254,10 @@ const SolicitudForm = () => {
         referencia_id: contacto.referencia_id,
       }));
       setContactos(mappedContactos);
-      setFormData({
-        ...formData,
+      setFormData((prev) => ({
+        ...prev,
         contacto_cliente_id: data.id,
-      });
+      }));
       setShowAddContactoModal(false);
     } catch (error) {
       console.error('Error al agregar contacto:', error);
@@ -262,10 +284,10 @@ const SolicitudForm = () => {
                     name="codigo_cliente_kunnr"
                     value={formData.codigo_cliente_kunnr}
                     onChange={(e) =>
-                      setFormData({
-                        ...formData,
+                      setFormData((prev) => ({
+                        ...prev,
                         codigo_cliente_kunnr: Number(e.target.value),
-                      })
+                      }))
                     }
                     required
                   >
@@ -326,7 +348,7 @@ const SolicitudForm = () => {
                   ></textarea>
                 </div>
 
-                {/* Requiere transporte */}
+                {/* ¿Requiere transporte? */}
                 <div className="mb-3 form-check">
                   <input
                     type="checkbox"
@@ -341,7 +363,7 @@ const SolicitudForm = () => {
                   </label>
                 </div>
 
-                {/* Campo Dirección: se muestra SOLO si requiere transporte */}
+                {/* Dirección (solo si requiere transporte) */}
                 {formData.requiere_transporte && (
                   <div className="mb-3">
                     <label htmlFor="direccion_id" className="form-label">
@@ -352,8 +374,14 @@ const SolicitudForm = () => {
                         className="form-select"
                         id="direccion_id"
                         name="direccion_id"
-                        value={formData.direccion_id}
-                        onChange={handleChange}
+                        value={formData.direccion_id?.toString() ?? ''}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setFormData((prev) => ({
+                            ...prev,
+                            direccion_id: val ? Number(val) : null,
+                          }));
+                        }}
                         required
                       >
                         <option value="">Seleccione una dirección</option>
@@ -374,7 +402,7 @@ const SolicitudForm = () => {
                   </div>
                 )}
 
-                {/* Campo Contacto */}
+                {/* Contacto */}
                 <div className="mb-3">
                   <label htmlFor="contacto_cliente_id" className="form-label">
                     Contacto
@@ -404,7 +432,7 @@ const SolicitudForm = () => {
                   </div>
                 </div>
 
-                {/* Campo Declaración */}
+                {/* Declaración */}
                 <div className="mb-3">
                   <label htmlFor="declaracion_id" className="form-label">
                     Declaración
@@ -426,7 +454,7 @@ const SolicitudForm = () => {
                   </select>
                 </div>
 
-                {/* Campo Generador */}
+                {/* Generador */}
                 <div className="mb-3">
                   <label className="form-label">
                     ¿El cliente es el generador del residuo?
@@ -454,6 +482,7 @@ const SolicitudForm = () => {
                     <label htmlFor="generadorNo">No</label>
                   </div>
                 </div>
+
                 {!formData.generador_igual_cliente && (
                   <div className="mb-3">
                     <label htmlFor="generador_id" className="form-label">
@@ -500,11 +529,11 @@ const SolicitudForm = () => {
         </div>
       )}
 
-      {/* Segundo formulario: Componente para Completar Solicitud */}
+      {/* Segundo formulario: Completar Solicitud */}
       {step === 2 && solicitudId && (
-        <SolicitudCompletionForm 
-          solicitudId={solicitudId} 
-          requiereTransporte={formData.requiere_transporte} 
+        <SolicitudCompletionForm
+          solicitudId={solicitudId}
+          requiereTransporte={formData.requiere_transporte}
         />
       )}
 
@@ -525,6 +554,7 @@ const SolicitudForm = () => {
                     ></button>
                   </div>
                   <div className="modal-body">
+                    {/* Campos de la nueva dirección */}
                     <div className="mb-3">
                       <label htmlFor="calle" className="form-label">
                         Calle
@@ -653,6 +683,7 @@ const SolicitudForm = () => {
                     ></button>
                   </div>
                   <div className="modal-body">
+                    {/* Campos del nuevo contacto */}
                     <div className="mb-3">
                       <label htmlFor="nombre" className="form-label">
                         Nombre

@@ -39,7 +39,7 @@ const SolicitudCompletionForm: React.FC<SolicitudCompletionFormProps> = ({ solic
         setResiduos(residuosData);
         const unidadesData = await getUnidadesReferenciales();
         setUnidades(unidadesData);
-
+    
         if (requiereTransporte) {
           const serviciosData = await getMaterialesServicios(solicitudId);
           setServicios(serviciosData);
@@ -50,10 +50,10 @@ const SolicitudCompletionForm: React.FC<SolicitudCompletionFormProps> = ({ solic
           setCapacidades(capacidadesData);
         }
       } catch (err) {
-        console.error('Error al cargar los datos para completar la solicitud:', err);
+        console.error("Error al cargar los datos:", err);
       }
     };
-
+    
     fetchData();
   }, [solicitudId, requiereTransporte]);
 
@@ -103,7 +103,6 @@ const SolicitudCompletionForm: React.FC<SolicitudCompletionFormProps> = ({ solic
               Completar Solicitud (ID: {solicitudId})
             </h3>
             <form onSubmit={handleSubmit}>
-              {/* Campo oculto para solicitud_id */}
               <input type="hidden" name="solicitud_id" value={solicitudId} />
 
               <h4>Información de Residuo</h4>
