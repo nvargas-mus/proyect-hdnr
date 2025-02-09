@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { loginUser } from '../services/authService'; 
+import { loginUser } from '../services/authService';
 import { Link, useNavigate } from 'react-router-dom';
 
 const LoginForm = () => {
@@ -13,15 +13,24 @@ const LoginForm = () => {
     e.preventDefault();
     try {
       const response = await loginUser({ email, contrasena });
-      const { token } = response;
-      setMessage('Login exitoso.');
-      setError('');
+      const { token, userId } = response;
 
       localStorage.setItem('authToken', token);
+      localStorage.setItem('usuario_id', userId.toString());
+      localStorage.setItem('user_email', email);
 
-      navigate('/crear-solicitud');
+      window.dispatchEvent(new Event('localStorageUpdated'));
+
+      setMessage('Login exitoso.');
+      setError('');
+      navigate('/home');
     } catch (err) {
-      setError('Credenciales inválidas. Intenta nuevamente.');
+      console.error('Error al iniciar sesión:', err);
+      const errorMessage =
+        err instanceof Error && err.message
+          ? err.message
+          : 'Error desconocido al iniciar sesión. Intenta nuevamente.';
+      setError(errorMessage);
       setMessage('');
     }
   };
@@ -34,7 +43,9 @@ const LoginForm = () => {
             <h3 className="card-title text-center">Login</h3>
             <form onSubmit={handleLogin}>
               <div className="mb-3">
-                <label htmlFor="email" className="form-label">Correo Electrónico</label>
+                <label htmlFor="email" className="form-label">
+                  Correo Electrónico
+                </label>
                 <input
                   type="email"
                   className="form-control"
@@ -45,7 +56,9 @@ const LoginForm = () => {
                 />
               </div>
               <div className="mb-3">
-                <label htmlFor="contrasena" className="form-label">Contraseña</label>
+                <label htmlFor="contrasena" className="form-label">
+                  Contraseña
+                </label>
                 <input
                   type="password"
                   className="form-control"
@@ -57,10 +70,14 @@ const LoginForm = () => {
               </div>
               {error && <p className="text-danger">{error}</p>}
               {message && <p className="text-success">{message}</p>}
-              <button type="submit" className="btn btn-primary w-100">Iniciar Sesión</button>
+              <button type="submit" className="btn btn-primary w-100">
+                Iniciar Sesión
+              </button>
             </form>
             <div className="text-center mt-3">
-              <p>¿No tienes una cuenta? <Link to="/register">Regístrate aquí</Link></p>
+              <p>
+                ¿No tienes una cuenta? <Link to="/register">Regístrate aquí</Link>
+              </p>
             </div>
           </div>
         </div>

@@ -22,8 +22,9 @@ const RegisterForm = () => {
       setError('');
 
       setTimeout(() => navigate('/'), 2000);
-    } catch (err) {
-      setError('Error al registrar. Verifica los datos ingresados.');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Error al registrar. Verifica los datos ingresados.';
+      setError(errorMessage);
       setMessage('');
     }
   };
@@ -83,4 +84,5 @@ const RegisterForm = () => {
 };
 
 export default RegisterForm;
+
 
