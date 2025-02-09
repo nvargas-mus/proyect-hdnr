@@ -23,7 +23,7 @@ const LoginForm = () => {
 
       setMessage('Login exitoso.');
       setError('');
-      navigate('/crear-solicitud');
+      navigate('/home');
     } catch (err) {
       console.error('Error al iniciar sesión:', err);
       const errorMessage =

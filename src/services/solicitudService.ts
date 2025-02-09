@@ -106,3 +106,11 @@ export const crearSolicitudMateriales = async (data: {
   const response = await api.post('/solicitud_materiales', data);
   return response.data;
 };
+
+export const getSolicitudesPorUsuario = async (usuario_id: number, include?: string) => {
+  const response = await api.get(`/solicitudes/por-usuario/${usuario_id}`, {
+    params: { include }
+  });
+  return response.data;
+};
+

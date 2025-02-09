@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   crearSolicitud,
   getClientesAsociados,
@@ -21,6 +22,7 @@ import SolicitudCompletionForm from './SolicitudCompletionForm';
 const SolicitudForm = () => {
   const [step, setStep] = useState(1);
   const [solicitudId, setSolicitudId] = useState<number | null>(null);
+  const navigate = useNavigate();
 
   const [formData, setFormData] = useState<{
     usuario_id: number;
@@ -29,7 +31,7 @@ const SolicitudForm = () => {
     hora_servicio_solicitada: string;
     descripcion: string;
     requiere_transporte: boolean;
-    direccion_id: number | null; 
+    direccion_id: number | null;
     contacto_cliente_id: number;
     declaracion_id: number;
     generador_igual_cliente: boolean;
@@ -41,7 +43,7 @@ const SolicitudForm = () => {
     hora_servicio_solicitada: '',
     descripcion: '',
     requiere_transporte: false,
-    direccion_id: null,   
+    direccion_id: null,
     contacto_cliente_id: 0,
     declaracion_id: 0,
     generador_igual_cliente: true,
@@ -142,10 +144,14 @@ const SolicitudForm = () => {
       };
       fetchDetails();
     }
-  }, [formData.codigo_cliente_kunnr]);
+  }, [
+    formData.codigo_cliente_kunnr,
+    newDireccion,
+    newContacto,
+  ]);
 
   useEffect(() => {
-    if (formData.generador_igual_cliente === false) {
+    if (!formData.generador_igual_cliente) {
       const fetchGeneradores = async () => {
         try {
           const generadoresData = await getGeneradores();
@@ -272,6 +278,7 @@ const SolicitudForm = () => {
           <div className="col-md-8">
             <div className="card p-4">
               <h3 className="card-title text-center">Crear Solicitud de Servicio</h3>
+
               <form onSubmit={handleSubmit}>
                 {/* Selección de cliente */}
                 <div className="mb-3">
@@ -482,7 +489,6 @@ const SolicitudForm = () => {
                     <label htmlFor="generadorNo">No</label>
                   </div>
                 </div>
-
                 {!formData.generador_igual_cliente && (
                   <div className="mb-3">
                     <label htmlFor="generador_id" className="form-label">
@@ -529,7 +535,18 @@ const SolicitudForm = () => {
         </div>
       )}
 
-      {/* Segundo formulario: Completar Solicitud */}
+      {step === 1 && (
+        <div className="d-flex justify-content-start mt-3">
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => navigate('/home')}
+          >
+            Volver
+          </button>
+        </div>
+      )}
+
       {step === 2 && solicitudId && (
         <SolicitudCompletionForm
           solicitudId={solicitudId}
@@ -760,3 +777,4 @@ const SolicitudForm = () => {
 };
 
 export default SolicitudForm;
+
