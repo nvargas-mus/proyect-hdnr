@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { loginUser } from '../services/authService';
 import { Link, useNavigate } from 'react-router-dom';
+import '../styles/Login.css';
 
 const LoginForm = () => {
   const [email, setEmail] = useState('');
@@ -70,7 +71,10 @@ const LoginForm = () => {
               </div>
               {error && <p className="text-danger">{error}</p>}
               {message && <p className="text-success">{message}</p>}
-              <button type="submit" className="btn btn-primary w-100">
+              <button
+                type="submit"
+                className="btn btn-primary w-100 login-button"
+              >
                 Iniciar Sesión
               </button>
             </form>
@@ -87,5 +91,6 @@ const LoginForm = () => {
 };
 
 export default LoginForm;
+
 
 

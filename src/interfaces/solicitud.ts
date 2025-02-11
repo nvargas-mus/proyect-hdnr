@@ -51,3 +51,18 @@ export interface Cliente {
     descripcion: string;
   }
   
+  export interface SolicitudFormData {
+    usuario_id: number;
+    codigo_cliente_kunnr: number;
+    clienteDisplay: string;
+    fecha_servicio_solicitada: string;
+    hora_servicio_solicitada: string;
+    descripcion: string;
+    requiere_transporte: boolean;
+    direccion_id: number | null;
+    contacto_cliente_id: number;
+    declaracion_id: number;
+    generador_igual_cliente: boolean;
+    generador_id: number;
+  }
+  

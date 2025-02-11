@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getSolicitudesPorUsuario } from '../services/solicitudService';
+import '../styles/Home.css'; 
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
@@ -15,11 +16,7 @@ const HomePage: React.FC = () => {
 
   const [page, setPage] = useState(1);
   const itemsPerPage = 10;
-
   const usuario_id = Number(localStorage.getItem('usuario_id'));
-
-  const itemRef = useRef<HTMLDivElement>(null);
-  const [containerHeight, setContainerHeight] = useState<number>(400);
 
   useEffect(() => {
     const fetchSolicitudes = async () => {
@@ -39,14 +36,6 @@ const HomePage: React.FC = () => {
     }
   }, [usuario_id]);
 
-  useEffect(() => {
-    if (itemRef.current) {
-      const itemHeight = itemRef.current.clientHeight;
-      const newHeight = itemHeight * 10; 
-      setContainerHeight(newHeight);
-    }
-  }, [solicitudes]);
-
   const totalSolicitudes = solicitudes.length;
   const totalPages = Math.ceil(totalSolicitudes / itemsPerPage);
 
@@ -55,15 +44,11 @@ const HomePage: React.FC = () => {
   const paginatedSolicitudes = solicitudes.slice(startIndex, endIndex);
 
   const handlePreviousPage = () => {
-    if (page > 1) {
-      setPage(page - 1);
-    }
+    if (page > 1) setPage(page - 1);
   };
 
   const handleNextPage = () => {
-    if (page < totalPages) {
-      setPage(page + 1);
-    }
+    if (page < totalPages) setPage(page + 1);
   };
 
   const handleCrearSolicitud = () => {
@@ -99,36 +84,35 @@ const HomePage: React.FC = () => {
           </div>
         </div>
       ) : (
-        <div className="card p-4 mb-4">
-          <h3 className="card-title text-center">Mis Solicitudes</h3>
+        <div className="card mb-4">
+          <div className="card-header text-center">
+            <h3 className="m-0">Mis Solicitudes</h3>
+          </div>
 
           {totalSolicitudes === 0 ? (
-            <p className="text-center">No hay solicitudes registradas.</p>
+            <div className="card-body">
+              <p className="text-center">No hay solicitudes registradas.</p>
+            </div>
           ) : (
             <>
-              <div 
-                className="list-group" 
-                style={{ minHeight: '400px', maxHeight: `${containerHeight}px`, overflowY: 'auto' }} 
-              >
-                {paginatedSolicitudes.map((solicitud, index) => (
-                  <div
+              <ul className="list-group list-group-flush solicitudes-list">
+                {paginatedSolicitudes.map((solicitud) => (
+                  <li
                     key={solicitud.solicitud_id}
-                    ref={index === 0 ? itemRef : null} 
                     className="list-group-item d-flex justify-content-between align-items-center"
                   >
                     <div>
-                      <strong>ID:</strong> {solicitud.solicitud_id} <br />
+                      <strong>ID:</strong> {solicitud.solicitud_id}
+                      <br />
                       <strong>Descripción:</strong> {solicitud.descripcion}
                     </div>
-
-                    <div className="d-flex">
+                    <div>
                       <button
-                        className="btn btn-outline-primary me-2"
+                        className="btn home-ver-detalles me-2"
                         onClick={() => handleVerDetalles(solicitud)}
                       >
                         Ver Detalles
                       </button>
-
                       <button
                         className="btn btn-success"
                         onClick={() => handleVerEstado(solicitud)}
@@ -136,39 +120,44 @@ const HomePage: React.FC = () => {
                         Ver Estado
                       </button>
                     </div>
-                  </div>
+                  </li>
                 ))}
-              </div>
+              </ul>
 
-              <div className="d-flex justify-content-center align-items-center mt-3">
-                <button
-                  className="btn btn-secondary me-3"
-                  onClick={handlePreviousPage}
-                  disabled={page === 1}
-                >
-                  Anterior
-                </button>
-                <span>
-                  Página {page} de {totalPages}
-                </span>
-                <button
-                  className="btn btn-secondary ms-3"
-                  onClick={handleNextPage}
-                  disabled={page === totalPages}
-                >
-                  Siguiente
-                </button>
+              <div className="card-footer">
+                <div className="d-flex justify-content-center align-items-center">
+                  <button
+                    className="btn btn-secondary me-3"
+                    onClick={handlePreviousPage}
+                    disabled={page === 1}
+                  >
+                    Anterior
+                  </button>
+                  <span>
+                    Página {page} de {totalPages}
+                  </span>
+                  <button
+                    className="btn btn-secondary ms-3"
+                    onClick={handleNextPage}
+                    disabled={page === totalPages}
+                  >
+                    Siguiente
+                  </button>
+                </div>
               </div>
             </>
           )}
-
-          <div className="d-flex justify-content-center mt-3">
-            <button className="btn btn-primary" onClick={handleCrearSolicitud}>
-              Crear Solicitud
-            </button>
-          </div>
         </div>
       )}
+
+      <div className="d-flex justify-content-center mt-5">
+        <button
+          className="btn home-create-solicitud"
+          onClick={handleCrearSolicitud}
+        >
+          Crear Solicitud
+        </button>
+      </div>
 
       {/* Modal de Detalles */}
       {showDetallesModal && selectedSolicitud && (
@@ -217,7 +206,6 @@ const HomePage: React.FC = () => {
               </div>
             </div>
           </div>
-          {/* Fondo del modal */}
           <div className="modal-backdrop fade show"></div>
         </>
       )}
@@ -258,7 +246,6 @@ const HomePage: React.FC = () => {
               </div>
             </div>
           </div>
-          {/* Fondo del modal */}
           <div className="modal-backdrop fade show"></div>
         </>
       )}
@@ -267,8 +254,3 @@ const HomePage: React.FC = () => {
 };
 
 export default HomePage;
-
-
-
-
-
