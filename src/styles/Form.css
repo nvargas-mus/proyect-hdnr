@@ -1,0 +1,38 @@
+
+.form-button-primary {
+    background-color: #243c6c !important; 
+    border-color: #243c6c !important;
+    color: #ffffff !important;
+  }
+
+  .form-button-outline {
+    background-color: #ffffff !important; 
+    border: 2px solid #243c6c !important; 
+    color: #243c6c !important;
+  }
+  
+  .modal-save-button {
+    background-color: #243c6c !important;
+    border-color: #243c6c !important;
+    color: #fff !important;
+  }
+  
+  .card.p-4 {
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  }
+
+input[type="radio"]:checked {
+    accent-color: #243c6c !important;
+  }
+
+
+  .btn-volver {
+    background-color: #049c3c !important;
+    border-color: #049c3c !important;
+    color: #ffffff !important;
+    padding-left: 20px;
+    padding-right: 20px;
+    min-width: 150px !important;
+    display: inline-block !important;
+  }
+  

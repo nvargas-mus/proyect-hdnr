@@ -8,15 +8,18 @@ import {
   getCapacidadesTransporte,
   crearSolicitudMateriales
 } from '../services/solicitudService';
+import '../styles/Form.css';
 
 interface SolicitudCompletionFormProps {
   solicitudId: number;
   requiereTransporte: boolean;
+  onBack: () => void; 
 }
 
 const SolicitudCompletionForm: React.FC<SolicitudCompletionFormProps> = ({
   solicitudId,
-  requiereTransporte
+  requiereTransporte,
+  onBack
 }) => {
   const navigate = useNavigate();
 
@@ -138,6 +141,7 @@ const SolicitudCompletionForm: React.FC<SolicitudCompletionFormProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+
       const atLeastOne = residuosSeleccionados.some(
         (row) => row.codigo_material_matnr_residuo
       );
@@ -171,7 +175,7 @@ const SolicitudCompletionForm: React.FC<SolicitudCompletionFormProps> = ({
 
   return (
     <div className="container mt-5">
-      {/* Card principal */}
+
       <div className="row justify-content-center">
         <div className="col-md-8">
           <div className="card p-4">
@@ -180,7 +184,7 @@ const SolicitudCompletionForm: React.FC<SolicitudCompletionFormProps> = ({
             </h3>
 
             <form onSubmit={handleSubmit}>
-              {/* Bloques de Residuos */}
+              {/* Sección de Residuos */}
               <h4>Información de Residuos</h4>
 
               {residuosSeleccionados.map((row, index) => (
@@ -194,13 +198,13 @@ const SolicitudCompletionForm: React.FC<SolicitudCompletionFormProps> = ({
                     marginBottom: '10px'
                   }}
                 >
-                  {/* Select para el residuo */}
+
                   <div className="mb-3">
-                    <label className="form-label">
-                      Código Material Residuo:
-                    </label>
-                    <select
-                      className="form-select"
+                    <label className="form-label">Código Material Residuo:</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      list={`residuosList-${index}`}
                       value={row.codigo_material_matnr_residuo}
                       onChange={(e) =>
                         handleResiduosChange(
@@ -209,22 +213,22 @@ const SolicitudCompletionForm: React.FC<SolicitudCompletionFormProps> = ({
                           e.target.value
                         )
                       }
+                      placeholder="Escribe para buscar..."
                       required
-                    >
-                      <option value="">Seleccione un residuo</option>
+                    />
+                    <datalist id={`residuosList-${index}`}>
                       {residuos.map((r, i) => (
-                        <option key={i} value={r.material_matnr}>
-                          {r.material_matnr} - {r.nombre_material_maktg}
-                        </option>
+                        <option
+                          key={i}
+                          value={`${r.material_matnr} - ${r.nombre_material_maktg}`}
+                        />
                       ))}
-                    </select>
+                    </datalist>
                   </div>
 
                   {/* Cantidad declarada */}
                   <div className="mb-3">
-                    <label className="form-label">
-                      Cantidad Declarada:
-                    </label>
+                    <label className="form-label">Cantidad Declarada:</label>
                     <input
                       type="number"
                       step="0.01"
@@ -239,9 +243,7 @@ const SolicitudCompletionForm: React.FC<SolicitudCompletionFormProps> = ({
 
                   {/* Unidad de medida de residuo */}
                   <div className="mb-3">
-                    <label className="form-label">
-                      Unidad Medida Residuo:
-                    </label>
+                    <label className="form-label">Unidad Medida Residuo:</label>
                     <select
                       className="form-select"
                       value={row.unidad_medida_id_residuo}
@@ -259,7 +261,6 @@ const SolicitudCompletionForm: React.FC<SolicitudCompletionFormProps> = ({
                     </select>
                   </div>
 
-                  {/* Botón para eliminar esta fila */}
                   {residuosSeleccionados.length > 1 && (
                     <button
                       type="button"
@@ -272,24 +273,19 @@ const SolicitudCompletionForm: React.FC<SolicitudCompletionFormProps> = ({
                 </div>
               ))}
 
-              {/* Botón "Agregar otro residuo" */}
               <button
                 type="button"
-                className="btn btn-secondary mb-4"
+                className="btn form-button-outline mb-4"
                 onClick={handleAddResiduosRow}
               >
                 + Agregar otro residuo
               </button>
 
-              {/* Sección de Servicio o Transporte */}
               {requiereTransporte ? (
                 <>
                   <h4>Información de Servicio</h4>
                   <div className="mb-3">
-                    <label
-                      htmlFor="codigo_material_matnr_servicio"
-                      className="form-label"
-                    >
+                    <label htmlFor="codigo_material_matnr_servicio" className="form-label">
                       Código Material Servicio:
                     </label>
                     <select
@@ -308,10 +304,7 @@ const SolicitudCompletionForm: React.FC<SolicitudCompletionFormProps> = ({
                     </select>
                   </div>
                   <div className="mb-3">
-                    <label
-                      htmlFor="cantidad_servicio"
-                      className="form-label"
-                    >
+                    <label htmlFor="cantidad_servicio" className="form-label">
                       Cantidad Servicio:
                     </label>
                     <input
@@ -325,10 +318,7 @@ const SolicitudCompletionForm: React.FC<SolicitudCompletionFormProps> = ({
                     />
                   </div>
                   <div className="mb-3">
-                    <label
-                      htmlFor="unidad_venta_kmein"
-                      className="form-label"
-                    >
+                    <label htmlFor="unidad_venta_kmein" className="form-label">
                       Unidad de Venta (automático):
                     </label>
                     <input
@@ -356,10 +346,7 @@ const SolicitudCompletionForm: React.FC<SolicitudCompletionFormProps> = ({
                     >
                       <option value="">Seleccione</option>
                       {tiposTransporte.map((tipo) => (
-                        <option
-                          key={tipo.tipo_transporte_id}
-                          value={tipo.tipo_transporte_id}
-                        >
+                        <option key={tipo.tipo_transporte_id} value={tipo.tipo_transporte_id}>
                           {tipo.nombre_tipo_transporte}
                         </option>
                       ))}
@@ -378,20 +365,14 @@ const SolicitudCompletionForm: React.FC<SolicitudCompletionFormProps> = ({
                     >
                       <option value="">Seleccione</option>
                       {capacidades.map((cap) => (
-                        <option
-                          key={cap.capacidad_id}
-                          value={cap.capacidad_id}
-                        >
+                        <option key={cap.capacidad_id} value={cap.capacidad_id}>
                           {cap.valor_capacidad} (UM: {cap.unidad_medida_id})
                         </option>
                       ))}
                     </select>
                   </div>
                   <div className="mb-3">
-                    <label
-                      htmlFor="unidad_medida_id_transport"
-                      className="form-label"
-                    >
+                    <label htmlFor="unidad_medida_id_transport" className="form-label">
                       Unidad Medida Transporte (automático):
                     </label>
                     <input
@@ -405,8 +386,10 @@ const SolicitudCompletionForm: React.FC<SolicitudCompletionFormProps> = ({
                 </>
               )}
 
-              {/* Botón para enviar */}
-              <button type="submit" className="btn btn-primary w-100">
+              <button
+                type="submit"
+                className="btn btn-primary w-100 form-button-primary"
+              >
                 Completar Solicitud
               </button>
             </form>
@@ -414,12 +397,11 @@ const SolicitudCompletionForm: React.FC<SolicitudCompletionFormProps> = ({
         </div>
       </div>
 
-      {/* Botón para volver */}
-      <div className="d-flex justify-content-start mt-3">
+      <div className="col-12 d-flex justify-content-start mt-3">
         <button
           type="button"
-          className="btn btn-secondary"
-          onClick={() => navigate(-1)}
+          className="btn btn-secondary btn-volver"
+          onClick={onBack}
         >
           Volver
         </button>
@@ -427,44 +409,43 @@ const SolicitudCompletionForm: React.FC<SolicitudCompletionFormProps> = ({
 
       {/* Modal de Éxito */}
       {showSuccessModal && (
-  <>
-    <div className="modal show d-block" tabIndex={-1}>
-      <div className="modal-dialog modal-dialog-centered">
-
-        <div className="modal-content border-0">
-
-          <div className="modal-header border-bottom-0">
-            <h5 className="modal-title">Solicitud Creada con Éxito</h5>
-            <button
-              type="button"
-              className="btn-close"
-              onClick={handleSuccessOK}
-            ></button>
+        <>
+          <div className="modal show d-block" tabIndex={-1}>
+            <div className="modal-dialog modal-dialog-centered">
+              <div className="modal-content border-0">
+                <div className="modal-header border-bottom-0">
+                  <h5 className="modal-title">Solicitud Creada con Éxito</h5>
+                  <button
+                    type="button"
+                    className="btn-close"
+                    onClick={handleSuccessOK}
+                  ></button>
+                </div>
+                <div className="modal-body border-top-0">
+                  <p>La solicitud ha sido completada exitosamente.</p>
+                </div>
+                <div className="modal-footer border-top-0">
+                  <button
+                    type="button"
+                    className="btn modal-save-button"
+                    onClick={handleSuccessOK}
+                  >
+                    Aceptar
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
-
-          <div className="modal-body border-top-0">
-            <p>La solicitud ha sido completada exitosamente.</p>
-          </div>
-
-          <div className="modal-footer border-top-0">
-            <button
-              type="button"
-              className="btn btn-primary"
-              onClick={handleSuccessOK}
-            >
-              Aceptar
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div className="modal-backdrop fade show"></div>
-  </>
-)}
+          <div className="modal-backdrop fade show"></div>
+        </>
+      )}
     </div>
   );
 };
+
 export default SolicitudCompletionForm;
+
+
 
 
 

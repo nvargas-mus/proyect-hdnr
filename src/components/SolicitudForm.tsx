@@ -18,6 +18,7 @@ import {
   Generador,
 } from '../interfaces/solicitud';
 import SolicitudCompletionForm from './SolicitudCompletionForm';
+import '../styles/Form.css';
 
 const SolicitudForm = () => {
   const [step, setStep] = useState(1);
@@ -27,6 +28,7 @@ const SolicitudForm = () => {
   const [formData, setFormData] = useState<{
     usuario_id: number;
     codigo_cliente_kunnr: number;
+    clienteDisplay: string;
     fecha_servicio_solicitada: string;
     hora_servicio_solicitada: string;
     descripcion: string;
@@ -39,6 +41,7 @@ const SolicitudForm = () => {
   }>({
     usuario_id: Number(localStorage.getItem('usuario_id')),
     codigo_cliente_kunnr: 0,
+    clienteDisplay: '',
     fecha_servicio_solicitada: '',
     hora_servicio_solicitada: '',
     descripcion: '',
@@ -49,6 +52,7 @@ const SolicitudForm = () => {
     generador_igual_cliente: true,
     generador_id: 0,
   });
+  
 
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [direcciones, setDirecciones] = useState<Direccion[]>([]);
@@ -130,25 +134,21 @@ const SolicitudForm = () => {
           }));
           setContactos(mappedContactos);
 
-          setNewDireccion({
-            ...newDireccion,
+          setNewDireccion((prev) => ({
+            ...prev,
             codigo_cliente_kunnr: formData.codigo_cliente_kunnr,
-          });
-          setNewContacto({
-            ...newContacto,
+          }));
+          setNewContacto((prev) => ({
+            ...prev,
             codigo_cliente_kunnr: formData.codigo_cliente_kunnr,
-          });
+          }));
         } catch (err) {
           console.error('Error al cargar direcciones o contactos:', err);
         }
       };
       fetchDetails();
     }
-  }, [
-    formData.codigo_cliente_kunnr,
-    newDireccion,
-    newContacto,
-  ]);
+  }, [formData.codigo_cliente_kunnr]);
 
   useEffect(() => {
     if (!formData.generador_igual_cliente) {
@@ -169,11 +169,13 @@ const SolicitudForm = () => {
   ) => {
     const { name, value, type } = e.target;
     let newValue: any = value;
+
     if (type === 'checkbox') {
       newValue = (e.target as HTMLInputElement).checked;
     } else if (type === 'radio' && name === 'generador_igual_cliente') {
       newValue = value === 'true';
     }
+
     setFormData((prev) => ({
       ...prev,
       [name]: newValue,
@@ -226,6 +228,7 @@ const SolicitudForm = () => {
         contacto_terreno_id: direccion.contacto_terreno_id,
       }));
       setDirecciones(mappedDirecciones);
+
       setFormData((prev) => ({
         ...prev,
         direccion_id: data.id,
@@ -273,6 +276,7 @@ const SolicitudForm = () => {
 
   return (
     <div className="container mt-5">
+      {/* Paso 1: Crear Solicitud */}
       {step === 1 && (
         <div className="row justify-content-center">
           <div className="col-md-8">
@@ -285,27 +289,36 @@ const SolicitudForm = () => {
                   <label htmlFor="codigo_cliente_kunnr" className="form-label">
                     Cliente
                   </label>
-                  <select
-                    className="form-select"
+                  <input
+                    type="text"
+                    className="form-control"
+                    list="clientesList"
                     id="codigo_cliente_kunnr"
                     name="codigo_cliente_kunnr"
-                    value={formData.codigo_cliente_kunnr}
-                    onChange={(e) =>
+                    placeholder="Escribe para buscar..."
+                    value={formData.clienteDisplay}
+                    onChange={(e) => {
+                      const inputValue = e.target.value;
+                      const parts = inputValue.split(' - ');
+                      const code = parts[0] ? Number(parts[0]) : 0;
                       setFormData((prev) => ({
                         ...prev,
-                        codigo_cliente_kunnr: Number(e.target.value),
-                      }))
-                    }
+                        clienteDisplay: inputValue,
+                        codigo_cliente_kunnr: code,
+                      }));
+                    }}
                     required
-                  >
-                    <option value={0}>Seleccione cliente</option>
+                  />
+                  <datalist id="clientesList">
                     {clientes.map((cliente) => (
-                      <option key={cliente.codigo} value={cliente.codigo}>
-                        {cliente.codigo} - {cliente.nombre} - {cliente.sucursal}
-                      </option>
+                      <option
+                        key={cliente.codigo}
+                        value={`${cliente.codigo} - ${cliente.nombre} - ${cliente.sucursal}`}
+                      />
                     ))}
-                  </select>
+                  </datalist>
                 </div>
+
 
                 {/* Fecha de servicio */}
                 <div className="mb-3">
@@ -348,9 +361,9 @@ const SolicitudForm = () => {
                     className="form-control"
                     id="descripcion"
                     name="descripcion"
+                    rows={3}
                     value={formData.descripcion}
                     onChange={handleChange}
-                    rows={3}
                     required
                   ></textarea>
                 </div>
@@ -400,7 +413,7 @@ const SolicitudForm = () => {
                       </select>
                       <button
                         type="button"
-                        className="btn btn-outline-secondary"
+                        className="btn form-button-outline"
                         onClick={() => setShowAddDireccionModal(true)}
                       >
                         Agregar Dirección
@@ -431,7 +444,7 @@ const SolicitudForm = () => {
                     </select>
                     <button
                       type="button"
-                      className="btn btn-outline-secondary"
+                      className="btn form-button-outline"
                       onClick={() => setShowAddContactoModal(true)}
                     >
                       Agregar Contacto
@@ -475,7 +488,7 @@ const SolicitudForm = () => {
                       checked={formData.generador_igual_cliente === true}
                       onChange={handleChange}
                     />
-                    <label htmlFor="generadorSi" className="me-2">
+                    <label htmlFor="generadorSi" className="me-3">
                       Sí
                     </label>
                     <input
@@ -512,7 +525,7 @@ const SolicitudForm = () => {
                       </select>
                       <button
                         type="button"
-                        className="btn btn-outline-secondary"
+                        className="btn form-button-outline"
                         onClick={() =>
                           alert('Funcionalidad para agregar generador pendiente de implementar.')
                         }
@@ -523,7 +536,10 @@ const SolicitudForm = () => {
                   </div>
                 )}
 
-                <button type="submit" className="btn btn-primary w-100">
+                <button
+                  type="submit"
+                  className="btn btn-primary w-100 form-button-primary"
+                >
                   Crear Solicitud
                 </button>
 
@@ -532,25 +548,26 @@ const SolicitudForm = () => {
               </form>
             </div>
           </div>
+
+          <div className="col-12 d-flex justify-content-start mt-3">
+            <button
+              type="button"
+              className="btn btn-secondary btn-volver"
+              onClick={() => navigate('/home')}
+            >
+              Volver
+            </button>
+          </div>
+
         </div>
       )}
 
-      {step === 1 && (
-        <div className="d-flex justify-content-start mt-3">
-          <button
-            type="button"
-            className="btn btn-secondary"
-            onClick={() => navigate('/home')}
-          >
-            Volver
-          </button>
-        </div>
-      )}
-
+      {/* Paso 2: completar la solicitud (otro componente) */}
       {step === 2 && solicitudId && (
         <SolicitudCompletionForm
           solicitudId={solicitudId}
           requiereTransporte={formData.requiere_transporte}
+          onBack={() => setStep(1)}
         />
       )}
 
@@ -663,7 +680,7 @@ const SolicitudForm = () => {
                         </select>
                         <button
                           type="button"
-                          className="btn btn-outline-secondary"
+                          className="btn form-button-outline"
                           onClick={() => setShowAddContactoModal(true)}
                         >
                           Agregar Contacto
@@ -672,7 +689,7 @@ const SolicitudForm = () => {
                     </div>
                   </div>
                   <div className="modal-footer">
-                    <button type="submit" className="btn btn-primary">
+                    <button type="submit" className="btn btn-primary modal-save-button">
                       Guardar Dirección
                     </button>
                   </div>
@@ -762,7 +779,8 @@ const SolicitudForm = () => {
                     </div>
                   </div>
                   <div className="modal-footer">
-                    <button type="submit" className="btn btn-primary">
+                    {/* Botón principal en el modal */}
+                    <button type="submit" className="btn btn-primary modal-save-button">
                       Guardar Contacto
                     </button>
                   </div>
@@ -777,4 +795,5 @@ const SolicitudForm = () => {
 };
 
 export default SolicitudForm;
+
 

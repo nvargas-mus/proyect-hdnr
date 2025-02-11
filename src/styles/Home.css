@@ -1,0 +1,19 @@
+
+.home-create-solicitud {
+    background-color: #243c6c !important;
+    border-color: #243c6c !important;
+    color: #ffffff !important;
+  }
+  
+  .home-ver-detalles {
+    background-color: #ffffff !important;
+    border: 2px solid #243c6c !important;
+    color: #243c6c !important;
+  }
+  
+  .solicitudes-list {
+    max-height: 800px;
+    overflow-y: auto;
+  }
+  
+  
