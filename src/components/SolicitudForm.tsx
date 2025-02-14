@@ -20,6 +20,8 @@ import {
 import SolicitudCompletionForm from './SolicitudCompletionForm';
 import '../styles/Form.css';
 
+const LOCAL_STORAGE_KEY = 'solicitudFormData';
+
 const SolicitudForm = () => {
   const [step, setStep] = useState(1);
   const [solicitudId, setSolicitudId] = useState<number | null>(null);
@@ -52,7 +54,6 @@ const SolicitudForm = () => {
     generador_igual_cliente: true,
     generador_id: 0,
   });
-  
 
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [direcciones, setDirecciones] = useState<Direccion[]>([]);
@@ -83,6 +84,17 @@ const SolicitudForm = () => {
     email: '',
     referencia_id: 0,
   });
+
+  useEffect(() => {
+    const savedData = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (savedData) {
+      setFormData(JSON.parse(savedData));
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(formData));
+  }, [formData]);
 
   useEffect(() => {
     const fetchInitialData = async () => {
@@ -169,13 +181,11 @@ const SolicitudForm = () => {
   ) => {
     const { name, value, type } = e.target;
     let newValue: any = value;
-
     if (type === 'checkbox') {
       newValue = (e.target as HTMLInputElement).checked;
     } else if (type === 'radio' && name === 'generador_igual_cliente') {
       newValue = value === 'true';
     }
-
     setFormData((prev) => ({
       ...prev,
       [name]: newValue,
@@ -186,16 +196,15 @@ const SolicitudForm = () => {
     e.preventDefault();
     try {
       const payload = { ...formData };
-
       if (!payload.requiere_transporte) {
         payload.direccion_id = null;
       }
-
       const data = await crearSolicitud(payload);
       setMessage('Solicitud creada exitosamente. Por favor, complete la información adicional.');
       setError('');
       setSolicitudId(data.solicitud_id);
       setStep(2);
+      localStorage.removeItem(LOCAL_STORAGE_KEY);
     } catch (err) {
       console.error('Error al crear la solicitud:', err);
       setError('Error al crear la solicitud. Verifica los datos e intenta nuevamente.');
@@ -228,7 +237,6 @@ const SolicitudForm = () => {
         contacto_terreno_id: direccion.contacto_terreno_id,
       }));
       setDirecciones(mappedDirecciones);
-
       setFormData((prev) => ({
         ...prev,
         direccion_id: data.id,
@@ -276,7 +284,6 @@ const SolicitudForm = () => {
 
   return (
     <div className="container mt-5">
-      {/* Paso 1: Crear Solicitud */}
       {step === 1 && (
         <div className="row justify-content-center">
           <div className="col-md-8">
@@ -318,7 +325,6 @@ const SolicitudForm = () => {
                     ))}
                   </datalist>
                 </div>
-
 
                 {/* Fecha de servicio */}
                 <div className="mb-3">
@@ -558,11 +564,9 @@ const SolicitudForm = () => {
               Volver
             </button>
           </div>
-
         </div>
       )}
 
-      {/* Paso 2: completar la solicitud (otro componente) */}
       {step === 2 && solicitudId && (
         <SolicitudCompletionForm
           solicitudId={solicitudId}
@@ -717,7 +721,6 @@ const SolicitudForm = () => {
                     ></button>
                   </div>
                   <div className="modal-body">
-                    {/* Campos del nuevo contacto */}
                     <div className="mb-3">
                       <label htmlFor="nombre" className="form-label">
                         Nombre
@@ -779,7 +782,6 @@ const SolicitudForm = () => {
                     </div>
                   </div>
                   <div className="modal-footer">
-                    {/* Botón principal en el modal */}
                     <button type="submit" className="btn btn-primary modal-save-button">
                       Guardar Contacto
                     </button>
@@ -795,5 +797,6 @@ const SolicitudForm = () => {
 };
 
 export default SolicitudForm;
+
 
 
