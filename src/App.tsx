@@ -2,13 +2,14 @@ import { Routes, Route } from 'react-router-dom';
 import LoginForm from './components/LoginForm';
 import RegisterForm from './components/RegisterForm';
 import SolicitudForm from './components/SolicitudForm';
+import HomePage from './components/HomePage';
 import NotFoundPage from './components/NotFoundPage';
 import Navbar from './components/NavBar';
-import HomePage from './components/HomePage';
+import { SolicitudProvider } from './context/SolicitudContext';
 
 const App = () => {
   return (
-    <>
+    <SolicitudProvider>
       <Navbar />
       <div className="container mt-4">
         <Routes>
@@ -19,11 +20,13 @@ const App = () => {
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </div>
-    </>
+    </SolicitudProvider>
   );
 };
 
 export default App;
+
+
 
 
 
