@@ -83,22 +83,14 @@ const SolicitudCompletionForm: React.FC<SolicitudCompletionFormProps> = ({
     const selectedCode = e.target.value;
     const foundServicio = servicios.find((s) => String(s.material_matnr) === selectedCode);
     const unidadVenta = foundServicio ? foundServicio.unidad_venta_kmein : '';
-    setFormData({
-      ...formData,
-      codigo_material_matnr_servicio: selectedCode,
-      unidad_venta_kmein: unidadVenta,
-    });
+    setFormData({ ...formData, codigo_material_matnr_servicio: selectedCode, unidad_venta_kmein: unidadVenta });
   };
 
   const handleCapacidadChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedCapacidadId = e.target.value;
     const foundCapacidad = capacidades.find((c) => String(c.capacidad_id) === selectedCapacidadId);
     const unidadMedida = foundCapacidad ? foundCapacidad.unidad_medida_id : '';
-    setFormData({
-      ...formData,
-      capacidad_id: selectedCapacidadId,
-      unidad_medida_id_transport: unidadMedida,
-    });
+    setFormData({ ...formData, capacidad_id: selectedCapacidadId, unidad_medida_id_transport: unidadMedida });
   };
 
   const handleResiduosChange = (
@@ -133,19 +125,27 @@ const SolicitudCompletionForm: React.FC<SolicitudCompletionFormProps> = ({
         return;
       }
       for (const row of residuosSeleccionados) {
-        if (!row.codigo_material_matnr_residuo) continue;
+        if (!row.codigo_material_matnr_residuo.trim()) continue;
+        const codeString = row.codigo_material_matnr_residuo.split(' - ')[0].trim();
+        const codigo = Number(codeString);
+        const cantidad = Number(row.cantidad_declarada);
+        const unidad = Number(row.unidad_medida_id_residuo);
+        if (isNaN(codigo) || isNaN(cantidad) || isNaN(unidad)) {
+          alert('Verifica que todos los campos de residuos sean válidos.');
+          return;
+        }
         const dataToSend = {
           solicitud_id: solicitudId,
-          codigo_material_matnr: Number(row.codigo_material_matnr_residuo),
-          cantidad_declarada: Number(row.cantidad_declarada),
-          unidad_medida_id: Number(row.unidad_medida_id_residuo),
+          codigo_material_matnr: codigo,
+          cantidad_declarada: cantidad,
+          unidad_medida_id: unidad,
         };
         await crearSolicitudMateriales(dataToSend);
       }
       setShowSuccessModal(true);
     } catch (err) {
       console.error('Error al completar la solicitud:', err);
-      alert('Error al completar la solicitud. Verifique los datos e intente nuevamente.');
+      alert('Error al completar la solicitud. Verifica los datos e intente nuevamente.');
     }
   };
 
