@@ -3,6 +3,7 @@ import LoginForm from './components/LoginForm';
 import RegisterForm from './components/RegisterForm';
 import SolicitudForm from './components/SolicitudForm';
 import HomePage from './components/HomePage';
+import AdminPage from './components/AdminPage';
 import NotFoundPage from './components/NotFoundPage';
 import Navbar from './components/NavBar';
 import { SolicitudProvider } from './context/SolicitudContext';
@@ -17,6 +18,7 @@ const App = () => {
           <Route path="/register" element={<RegisterForm />} />
           <Route path="/home" element={<HomePage />} />
           <Route path="/crear-solicitud" element={<SolicitudForm />} />
+          <Route path="/admin" element={<AdminPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </div>
@@ -25,6 +27,7 @@ const App = () => {
 };
 
 export default App;
+
 
 
 
