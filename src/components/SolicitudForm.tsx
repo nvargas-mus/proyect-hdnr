@@ -85,6 +85,19 @@ const SolicitudForm = () => {
     referencia_id: 0,
   });
 
+  const generateTimeOptions = () => {
+    const times: string[] = [];
+    for (let hour = 8; hour <= 18; hour++) {
+      for (let min = 0; min < 60; min += 15) {
+        if (hour === 18 && min > 0) break;
+        const hStr = hour.toString().padStart(2, '0');
+        const mStr = min.toString().padStart(2, '0');
+        times.push(`${hStr}:${mStr}`);
+      }
+    }
+    return times;
+  };
+
   useEffect(() => {
     const savedData = localStorage.getItem(LOCAL_STORAGE_KEY);
     if (savedData) {
@@ -100,7 +113,13 @@ const SolicitudForm = () => {
     const fetchInitialData = async () => {
       try {
         const clientesData = await getClientesAsociados();
-        const mappedClientes = clientesData.map((cliente: any) => ({
+        let clientesList: any[] = [];
+        if (Array.isArray(clientesData)) {
+          clientesList = clientesData;
+        } else if (clientesData && typeof clientesData === 'object') {
+          clientesList = clientesData.clientes || clientesData.data || [];
+        }
+        const mappedClientes = clientesList.map((cliente: any) => ({
           codigo: cliente.codigo_cliente_kunnr,
           nombre: cliente.nombre_name1,
           sucursal: cliente.sucursal_name2,
@@ -108,7 +127,13 @@ const SolicitudForm = () => {
         setClientes(mappedClientes);
 
         const declaracionesData = await getDeclaraciones();
-        const mappedDeclaraciones = declaracionesData.map((decl: any) => ({
+        let declaracionesList: any[] = [];
+        if (Array.isArray(declaracionesData)) {
+          declaracionesList = declaracionesData;
+        } else if (declaracionesData && typeof declaracionesData === 'object') {
+          declaracionesList = declaracionesData.declaraciones || declaracionesData.data || [];
+        }
+        const mappedDeclaraciones = declaracionesList.map((decl: any) => ({
           id: decl.declaracion_id,
           descripcion: decl.declaracion_nombre,
         }));
@@ -124,8 +149,23 @@ const SolicitudForm = () => {
     if (formData.codigo_cliente_kunnr && formData.codigo_cliente_kunnr !== 0) {
       const fetchDetails = async () => {
         try {
-          const direccionesData = await getDirecciones();
-          const mappedDirecciones = direccionesData.map((direccion: any) => ({
+          let direccionesResponse: any;
+          try {
+            direccionesResponse = await getDirecciones(formData.codigo_cliente_kunnr);
+          } catch (err: any) {
+            if (err.response && err.response.status === 404) {
+              direccionesResponse = [];
+            } else {
+              throw err;
+            }
+          }
+          let direccionesList: any[] = [];
+          if (Array.isArray(direccionesResponse)) {
+            direccionesList = direccionesResponse;
+          } else if (direccionesResponse && typeof direccionesResponse === 'object') {
+            direccionesList = direccionesResponse.direcciones || direccionesResponse.data || [];
+          }
+          const mappedDirecciones = direccionesList.map((direccion: any) => ({
             id: direccion.direccion_id,
             calle: direccion.calle,
             numero: direccion.numero,
@@ -136,8 +176,23 @@ const SolicitudForm = () => {
           }));
           setDirecciones(mappedDirecciones);
 
-          const contactosData = await getContactos();
-          const mappedContactos = contactosData.map((contacto: any) => ({
+          let contactosResponse: any;
+          try {
+            contactosResponse = await getContactos(formData.codigo_cliente_kunnr);
+          } catch (err: any) {
+            if (err.response && err.response.status === 404) {
+              contactosResponse = [];
+            } else {
+              throw err;
+            }
+          }
+          let contactosList: any[] = [];
+          if (Array.isArray(contactosResponse)) {
+            contactosList = contactosResponse;
+          } else if (contactosResponse && typeof contactosResponse === 'object') {
+            contactosList = contactosResponse.contactos || contactosResponse.data || [];
+          }
+          const mappedContactos = contactosList.map((contacto: any) => ({
             id: contacto.contacto_id,
             nombre: contacto.nombre,
             telefono: contacto.telefono,
@@ -194,6 +249,20 @@ const SolicitudForm = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const fechaServicio = new Date(formData.fecha_servicio_solicitada);
+    const hoy = new Date();
+    if (fechaServicio < hoy) {
+      alert("Advertencia: La fecha de servicio seleccionada está en el pasado.");
+    }
+
+    const [hourStr, minuteStr] = formData.hora_servicio_solicitada.split(':');
+    const hour = parseInt(hourStr, 10);
+    const minute = parseInt(minuteStr, 10);
+    if (hour < 8 || hour > 18 || ![0, 15, 30, 45].includes(minute)) {
+      alert("Advertencia: La hora de servicio debe estar entre 08:00 y 18:00 y los minutos deben ser 00, 15, 30 o 45.");
+    }
+
     try {
       const payload = { ...formData };
       if (!payload.requiere_transporte) {
@@ -226,8 +295,14 @@ const SolicitudForm = () => {
     e.preventDefault();
     try {
       const data = await postDireccion(newDireccion);
-      const direccionesActualizadas = await getDirecciones();
-      const mappedDirecciones = direccionesActualizadas.map((direccion: any) => ({
+      const direccionesActualizadas = await getDirecciones(formData.codigo_cliente_kunnr);
+      let direccionesList: any[] = [];
+      if (Array.isArray(direccionesActualizadas)) {
+        direccionesList = direccionesActualizadas;
+      } else if (direccionesActualizadas && typeof direccionesActualizadas === 'object') {
+        direccionesList = direccionesActualizadas.direcciones || direccionesActualizadas.data || [];
+      }
+      const mappedDirecciones = direccionesList.map((direccion: any) => ({
         id: direccion.direccion_id,
         calle: direccion.calle,
         numero: direccion.numero,
@@ -262,8 +337,14 @@ const SolicitudForm = () => {
     e.preventDefault();
     try {
       const data = await postContacto(newContacto);
-      const contactosActualizados = await getContactos();
-      const mappedContactos = contactosActualizados.map((contacto: any) => ({
+      const contactosActualizados = await getContactos(formData.codigo_cliente_kunnr);
+      let contactosList: any[] = [];
+      if (Array.isArray(contactosActualizados)) {
+        contactosList = contactosActualizados;
+      } else if (contactosActualizados && typeof contactosActualizados === 'object') {
+        contactosList = contactosActualizados.contactos || contactosActualizados.data || [];
+      }
+      const mappedContactos = contactosList.map((contacto: any) => ({
         id: contacto.contacto_id,
         nombre: contacto.nombre,
         telefono: contacto.telefono,
@@ -289,7 +370,6 @@ const SolicitudForm = () => {
           <div className="col-md-8">
             <div className="card p-4">
               <h3 className="card-title text-center">Crear Solicitud de Servicio</h3>
-
               <form onSubmit={handleSubmit}>
                 {/* Selección de cliente */}
                 <div className="mb-3">
@@ -347,15 +427,21 @@ const SolicitudForm = () => {
                   <label htmlFor="hora_servicio_solicitada" className="form-label">
                     Hora de Servicio
                   </label>
-                  <input
-                    type="time"
-                    className="form-control"
+                  <select
+                    className="form-select"
                     id="hora_servicio_solicitada"
                     name="hora_servicio_solicitada"
                     value={formData.hora_servicio_solicitada}
                     onChange={handleChange}
                     required
-                  />
+                  >
+                    <option value="">Seleccione una hora</option>
+                    {generateTimeOptions().map((time, index) => (
+                      <option key={index} value={time}>
+                        {time}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 {/* Descripción */}
@@ -797,6 +883,9 @@ const SolicitudForm = () => {
 };
 
 export default SolicitudForm;
+
+
+
 
 
 
