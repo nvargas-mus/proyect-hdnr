@@ -13,23 +13,37 @@ export const crearSolicitud = async (solicitudData: {
   generador_id: number;
   generador_igual_cliente: boolean;
 }) => {
+  const serviceDate = new Date(solicitudData.fecha_servicio_solicitada);
+  const today = new Date();
+  if (serviceDate < today) {
+    console.warn("Advertencia: La fecha de servicio seleccionada está en el pasado.");
+  }
+  
+  const [hourStr, minuteStr] = solicitudData.hora_servicio_solicitada.split(':');
+  const hour = parseInt(hourStr, 10);
+  const minute = parseInt(minuteStr, 10);
+  if (hour < 8 || hour > 18 || ![0, 15, 30, 45].includes(minute)) {
+    console.warn("Advertencia: La hora de servicio seleccionada no está dentro del rango permitido (08:00-18:00, minutos: 00,15,30,45).");
+  }
+
   const response = await api.post('/solicitudes', solicitudData);
   return response.data;
 };
 
-
-export const getClientesAsociados = async () => {
-  const response = await api.get('/usuarios/clientes/asociados');
+export const getClientesAsociados = async (q: string = '') => {
+  const response = await api.get('/usuarios/clientes/asociados', {
+    params: { limit: 10, offset: 0, q }
+  });
   return response.data;
 };
 
-export const getDirecciones = async () => {
-  const response = await api.get('/direcciones_cliente');
+export const getDirecciones = async (codigo_cliente_kunnr: number) => {
+  const response = await api.get(`/direcciones_cliente/cliente/${codigo_cliente_kunnr}`);
   return response.data;
 };
 
-export const getContactos = async () => {
-  const response = await api.get('/contactos_clientes');
+export const getContactos = async (codigo_cliente: number) => {
+  const response = await api.get(`/contactos_clientes/cliente/${codigo_cliente}`);
   return response.data;
 };
 
@@ -113,4 +127,5 @@ export const getSolicitudesPorUsuario = async (usuario_id: number, include?: str
   });
   return response.data;
 };
+
 
