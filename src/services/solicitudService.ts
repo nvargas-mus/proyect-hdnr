@@ -10,7 +10,7 @@ export const crearSolicitud = async (solicitudData: {
   direccion_id: number | null; 
   contacto_cliente_id: number;
   declaracion_id: number;
-  generador_id: number;
+  generador_id: number | null;
   generador_igual_cliente: boolean;
 }) => {
   const serviceDate = new Date(solicitudData.fecha_servicio_solicitada);
@@ -38,13 +38,13 @@ export const getClientesAsociados = async (q: string = '') => {
 };
 
 export const getDirecciones = async (codigo_cliente_kunnr: number) => {
-  const response = await api.get(`/direcciones_cliente/cliente/${codigo_cliente_kunnr}`);
-  return response.data;
+  const response = await api.get('/direcciones_cliente');
+  return response.data.filter((direccion: any) => direccion.codigo_cliente_kunnr === codigo_cliente_kunnr);
 };
 
 export const getContactos = async (codigo_cliente: number) => {
-  const response = await api.get(`/contactos_clientes/cliente/${codigo_cliente}`);
-  return response.data;
+  const response = await api.get('/contactos_clientes');
+  return response.data.filter((contacto: any) => contacto.codigo_cliente_kunnr === codigo_cliente);
 };
 
 export const getDeclaraciones = async () => {
@@ -127,5 +127,7 @@ export const getSolicitudesPorUsuario = async (usuario_id: number, include?: str
   });
   return response.data;
 };
+
+
 
 

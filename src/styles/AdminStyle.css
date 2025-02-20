@@ -1,0 +1,113 @@
+
+.form-button-primary {
+    background-color: #243c6c !important; 
+    border-color: #243c6c !important;
+    color: #ffffff !important;
+  }
+  
+  .form-button-outline {
+    background-color: #ffffff !important; 
+    border: 2px solid #243c6c !important; 
+    color: #243c6c !important;
+  }
+  
+  .modal-save-button {
+    background-color: #243c6c !important;
+    border-color: #243c6c !important;
+    color: #fff !important;
+  }
+  
+  .card.p-4 {
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  }
+  
+  input[type="radio"]:checked {
+    accent-color: #243c6c !important;
+  }
+  
+  .btn-volver {
+    background-color: #049c3c !important;
+    border-color: #049c3c !important;
+    color: #ffffff !important;
+    padding-left: 20px;
+    padding-right: 20px;
+    min-width: 150px !important;
+    display: inline-block !important;
+  }
+
+  .main-content {
+    padding-top: 80px; 
+  }
+  
+  .sidebar-menu {
+    background-color: #b2cde6;
+    border-radius: 8px;
+    padding: 20px;
+    margin: 80px 10px 0 10px;
+    color: #ffffff;
+    font-family: 'Arial', sans-serif;
+  }
+  
+  .sidebar-menu ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  
+  .sidebar-menu li {
+    margin-bottom: 10px;
+  }
+  
+  .sidebar-btn {
+    width: 100%;
+    background: transparent;
+    border: none;
+    color: inherit;
+    text-align: left;
+    padding: 10px;
+    font-size: 16px;
+    border-radius: 4px;
+    transition: background 0.3s;
+    cursor: pointer;
+  }
+  
+  .sidebar-btn:hover,
+  .sidebar-btn.active {
+    background: rgba(255, 255, 255, 0.2);
+  }
+  
+  .custom-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    font-family: 'Arial', sans-serif;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  }
+  
+  .custom-table thead {
+    background-color: #243c6c;
+    color: #ffffff;
+  }
+  
+  .custom-table th,
+  .custom-table td {
+    padding: 12px 15px;
+    border: 1px solid #ddd;
+    text-align: left;
+  }
+  
+  .custom-table tbody tr:nth-child(even) {
+    background-color: #f9f9f9;
+  }
+  
+  .custom-table tbody tr:hover {
+    background-color: #e9ecef;
+    transition: background-color 0.2s ease;
+  }
+  
+  .pagination-buttons {
+    margin-top: 20px;
+  }
+  
+  
+  

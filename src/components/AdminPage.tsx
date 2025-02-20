@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { getClienteById, asignarClientesAUsuario } from '../services/adminService';
+import "../styles/AdminStyle.css";
 
 const AdminPage = () => {
   const [activeTab, setActiveTab] = useState('gestionUsuarios'); 
@@ -8,6 +9,10 @@ const AdminPage = () => {
   const [clienteInput, setClienteInput] = useState('');
   const [clientesList, setClientesList] = useState<any[]>([]);
   const [message, setMessage] = useState('');
+
+  const [codigoBusqueda, setCodigoBusqueda] = useState('');
+  const [solicitudes, setSolicitudes] = useState<any[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const fetchUsuarioInfo = async () => {
     try {
@@ -52,35 +57,75 @@ const AdminPage = () => {
     }
   };
 
+  const fetchSolicitudes = async () => {
+    if (!codigoBusqueda) return;
+
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+      alert('No se encontró el token de autenticación. Por favor, inicia sesión.');
+      return;
+    }
+  
+    try {
+      const response = await fetch(`http://15.229.249.223:3000/solicitudes/por-cliente/${codigoBusqueda}`, {
+        method: 'GET',
+        headers: {
+          accept: '*/*',
+          Authorization: `Bearer ${token}`,
+        },
+      });
+  
+      if (response.status === 401) {
+        alert('No autorizado: el token es inválido o ha expirado.');
+        return;
+      }
+  
+      const data = await response.json();
+      setSolicitudes(data);
+      setCurrentPage(1);
+    } catch (error) {
+      console.error('Error fetching solicitudes', error);
+      alert('Error al obtener las solicitudes');
+    }
+  };
+
   return (
     <div className="container-fluid">
       <div className="row">
         {/* Menú lateral */}
-        <nav className="col-md-2 d-none d-md-block bg-light sidebar">
-          <div className="sidebar-sticky">
-            <ul className="nav flex-column">
-              <li className="nav-item">
+        <nav className="col-md-2 d-none d-md-block">
+          <div className="sidebar-menu">
+            <ul>
+              <li>
                 <button
-                  className={`nav-link btn btn-link ${activeTab === 'ultimasSolicitudes' ? 'active' : ''}`}
+                  className={`sidebar-btn ${activeTab === 'ultimasSolicitudes' ? 'active' : ''}`}
                   onClick={() => setActiveTab('ultimasSolicitudes')}
                 >
                   Ultimas Solicitudes
                 </button>
               </li>
-              <li className="nav-item">
+              <li>
                 <button
-                  className={`nav-link btn btn-link ${activeTab === 'gestionUsuarios' ? 'active' : ''}`}
+                  className={`sidebar-btn ${activeTab === 'gestionUsuarios' ? 'active' : ''}`}
                   onClick={() => setActiveTab('gestionUsuarios')}
                 >
-                  Gestion Usuarios
+                  Gestión Usuarios
                 </button>
               </li>
-              <li className="nav-item">
+              <li>
                 <button
-                  className={`nav-link btn btn-link ${activeTab === 'tablaSolicitudes' ? 'active' : ''}`}
+                  className={`sidebar-btn ${activeTab === 'tablaSolicitudes' ? 'active' : ''}`}
                   onClick={() => setActiveTab('tablaSolicitudes')}
                 >
                   Tabla Solicitudes
+                </button>
+              </li>
+              <li>
+                <button
+                  className={`sidebar-btn ${activeTab === 'busquedaSolicitudes' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('busquedaSolicitudes')}
+                >
+                  Búsqueda por Código
                 </button>
               </li>
             </ul>
@@ -88,10 +133,10 @@ const AdminPage = () => {
         </nav>
 
         {/* Contenido principal */}
-        <main role="main" className="col-md-9 ml-sm-auto col-lg-10 px-4">
+        <main role="main" className="col-md-9 ml-sm-auto col-lg-10 px-4 main-content">
           {activeTab === 'gestionUsuarios' && (
             <div>
-              <h2>Gestion Usuarios - Asociar Usuario a Clientes</h2>
+              <h2>Gestión Usuarios - Asociar Usuario a Clientes</h2>
               <div className="form-group">
                 <label>ID USUARIO</label>
                 <input
@@ -100,12 +145,12 @@ const AdminPage = () => {
                   value={usuarioId}
                   onChange={(e) => setUsuarioId(e.target.value)}
                 />
-                <button className="btn btn-primary mt-2" onClick={fetchUsuarioInfo}>
+                <button className="btn form-button-primary mt-2" onClick={fetchUsuarioInfo}>
                   Buscar Usuario
                 </button>
               </div>
               {usuarioInfo && (
-                <div className="card mt-3">
+                <div className="card mt-3 p-4">
                   <div className="card-body">
                     <h5 className="card-title">Datos del Usuario</h5>
                     <p>Nombre: {usuarioInfo.nombre_usuario || 'N/A'}</p>
@@ -127,7 +172,7 @@ const AdminPage = () => {
                     onChange={(e) => setClienteInput(e.target.value)}
                   />
                   <div className="input-group-append">
-                    <button className="btn btn-secondary" type="button" onClick={handleAddCliente}>
+                    <button className="btn form-button-outline" type="button" onClick={handleAddCliente}>
                       Agregar otro ID Cliente
                     </button>
                   </div>
@@ -145,22 +190,83 @@ const AdminPage = () => {
                   </ul>
                 </div>
               )}
-              <button className="btn btn-success mt-3" onClick={handleAsignarClientes}>
+              <button className="btn form-button-primary mt-3" onClick={handleAsignarClientes}>
                 Vincular clientes a usuario
               </button>
               {message && <div className="alert alert-info mt-3">{message}</div>}
             </div>
           )}
+
           {activeTab === 'ultimasSolicitudes' && (
             <div>
               <h2>Ultimas Solicitudes</h2>
               <p>Contenido de Ultimas Solicitudes...</p>
             </div>
           )}
+
           {activeTab === 'tablaSolicitudes' && (
             <div>
               <h2>Tabla Solicitudes</h2>
               <p>Contenido de Tabla Solicitudes...</p>
+            </div>
+          )}
+
+          {activeTab === 'busquedaSolicitudes' && (
+            <div>
+              <h2>Búsqueda Solicitudes</h2>
+              <div className="form-group">
+                <label>Código Cliente</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  value={codigoBusqueda}
+                  onChange={(e) => setCodigoBusqueda(e.target.value)}
+                />
+                <button className="btn form-button-primary mt-2" onClick={fetchSolicitudes}>
+                  Buscar Solicitudes
+                </button>
+              </div>
+              {solicitudes.length > 0 && (
+                <>
+                  <table className="custom-table">
+                    <thead>
+                      <tr>
+                        <th>ID Solicitud</th>
+                        <th>Fecha Solicitud</th>
+                        <th>Descripción</th>
+                        <th>Requiere Transporte</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {solicitudes.slice((currentPage - 1) * 10, currentPage * 10).map((solicitud) => (
+                        <tr key={solicitud.solicitud_id}>
+                          <td>{solicitud.solicitud_id}</td>
+                          <td>{new Date(solicitud.fecha_solicitud).toLocaleString()}</td>
+                          <td>{solicitud.descripcion}</td>
+                          <td>{solicitud.requiere_transporte ? 'Sí' : 'No'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  <div className="d-flex justify-content-between pagination-buttons">
+                    <button
+                      className="btn form-button-outline"
+                      disabled={currentPage === 1}
+                      onClick={() => setCurrentPage(currentPage - 1)}
+                    >
+                      Anterior
+                    </button>
+                    <button
+                      className="btn form-button-outline"
+                      disabled={currentPage * 10 >= solicitudes.length}
+                      onClick={() => setCurrentPage(currentPage + 1)}
+                    >
+                      Siguiente
+                    </button>
+                  </div>
+
+                </>
+              )}
             </div>
           )}
         </main>
@@ -170,4 +276,9 @@ const AdminPage = () => {
 };
 
 export default AdminPage;
+
+
+
+
+
 

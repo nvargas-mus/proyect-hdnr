@@ -39,7 +39,7 @@ const SolicitudForm = () => {
     contacto_cliente_id: number;
     declaracion_id: number;
     generador_igual_cliente: boolean;
-    generador_id: number;
+    generador_id: number | null;
   }>({
     usuario_id: Number(localStorage.getItem('usuario_id')),
     codigo_cliente_kunnr: 0,
@@ -52,17 +52,19 @@ const SolicitudForm = () => {
     contacto_cliente_id: 0,
     declaracion_id: 0,
     generador_igual_cliente: true,
-    generador_id: 0,
+    generador_id: null,
   });
+  
 
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [direcciones, setDirecciones] = useState<Direccion[]>([]);
   const [contactos, setContactos] = useState<Contacto[]>([]);
   const [declaraciones, setDeclaraciones] = useState<Declaracion[]>([]);
   const [generadores, setGeneradores] = useState<Generador[]>([]);
-
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [selectedDireccion, setSelectedDireccion] = useState<string>('');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const [showAddDireccionModal, setShowAddDireccionModal] = useState(false);
   const [showAddContactoModal, setShowAddContactoModal] = useState(false);
@@ -110,9 +112,9 @@ const SolicitudForm = () => {
   }, [formData]);
 
   useEffect(() => {
-    const fetchInitialData = async () => {
+    const fetchClientes = async () => {
       try {
-        const clientesData = await getClientesAsociados();
+        const clientesData = await getClientesAsociados(searchQuery);
         let clientesList: any[] = [];
         if (Array.isArray(clientesData)) {
           clientesList = clientesData;
@@ -125,7 +127,16 @@ const SolicitudForm = () => {
           sucursal: cliente.sucursal_name2,
         }));
         setClientes(mappedClientes);
+      } catch (error) {
+        console.error("Error al obtener clientes:", error);
+      }
+    };
+    fetchClientes();
+  }, [searchQuery]);
 
+  useEffect(() => {
+    const fetchDeclaraciones = async () => {
+      try {
         const declaracionesData = await getDeclaraciones();
         let declaracionesList: any[] = [];
         if (Array.isArray(declaracionesData)) {
@@ -139,75 +150,35 @@ const SolicitudForm = () => {
         }));
         setDeclaraciones(mappedDeclaraciones);
       } catch (err) {
-        console.error('Error al cargar datos iniciales:', err);
+        console.error('Error al cargar declaraciones:', err);
       }
     };
-    fetchInitialData();
+    fetchDeclaraciones();
   }, []);
 
   useEffect(() => {
     if (formData.codigo_cliente_kunnr && formData.codigo_cliente_kunnr !== 0) {
+      setSelectedDireccion('');
       const fetchDetails = async () => {
         try {
-          let direccionesResponse: any;
-          try {
-            direccionesResponse = await getDirecciones(formData.codigo_cliente_kunnr);
-          } catch (err: any) {
-            if (err.response && err.response.status === 404) {
-              direccionesResponse = [];
-            } else {
-              throw err;
-            }
-          }
-          let direccionesList: any[] = [];
-          if (Array.isArray(direccionesResponse)) {
-            direccionesList = direccionesResponse;
-          } else if (direccionesResponse && typeof direccionesResponse === 'object') {
-            direccionesList = direccionesResponse.direcciones || direccionesResponse.data || [];
-          }
-          const mappedDirecciones = direccionesList.map((direccion: any) => ({
-            id: direccion.direccion_id,
-            calle: direccion.calle,
-            numero: direccion.numero,
-            complemento: direccion.complemento,
-            comuna: direccion.comuna,
-            region: direccion.region,
-            contacto_terreno_id: direccion.contacto_terreno_id,
-          }));
-          setDirecciones(mappedDirecciones);
+          const codigo = Number(formData.codigo_cliente_kunnr);
+          console.log('Buscando direcciones para cliente:', codigo);
+          const direccionesResponse = await getDirecciones(codigo);
+          console.log('Respuesta de direcciones:', direccionesResponse);
+          setDirecciones(direccionesResponse);
 
-          let contactosResponse: any;
-          try {
-            contactosResponse = await getContactos(formData.codigo_cliente_kunnr);
-          } catch (err: any) {
-            if (err.response && err.response.status === 404) {
-              contactosResponse = [];
-            } else {
-              throw err;
-            }
-          }
-          let contactosList: any[] = [];
-          if (Array.isArray(contactosResponse)) {
-            contactosList = contactosResponse;
-          } else if (contactosResponse && typeof contactosResponse === 'object') {
-            contactosList = contactosResponse.contactos || contactosResponse.data || [];
-          }
-          const mappedContactos = contactosList.map((contacto: any) => ({
-            id: contacto.contacto_id,
-            nombre: contacto.nombre,
-            telefono: contacto.telefono,
-            email: contacto.email,
-            referencia_id: contacto.referencia_id,
-          }));
-          setContactos(mappedContactos);
+          console.log('Buscando contactos para cliente:', codigo);
+          const contactosResponse = await getContactos(codigo);
+          console.log('Respuesta de contactos:', contactosResponse);
+          setContactos(contactosResponse);
 
           setNewDireccion((prev) => ({
             ...prev,
-            codigo_cliente_kunnr: formData.codigo_cliente_kunnr,
+            codigo_cliente_kunnr: codigo,
           }));
           setNewContacto((prev) => ({
             ...prev,
-            codigo_cliente_kunnr: formData.codigo_cliente_kunnr,
+            codigo_cliente_kunnr: codigo,
           }));
         } catch (err) {
           console.error('Error al cargar direcciones o contactos:', err);
@@ -249,24 +220,30 @@ const SolicitudForm = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
+  
+    // Validar fecha y hora
     const fechaServicio = new Date(formData.fecha_servicio_solicitada);
     const hoy = new Date();
     if (fechaServicio < hoy) {
       alert("Advertencia: La fecha de servicio seleccionada está en el pasado.");
     }
-
     const [hourStr, minuteStr] = formData.hora_servicio_solicitada.split(':');
     const hour = parseInt(hourStr, 10);
     const minute = parseInt(minuteStr, 10);
     if (hour < 8 || hour > 18 || ![0, 15, 30, 45].includes(minute)) {
       alert("Advertencia: La hora de servicio debe estar entre 08:00 y 18:00 y los minutos deben ser 00, 15, 30 o 45.");
     }
-
+  
     try {
-      const payload = { ...formData };
+      const { clienteDisplay, ...payload } = formData;
       if (!payload.requiere_transporte) {
         payload.direccion_id = null;
+      }
+      if (payload.hora_servicio_solicitada.length === 5) {
+        payload.hora_servicio_solicitada += ":00";
+      }
+      if (payload.generador_igual_cliente) {
+        payload.generador_id = null;
       }
       const data = await crearSolicitud(payload);
       setMessage('Solicitud creada exitosamente. Por favor, complete la información adicional.');
@@ -280,6 +257,7 @@ const SolicitudForm = () => {
       setMessage('');
     }
   };
+  
 
   const handleDireccionChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -296,13 +274,7 @@ const SolicitudForm = () => {
     try {
       const data = await postDireccion(newDireccion);
       const direccionesActualizadas = await getDirecciones(formData.codigo_cliente_kunnr);
-      let direccionesList: any[] = [];
-      if (Array.isArray(direccionesActualizadas)) {
-        direccionesList = direccionesActualizadas;
-      } else if (direccionesActualizadas && typeof direccionesActualizadas === 'object') {
-        direccionesList = direccionesActualizadas.direcciones || direccionesActualizadas.data || [];
-      }
-      const mappedDirecciones = direccionesList.map((direccion: any) => ({
+      const mappedDirecciones = direccionesActualizadas.map((direccion: any) => ({
         id: direccion.direccion_id,
         calle: direccion.calle,
         numero: direccion.numero,
@@ -338,13 +310,7 @@ const SolicitudForm = () => {
     try {
       const data = await postContacto(newContacto);
       const contactosActualizados = await getContactos(formData.codigo_cliente_kunnr);
-      let contactosList: any[] = [];
-      if (Array.isArray(contactosActualizados)) {
-        contactosList = contactosActualizados;
-      } else if (contactosActualizados && typeof contactosActualizados === 'object') {
-        contactosList = contactosActualizados.contactos || contactosActualizados.data || [];
-      }
-      const mappedContactos = contactosList.map((contacto: any) => ({
+      const mappedContactos = contactosActualizados.map((contacto: any) => ({
         id: contacto.contacto_id,
         nombre: contacto.nombre,
         telefono: contacto.telefono,
@@ -371,7 +337,7 @@ const SolicitudForm = () => {
             <div className="card p-4">
               <h3 className="card-title text-center">Crear Solicitud de Servicio</h3>
               <form onSubmit={handleSubmit}>
-                {/* Selección de cliente */}
+                {/* Selección de cliente con autocompletado */}
                 <div className="mb-3">
                   <label htmlFor="codigo_cliente_kunnr" className="form-label">
                     Cliente
@@ -386,6 +352,7 @@ const SolicitudForm = () => {
                     value={formData.clienteDisplay}
                     onChange={(e) => {
                       const inputValue = e.target.value;
+                      setSearchQuery(inputValue);
                       const parts = inputValue.split(' - ');
                       const code = parts[0] ? Number(parts[0]) : 0;
                       setFormData((prev) => ({
@@ -486,12 +453,13 @@ const SolicitudForm = () => {
                         className="form-select"
                         id="direccion_id"
                         name="direccion_id"
-                        value={formData.direccion_id?.toString() ?? ''}
+                        value={selectedDireccion}
                         onChange={(e) => {
-                          const val = e.target.value;
+                          const value = e.target.value;
+                          setSelectedDireccion(value);
                           setFormData((prev) => ({
                             ...prev,
-                            direccion_id: val ? Number(val) : null,
+                            direccion_id: value ? Number(value) : null,
                           }));
                         }}
                         required
@@ -604,7 +572,7 @@ const SolicitudForm = () => {
                         className="form-select"
                         id="generador_id"
                         name="generador_id"
-                        value={formData.generador_id}
+                        value={formData.direccion_id !== null ? formData.direccion_id.toString() : ""}
                         onChange={handleChange}
                         required
                       >
@@ -678,7 +646,6 @@ const SolicitudForm = () => {
                     ></button>
                   </div>
                   <div className="modal-body">
-                    {/* Campos de la nueva dirección */}
                     <div className="mb-3">
                       <label htmlFor="calle" className="form-label">
                         Calle
@@ -883,9 +850,4 @@ const SolicitudForm = () => {
 };
 
 export default SolicitudForm;
-
-
-
-
-
 
