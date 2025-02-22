@@ -1,3 +1,7 @@
+<p align="left">
+  <img src="logo.png" height="450" alt="PlantAI FRONTEND"/>
+</p>
+
 # Proyecto Empresa Hidronor
 
 # Arquitectura de datos Frontend
