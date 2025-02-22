@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { loginUser } from '../services/authService';
+import { loginUser, getUserRoles } from '../services/authService';
 import { Link, useNavigate } from 'react-router-dom';
 import '../styles/Login.css';
 
@@ -14,17 +14,35 @@ const LoginForm = () => {
     e.preventDefault();
     try {
       const response = await loginUser({ email, contrasena });
-      const { token, userId } = response;
+      
+      const usuarioId = response.usuario_id || response.userId;
+      const token = response.token;
+
+      if (!usuarioId) {
+        throw new Error('No se recibió el ID del usuario en la respuesta');
+      }
 
       localStorage.setItem('authToken', token);
-      localStorage.setItem('usuario_id', userId.toString());
+      localStorage.setItem('usuario_id', usuarioId.toString());
       localStorage.setItem('user_email', email);
 
       window.dispatchEvent(new Event('localStorageUpdated'));
 
-      setMessage('Login exitoso.');
-      setError('');
-      navigate('/home');
+      const roles = await getUserRoles(usuarioId);
+
+      if (roles && roles.length > 0) {
+        const userRole = roles[0];
+        setMessage('Login exitoso.');
+        if (userRole.rol_id === 1) {
+          navigate('/admin');
+        } else if (userRole.rol_id === 2) {
+          navigate('/home');
+        } else {
+          navigate('/home');
+        }
+      } else {
+        setError('No se encontraron roles para el usuario.');
+      }
     } catch (err) {
       console.error('Error al iniciar sesión:', err);
       const errorMessage =
@@ -71,10 +89,7 @@ const LoginForm = () => {
               </div>
               {error && <p className="text-danger">{error}</p>}
               {message && <p className="text-success">{message}</p>}
-              <button
-                type="submit"
-                className="btn btn-primary w-100 login-button"
-              >
+              <button type="submit" className="btn btn-primary w-100 login-button">
                 Iniciar Sesión
               </button>
             </form>
@@ -91,6 +106,8 @@ const LoginForm = () => {
 };
 
 export default LoginForm;
+
+
 
 
 
