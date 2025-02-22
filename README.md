@@ -1,5 +1,5 @@
 <p align="left">
-  <img src="logo.png" height="450" alt="PlantAI FRONTEND"/>
+  <img src="./src/assets/logo.png" height="150" alt="logo-empresa"/>
 </p>
 
 # Proyecto Empresa Hidronor
