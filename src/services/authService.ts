@@ -29,3 +29,14 @@ export const loginUser = async (credentials: {
   return response.data;
 };
 
+export const getUserRoles = async (usuario_id: number) => {
+  try {
+    const response = await api.get(`/usuarios_roles/usuario/${usuario_id}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error al obtener roles del usuario:", error);
+    throw error;
+  }
+};
+
+
