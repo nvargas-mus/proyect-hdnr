@@ -151,7 +151,11 @@ const SolicitudCompletionForm: React.FC<SolicitudCompletionFormProps> = ({
 
   const handleSuccessOK = () => {
     setShowSuccessModal(false);
-    navigate('/home');
+    if (window.location.pathname.startsWith('/admin')) {
+      onBack();
+    } else {
+      navigate('/home');
+    }
   };
 
   return (
@@ -390,10 +394,3 @@ const SolicitudCompletionForm: React.FC<SolicitudCompletionFormProps> = ({
 };
 
 export default SolicitudCompletionForm;
-
-
-
-
-
-
-
