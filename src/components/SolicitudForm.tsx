@@ -63,7 +63,6 @@ const SolicitudForm = () => {
   const [generadores, setGeneradores] = useState<Generador[]>([]);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
-  const [selectedDireccion, setSelectedDireccion] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState('');
 
   const [showAddDireccionModal, setShowAddDireccionModal] = useState(false);
@@ -158,28 +157,34 @@ const SolicitudForm = () => {
 
   useEffect(() => {
     if (formData.codigo_cliente_kunnr && formData.codigo_cliente_kunnr !== 0) {
-      setSelectedDireccion('');
       const fetchDetails = async () => {
         try {
           const codigo = Number(formData.codigo_cliente_kunnr);
-          console.log('Buscando direcciones para cliente:', codigo);
+          
           const direccionesResponse = await getDirecciones(codigo);
-          console.log('Respuesta de direcciones:', direccionesResponse);
-          setDirecciones(direccionesResponse);
-
-          console.log('Buscando contactos para cliente:', codigo);
+          const mappedDirecciones = direccionesResponse.map((direccion: any) => ({
+            id: direccion.direccion_id,
+            calle: direccion.calle,
+            numero: direccion.numero,
+            complemento: direccion.complemento,
+            comuna: direccion.comuna,
+            region: direccion.region,
+            contacto_terreno_id: direccion.contacto_terreno_id,
+          }));
+          setDirecciones(mappedDirecciones);
+  
           const contactosResponse = await getContactos(codigo);
-          console.log('Respuesta de contactos:', contactosResponse);
-          setContactos(contactosResponse);
-
-          setNewDireccion((prev) => ({
-            ...prev,
-            codigo_cliente_kunnr: codigo,
+          const mappedContactos = contactosResponse.map((contacto: any) => ({
+            id: contacto.contacto_id,
+            nombre: contacto.nombre,
+            telefono: contacto.telefono,
+            email: contacto.email,
+            referencia_id: contacto.referencia_id,
           }));
-          setNewContacto((prev) => ({
-            ...prev,
-            codigo_cliente_kunnr: codigo,
-          }));
+          setContactos(mappedContactos);
+          setNewDireccion((prev) => ({ ...prev, codigo_cliente_kunnr: codigo }));
+          setNewContacto((prev) => ({ ...prev, codigo_cliente_kunnr: codigo }));
+  
         } catch (err) {
           console.error('Error al cargar direcciones o contactos:', err);
         }
@@ -221,39 +226,56 @@ const SolicitudForm = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
   
-    // Validar fecha y hora
     const fechaServicio = new Date(formData.fecha_servicio_solicitada);
     const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    
     if (fechaServicio < hoy) {
-      alert("Advertencia: La fecha de servicio seleccionada está en el pasado.");
+      alert("Error: La fecha de servicio no puede estar en el pasado.");
+      return;
     }
-    const [hourStr, minuteStr] = formData.hora_servicio_solicitada.split(':');
-    const hour = parseInt(hourStr, 10);
-    const minute = parseInt(minuteStr, 10);
-    if (hour < 8 || hour > 18 || ![0, 15, 30, 45].includes(minute)) {
-      alert("Advertencia: La hora de servicio debe estar entre 08:00 y 18:00 y los minutos deben ser 00, 15, 30 o 45.");
+  
+    const [horaStr, minutoStr] = formData.hora_servicio_solicitada.split(':');
+    const hora = parseInt(horaStr, 10);
+    const minuto = parseInt(minutoStr, 10);
+    
+    if (
+      hora < 8 || 
+      hora > 18 || 
+      ![0, 15, 30, 45].includes(minuto) || 
+      formData.hora_servicio_solicitada === ""
+    ) {
+      alert("Error: Hora inválida. Debe ser entre 08:00 y 18:00 con minutos exactos (00, 15, 30, 45).");
+      return;
+    }
+
+    if (formData.requiere_transporte && !formData.direccion_id) {
+      alert("Error: Debe seleccionar una dirección cuando requiere transporte.");
+      return;
     }
   
     try {
       const { clienteDisplay, ...payload } = formData;
-      if (!payload.requiere_transporte) {
-        payload.direccion_id = null;
-      }
+  
       if (payload.hora_servicio_solicitada.length === 5) {
         payload.hora_servicio_solicitada += ":00";
       }
-      if (payload.generador_igual_cliente) {
-        payload.generador_id = null;
-      }
+  
+      payload.generador_id = payload.generador_igual_cliente 
+        ? 0
+        : payload.generador_id;
+  
       const data = await crearSolicitud(payload);
-      setMessage('Solicitud creada exitosamente. Por favor, complete la información adicional.');
+      
+      setMessage('Solicitud creada exitosamente. Complete la información adicional.');
       setError('');
       setSolicitudId(data.solicitud_id);
       setStep(2);
       localStorage.removeItem(LOCAL_STORAGE_KEY);
+      
     } catch (err) {
       console.error('Error al crear la solicitud:', err);
-      setError('Error al crear la solicitud. Verifica los datos e intenta nuevamente.');
+      setError('Error al crear la solicitud. Verifique los datos e intente nuevamente.');
       setMessage('');
     }
   };
@@ -272,7 +294,11 @@ const SolicitudForm = () => {
   const handleSubmitDireccion = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const data = await postDireccion(newDireccion);
+      const data = await postDireccion({
+        ...newDireccion,
+        codigo_cliente_kunnr: formData.codigo_cliente_kunnr,
+      });
+  
       const direccionesActualizadas = await getDirecciones(formData.codigo_cliente_kunnr);
       const mappedDirecciones = direccionesActualizadas.map((direccion: any) => ({
         id: direccion.direccion_id,
@@ -284,10 +310,12 @@ const SolicitudForm = () => {
         contacto_terreno_id: direccion.contacto_terreno_id,
       }));
       setDirecciones(mappedDirecciones);
+  
       setFormData((prev) => ({
         ...prev,
-        direccion_id: data.id,
+        direccion_id: data.direccion_id,
       }));
+  
       setShowAddDireccionModal(false);
     } catch (error) {
       console.error('Error al agregar dirección:', error);
@@ -453,10 +481,9 @@ const SolicitudForm = () => {
                         className="form-select"
                         id="direccion_id"
                         name="direccion_id"
-                        value={selectedDireccion}
+                        value={formData.direccion_id || ""}
                         onChange={(e) => {
                           const value = e.target.value;
-                          setSelectedDireccion(value);
                           setFormData((prev) => ({
                             ...prev,
                             direccion_id: value ? Number(value) : null,
@@ -572,7 +599,7 @@ const SolicitudForm = () => {
                         className="form-select"
                         id="generador_id"
                         name="generador_id"
-                        value={formData.direccion_id !== null ? formData.direccion_id.toString() : ""}
+                        value={formData.generador_id !== null ? formData.generador_id.toString() : ""}
                         onChange={handleChange}
                         required
                       >
@@ -621,13 +648,30 @@ const SolicitudForm = () => {
         </div>
       )}
 
-      {step === 2 && solicitudId && (
-        <SolicitudCompletionForm
-          solicitudId={solicitudId}
-          requiereTransporte={formData.requiere_transporte}
-          onBack={() => setStep(1)}
-        />
-      )}
+        {step === 2 && solicitudId && (
+          <SolicitudCompletionForm
+            solicitudId={solicitudId}
+            requiereTransporte={formData.requiere_transporte}
+            onBack={() => {
+              setFormData({
+                usuario_id: Number(localStorage.getItem('usuario_id')),
+                codigo_cliente_kunnr: 0,
+                clienteDisplay: '',
+                fecha_servicio_solicitada: '',
+                hora_servicio_solicitada: '',
+                descripcion: '',
+                requiere_transporte: false,
+                direccion_id: null,
+                contacto_cliente_id: 0,
+                declaracion_id: 0,
+                generador_igual_cliente: true,
+                generador_id: null,
+              });
+              setStep(1);
+            }}
+          />
+        )}
+
 
       {/* Modal para Agregar Dirección */}
       {showAddDireccionModal && (
@@ -850,4 +894,3 @@ const SolicitudForm = () => {
 };
 
 export default SolicitudForm;
-

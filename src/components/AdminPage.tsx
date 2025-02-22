@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { getClienteById, asignarClientesAUsuario } from '../services/adminService';
+import SolicitudForm from './SolicitudForm'; 
 import "../styles/AdminStyle.css";
 
 const AdminPage = () => {
@@ -101,7 +102,7 @@ const AdminPage = () => {
                   className={`sidebar-btn ${activeTab === 'ultimasSolicitudes' ? 'active' : ''}`}
                   onClick={() => setActiveTab('ultimasSolicitudes')}
                 >
-                  Ultimas Solicitudes
+                  Últimas Solicitudes
                 </button>
               </li>
               <li>
@@ -126,6 +127,14 @@ const AdminPage = () => {
                   onClick={() => setActiveTab('busquedaSolicitudes')}
                 >
                   Búsqueda por Código
+                </button>
+              </li>
+              <li>
+                <button
+                  className={`sidebar-btn ${activeTab === 'crearSolicitud' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('crearSolicitud')}
+                >
+                  Crear Solicitud
                 </button>
               </li>
             </ul>
@@ -199,8 +208,8 @@ const AdminPage = () => {
 
           {activeTab === 'ultimasSolicitudes' && (
             <div>
-              <h2>Ultimas Solicitudes</h2>
-              <p>Contenido de Ultimas Solicitudes...</p>
+              <h2>Últimas Solicitudes</h2>
+              <p>Contenido de Últimas Solicitudes...</p>
             </div>
           )}
 
@@ -238,14 +247,16 @@ const AdminPage = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {solicitudes.slice((currentPage - 1) * 10, currentPage * 10).map((solicitud) => (
-                        <tr key={solicitud.solicitud_id}>
-                          <td>{solicitud.solicitud_id}</td>
-                          <td>{new Date(solicitud.fecha_solicitud).toLocaleString()}</td>
-                          <td>{solicitud.descripcion}</td>
-                          <td>{solicitud.requiere_transporte ? 'Sí' : 'No'}</td>
-                        </tr>
-                      ))}
+                      {solicitudes
+                        .slice((currentPage - 1) * 10, currentPage * 10)
+                        .map((solicitud) => (
+                          <tr key={solicitud.solicitud_id}>
+                            <td>{solicitud.solicitud_id}</td>
+                            <td>{new Date(solicitud.fecha_solicitud).toLocaleString()}</td>
+                            <td>{solicitud.descripcion}</td>
+                            <td>{solicitud.requiere_transporte ? 'Sí' : 'No'}</td>
+                          </tr>
+                        ))}
                     </tbody>
                   </table>
                   <div className="d-flex justify-content-between pagination-buttons">
@@ -264,9 +275,15 @@ const AdminPage = () => {
                       Siguiente
                     </button>
                   </div>
-
                 </>
               )}
+            </div>
+          )}
+
+          {activeTab === 'crearSolicitud' && (
+            <div>
+        
+              <SolicitudForm />
             </div>
           )}
         </main>
@@ -276,6 +293,7 @@ const AdminPage = () => {
 };
 
 export default AdminPage;
+
 
 
 

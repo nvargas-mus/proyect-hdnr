@@ -38,8 +38,10 @@ export const getClientesAsociados = async (q: string = '') => {
 };
 
 export const getDirecciones = async (codigo_cliente_kunnr: number) => {
-  const response = await api.get('/direcciones_cliente');
-  return response.data.filter((direccion: any) => direccion.codigo_cliente_kunnr === codigo_cliente_kunnr);
+  const response = await api.get('/direcciones_cliente', {
+    params: { codigo_cliente_kunnr },
+  });
+  return response.data;
 };
 
 export const getContactos = async (codigo_cliente: number) => {
