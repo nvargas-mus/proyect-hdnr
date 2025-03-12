@@ -15,19 +15,21 @@ export const loginUser = async (credentials: {
 }) => {
   const response = await api.post('/usuarios/login', credentials);
 
-  const { token, usuario_id, rol } = response.data;
-
+  const { token, usuario_id, userId, rol } = response.data;
   if (token) {
     localStorage.setItem('authToken', token);
   }
-  if (usuario_id) {
-    localStorage.setItem('usuario_id', usuario_id.toString());
+  const id = usuario_id || userId;
+  if (id) {
+    localStorage.setItem('usuario_id', id.toString());
   }
   if (rol) {
     localStorage.setItem('userRole', rol);
   }
   return response.data;
 };
+
+
 
 export const getUserRoles = async (usuario_id: number) => {
   try {

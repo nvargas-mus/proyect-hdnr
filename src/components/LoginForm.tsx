@@ -17,19 +17,19 @@ const LoginForm = () => {
       
       const usuarioId = response.usuario_id || response.userId;
       const token = response.token;
-
+  
       if (!usuarioId) {
         throw new Error('No se recibió el ID del usuario en la respuesta');
       }
-
+  
       localStorage.setItem('authToken', token);
       localStorage.setItem('usuario_id', usuarioId.toString());
       localStorage.setItem('user_email', email);
-
+  
       window.dispatchEvent(new Event('localStorageUpdated'));
-
+  
       const roles = await getUserRoles(usuarioId);
-
+  
       if (roles && roles.length > 0) {
         const userRole = roles[0];
         setMessage('Login exitoso.');
@@ -37,6 +37,8 @@ const LoginForm = () => {
           navigate('/admin');
         } else if (userRole.rol_id === 2) {
           navigate('/home');
+        } else if (userRole.rol_id === 4) {
+          navigate('/coordinador');
         } else {
           navigate('/home');
         }
@@ -53,6 +55,7 @@ const LoginForm = () => {
       setMessage('');
     }
   };
+  
 
   return (
     <div className="container mt-5">
