@@ -8,6 +8,7 @@ import AdminPage from './components/AdminPage';
 import NotFoundPage from './components/NotFoundPage';
 import Navbar from './components/NavBar';
 import { SolicitudProvider } from './context/SolicitudContext';
+import 'bootstrap/dist/css/bootstrap.min.css';
 
 const App = () => {
   return (
