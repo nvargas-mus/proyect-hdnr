@@ -40,15 +40,27 @@ export interface SolicitudesResponse {
   datos: Solicitud[];
 }
 
+// Interfaz para opciones de filtro
+interface FilterOptions {
+  cliente?: number;
+  usuario?: number;
+  estado?: string;
+  centro?: number;
+  fecha_desde?: string;
+  fecha_hasta?: string;
+  requiere_transporte?: string;
+  [key: string]: any;
+}
+
+//token de autenticación
 export const getAuthToken = () => {
   return localStorage.getItem('authToken');
 };
 
 export const getSolicitudesCoordinador = async (
-  clienteId: number, 
-  usuarioId: number, 
   pagina: number = 1, 
-  tamanoPagina: number = 20
+  tamanoPagina: number = 20,
+  filters: FilterOptions = {}
 ): Promise<SolicitudesResponse> => {
   const token = getAuthToken();
   
@@ -58,15 +70,23 @@ export const getSolicitudesCoordinador = async (
   }
   
   try {
+    const params: FilterOptions = {
+      pagina,
+      tamano_pagina: tamanoPagina
+    };
+    
+    if (filters.cliente) params.cliente = filters.cliente;
+    if (filters.usuario) params.usuario = filters.usuario;
+    if (filters.estado) params.estado = filters.estado;
+    if (filters.centro) params.centro = filters.centro;
+    if (filters.fechaDesde) params.fecha_desde = filters.fechaDesde;
+    if (filters.fechaHasta) params.fecha_hasta = filters.fechaHasta;
+    if (filters.requiereTransporte) params.requiere_transporte = filters.requiereTransporte;
+    
     const response = await axios.get<SolicitudesResponse>(
       `${API_URL}/solicitudes/dashboard/coordinador`, 
       {
-        params: {
-          cliente: clienteId,
-          usuario: usuarioId,
-          pagina,
-          tamano_pagina: tamanoPagina
-        },
+        params,
         headers: {
           'accept': 'application/json',
           'Authorization': `Bearer ${token}`

@@ -3,6 +3,7 @@ import { Container, Row, Col, Card, Button, Modal, Table, Badge, Pagination } fr
 import { FaEye, FaEdit, FaCalendarAlt, FaTruck, FaTimesCircle } from 'react-icons/fa';
 import { getSolicitudesCoordinador, Solicitud } from '../services/coordinadorServices';
 import { useNavigate } from 'react-router-dom';
+import FiltrosSolicitudes from '../components/FiltrosSolicitudes';
 import '../styles/CoordinadorPage.css';
 
 const CoordinadorPage: React.FC = () => {
@@ -20,8 +21,7 @@ const CoordinadorPage: React.FC = () => {
   const [solicitudDetalle, setSolicitudDetalle] = useState<Solicitud | null>(null);
   const [loadingDetalle, setLoadingDetalle] = useState<boolean>(false);
 
-  const clienteId = 600141;
-  const usuarioId = 14;
+  const [activeFilters, setActiveFilters] = useState<Record<string, any>>({});
 
   useEffect(() => {
     const fetchSolicitudes = async () => {
@@ -37,7 +37,12 @@ const CoordinadorPage: React.FC = () => {
         }
         
         setLoading(true);
-        const response = await getSolicitudesCoordinador(clienteId, usuarioId, paginaActual);
+        const response = await getSolicitudesCoordinador(
+          paginaActual,
+          20,
+          activeFilters
+        );
+        
         setSolicitudes(response.datos);
         setTotalPaginas(response.metadatos.total_paginas);
         setTotalSolicitudes(response.metadatos.total_resultados);
@@ -57,7 +62,7 @@ const CoordinadorPage: React.FC = () => {
     };
 
     fetchSolicitudes();
-  }, [clienteId, usuarioId, paginaActual, navigate]);
+  }, [paginaActual, navigate, activeFilters]);
 
   const handlePageChange = (pageNumber: number) => {
     setPaginaActual(pageNumber);
@@ -66,9 +71,9 @@ const CoordinadorPage: React.FC = () => {
   const handleVerDetalle = (id: number) => {
     setSelectedSolicitudId(id);
     setShowDetalleModal(true);
-    
-    setLoadingDetalle(true);
 
+    setLoadingDetalle(true);
+    
     const solicitudEncontrada = solicitudes.find(s => s.solicitud_id === id);
     if (solicitudEncontrada) {
       setSolicitudDetalle(solicitudEncontrada);
@@ -89,6 +94,11 @@ const CoordinadorPage: React.FC = () => {
     setShowDetalleModal(false);
     setSelectedSolicitudId(null);
     setSolicitudDetalle(null);
+  };
+
+  const handleApplyFilters = (filters: any) => {
+    setActiveFilters(filters);
+    setPaginaActual(1);
   };
 
   const formatDate = (dateString: string) => {
@@ -177,85 +187,93 @@ const CoordinadorPage: React.FC = () => {
         </Col>
       </Row>
       
+      {/* Componente de Filtros */}
       <Row>
         <Col>
-          <Card className="p-4">
-            <Card.Body>
-              <h4 className="mb-4">Solicitudes de Servicio</h4>
-              
-              {loading ? (
-                <div className="text-center my-5">Cargando solicitudes...</div>
-              ) : error ? (
-                <div className="alert alert-danger my-3">{error}</div>
-              ) : (
-                <>
-                  <div className="table-responsive">
-                    <Table className="custom-table">
-                      <thead>
-                        <tr>
-                          <th>ID</th>
-                          <th>Código</th>
-                          <th>Cliente</th>
-                          <th>Sucursal</th>
-                          <th>Fecha</th>
-                          <th>Hora</th>
-                          <th>Estado</th>
-                          <th>Comuna</th>
-                          <th>Transporte</th>
-                          <th>Acciones</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {solicitudes.map((solicitud) => (
-                          <tr key={`${solicitud.solicitud_id}-${solicitud.fecha_solicitud}`}>
-                            <td>{solicitud.solicitud_id}</td>
-                            <td>{solicitud.codigo_cliente_kunnr}</td>
-                            <td>{solicitud.nombre_name1}</td>
-                            <td>{solicitud.sucursal_name2}</td>
-                            <td>{formatDate(solicitud.fecha_servicio_solicitada)}</td>
-                            <td>{solicitud.hora_servicio_solicitada.substring(0, 5)}</td>
-                            <td>{getEstadoBadge(solicitud.nombre_estado)}</td>
-                            <td>{solicitud.comuna || 'N/A'}</td>
-                            <td className="text-center">
-                              {solicitud.requiere_transporte ? 
-                                <FaTruck size={20} color="#28a745" title="Requiere transporte" /> : 
-                                <FaTimesCircle size={20} color="#dc3545" title="No requiere transporte" />}
-                            </td>
-                            <td>
-                              <div className="d-flex gap-2">
-                                <Button 
-                                  className="form-button-primary"
-                                  size="sm"
-                                  onClick={() => handleVerFecha(solicitud.solicitud_id)}
-                                  title="Ver fecha"
-                                >
-                                  <FaCalendarAlt />
-                                </Button>
-                                <Button 
-                                  className="form-button-primary"
-                                  size="sm"
-                                  onClick={() => handleEditar(solicitud.solicitud_id)}
-                                  title="Editar"
-                                >
-                                  <FaEdit />
-                                </Button>
-                                <Button 
-                                  className="form-button-primary"
-                                  size="sm"
-                                  onClick={() => handleVerDetalle(solicitud.solicitud_id)}
-                                  title="Ver detalles"
-                                >
-                                  <FaEye />
-                                </Button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </Table>
-                  </div>
+          <FiltrosSolicitudes onApplyFilters={handleApplyFilters} />
+        </Col>
+      </Row>
+      
+      <Row>
+        <Col>
+          <div className="table-panel">
+            <div className="table-header">
+              <h4>Solicitudes de Servicio</h4>
+              <span className="text-muted">Total: {totalSolicitudes}</span>
+            </div>
+            
+            {loading ? (
+              <div className="text-center py-5">Cargando solicitudes...</div>
+            ) : error ? (
+              <div className="alert alert-danger m-3">{error}</div>
+            ) : (
+              <>
+                <Table className="custom-table" responsive>
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>Código</th>
+                      <th>Cliente</th>
+                      <th>Sucursal</th>
+                      <th>Fecha</th>
+                      <th>Hora</th>
+                      <th>Estado</th>
+                      <th>Comuna</th>
+                      <th>Transporte</th>
+                      <th>Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {solicitudes.map((solicitud) => (
+                      <tr key={`${solicitud.solicitud_id}-${solicitud.fecha_solicitud}`}>
+                        <td>{solicitud.solicitud_id}</td>
+                        <td>{solicitud.codigo_cliente_kunnr}</td>
+                        <td>{solicitud.nombre_name1}</td>
+                        <td>{solicitud.sucursal_name2}</td>
+                        <td>{formatDate(solicitud.fecha_servicio_solicitada)}</td>
+                        <td>{solicitud.hora_servicio_solicitada.substring(0, 5)}</td>
+                        <td>{getEstadoBadge(solicitud.nombre_estado)}</td>
+                        <td>{solicitud.comuna || 'N/A'}</td>
+                        <td className="text-center">
+                          {solicitud.requiere_transporte ? 
+                            <FaTruck size={20} color="#28a745" title="Requiere transporte" /> : 
+                            <FaTimesCircle size={20} color="#dc3545" title="No requiere transporte" />}
+                        </td>
+                        <td>
+                          <div className="d-flex gap-2">
+                            <Button 
+                              className="form-button-primary"
+                              size="sm"
+                              onClick={() => handleVerFecha(solicitud.solicitud_id)}
+                              title="Ver fecha"
+                            >
+                              <FaCalendarAlt />
+                            </Button>
+                            <Button 
+                              className="form-button-primary"
+                              size="sm"
+                              onClick={() => handleEditar(solicitud.solicitud_id)}
+                              title="Editar"
+                            >
+                              <FaEdit />
+                            </Button>
+                            <Button 
+                              className="form-button-primary"
+                              size="sm"
+                              onClick={() => handleVerDetalle(solicitud.solicitud_id)}
+                              title="Ver detalles"
+                            >
+                              <FaEye />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </Table>
 
-                  <Pagination className="justify-content-center mt-4">
+                <div className="pagination-wrapper">
+                  <Pagination className="justify-content-center mb-0">
                     <Pagination.First 
                       onClick={() => handlePageChange(1)} 
                       disabled={paginaActual === 1} 
@@ -284,14 +302,14 @@ const CoordinadorPage: React.FC = () => {
                       disabled={paginaActual === totalPaginas}
                     />
                   </Pagination>
-                </>
-              )}
-            </Card.Body>
-          </Card>
+                </div>
+              </>
+            )}
+          </div>
         </Col>
       </Row>
 
-      {/* Modal de Detalle de Solicitud */}
+      {/* Modalde Detalle de Solicitud */}
       <Modal show={showDetalleModal} onHide={handleCloseDetalleModal} size="lg" centered>
         <Modal.Header closeButton>
           <Modal.Title>
@@ -308,57 +326,61 @@ const CoordinadorPage: React.FC = () => {
               <Row className="mb-4">
                 <Col md={6}>
                   <h5>Información General</h5>
-                  <Table striped borderless size="sm">
-                    <tbody>
-                      <tr>
-                        <td><strong>Cliente:</strong></td>
-                        <td>{solicitudDetalle.nombre_name1}</td>
-                      </tr>
-                      <tr>
-                        <td><strong>Sucursal:</strong></td>
-                        <td>{solicitudDetalle.sucursal_name2}</td>
-                      </tr>
-                      <tr>
-                        <td><strong>Código Cliente:</strong></td>
-                        <td>{solicitudDetalle.codigo_cliente_kunnr}</td>
-                      </tr>
-                      <tr>
-                        <td><strong>Estado:</strong></td>
-                        <td>{getEstadoBadge(solicitudDetalle.nombre_estado)}</td>
-                      </tr>
-                    </tbody>
-                  </Table>
+                  <div className="modal-table-container">
+                    <Table striped borderless size="sm" className="custom-table">
+                      <tbody>
+                        <tr>
+                          <td><strong>Cliente:</strong></td>
+                          <td>{solicitudDetalle.nombre_name1}</td>
+                        </tr>
+                        <tr>
+                          <td><strong>Sucursal:</strong></td>
+                          <td>{solicitudDetalle.sucursal_name2}</td>
+                        </tr>
+                        <tr>
+                          <td><strong>Código Cliente:</strong></td>
+                          <td>{solicitudDetalle.codigo_cliente_kunnr}</td>
+                        </tr>
+                        <tr>
+                          <td><strong>Estado:</strong></td>
+                          <td>{getEstadoBadge(solicitudDetalle.nombre_estado)}</td>
+                        </tr>
+                      </tbody>
+                    </Table>
+                  </div>
                 </Col>
                 <Col md={6}>
                   <h5>Información de Servicio</h5>
-                  <Table striped borderless size="sm">
-                    <tbody>
-                      <tr>
-                        <td><strong>Fecha Solicitada:</strong></td>
-                        <td>{formatDate(solicitudDetalle.fecha_servicio_solicitada)}</td>
-                      </tr>
-                      <tr>
-                        <td><strong>Hora Solicitada:</strong></td>
-                        <td>{solicitudDetalle.hora_servicio_solicitada.substring(0, 5)}</td>
-                      </tr>
-                      <tr>
-                        <td><strong>Fecha de Solicitud:</strong></td>
-                        <td>{formatDate(solicitudDetalle.fecha_solicitud)}</td>
-                      </tr>
-                      <tr>
-                        <td><strong>Requiere Transporte:</strong></td>
-                        <td>
-                          {solicitudDetalle.requiere_transporte ? 
-                            <span className="d-flex align-items-center">
-                              <FaTruck size={16} color="#28a745" className="me-2" /> Sí
-                            </span> : 
-                            <span className="d-flex align-items-center">
-                              <FaTimesCircle size={16} color="#dc3545" className="me-2" /> No
-                            </span>}
-                        </td>
-                      </tr>
-                    </tbody>
-                  </Table>
+                  <div className="modal-table-container">
+                    <Table striped borderless size="sm" className="custom-table">
+                      <tbody>
+                        <tr>
+                          <td><strong>Fecha Solicitada:</strong></td>
+                          <td>{formatDate(solicitudDetalle.fecha_servicio_solicitada)}</td>
+                        </tr>
+                        <tr>
+                          <td><strong>Hora Solicitada:</strong></td>
+                          <td>{solicitudDetalle.hora_servicio_solicitada.substring(0, 5)}</td>
+                        </tr>
+                        <tr>
+                          <td><strong>Fecha de Solicitud:</strong></td>
+                          <td>{formatDate(solicitudDetalle.fecha_solicitud)}</td>
+                        </tr>
+                        <tr>
+                          <td><strong>Requiere Transporte:</strong></td>
+                          <td>
+                            {solicitudDetalle.requiere_transporte ? 
+                              <span className="d-flex align-items-center">
+                                <FaTruck size={16} color="#28a745" className="me-2" /> Sí
+                              </span> : 
+                              <span className="d-flex align-items-center">
+                                <FaTimesCircle size={16} color="#dc3545" className="me-2" /> No
+                              </span>}
+                          </td>
+                        </tr>
+                      </tbody>
+                    </Table>
+                  </div>
                 </Col>
               </Row>
 
@@ -374,24 +396,26 @@ const CoordinadorPage: React.FC = () => {
                 <Col>
                   <h5>Residuos</h5>
                   {solicitudDetalle.residuos && solicitudDetalle.residuos.length > 0 ? (
-                    <Table striped bordered hover size="sm">
-                      <thead>
-                        <tr>
-                          <th>Material</th>
-                          <th>Cantidad</th>
-                          <th>Unidad</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {solicitudDetalle.residuos.map((residuo, index) => (
-                          <tr key={index}>
-                            <td>{residuo.nombre_material}</td>
-                            <td>{residuo.cantidad_declarada}</td>
-                            <td>{residuo.nombre_unidad}</td>
+                    <div className="modal-table-container">
+                      <Table striped hover size="sm" className="custom-table">
+                        <thead>
+                          <tr>
+                            <th>Material</th>
+                            <th>Cantidad</th>
+                            <th>Unidad</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </Table>
+                        </thead>
+                        <tbody>
+                          {solicitudDetalle.residuos.map((residuo, index) => (
+                            <tr key={index}>
+                              <td>{residuo.nombre_material}</td>
+                              <td>{residuo.cantidad_declarada}</td>
+                              <td>{residuo.nombre_unidad}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </Table>
+                    </div>
                   ) : (
                     <p>No hay residuos declarados</p>
                   )}
