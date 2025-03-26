@@ -18,42 +18,42 @@
 
 ### 1. Clonar el repositorio
 
-- Abre una terminal en Visual Studio Code o tu editor de preferencia.
-- Clona el repositorio desde GitHub ejecutando el siguiente comando:
+- Inicia una ventana de terminal en Visual Studio Code o el entorno de desarrollo que prefieras.
+- Clona el repositorio de GitHub utilizando este comando:
 
   ```bash
   git clone https://github.com/nvargas-mus/proyect-hdnr
   ```
 
-- Verifica que todo se clonó correctamente, usando el comando:
+- Confirma que la clonación fue exitosa mediante el siguiente comando:
   ```bash
   git status
   ```
 
-### 2. Navegar a la carpeta del proyecto
+### 2. Ingresar al directorio del proyecto
 
-- Verifica que te encuentras en la carpeta correcta. Si no es así, utiliza el comando:
+- Asegúrate de estar ubicado en la carpeta adecuada. De no ser así, emplea esta instrucción:
 
   ```bash
   cd proyecto-hdnr
   ```
 
-### 3. Instalar las dependencias
+### 3. Instalar las dependencias necesarias
 
-- En la terminal, instala las dependencias de Node.js utilizando:
+- Desde la terminal, ejecuta el siguiente comando para descargar e instalar los paquetes requeridos:
 
   ```bash
   npm install
   ```
 
-- Si al instalar genera un reporte de vulnerabilidades, intenta solucionarlo automáticamente ejecutando:
+- Si durante la instalación aparece un informe de vulnerabilidades, puedes intentar resolverlas automáticamente mediante la ejecución de:
   ```bash
   npm audit fix
   ```
 
-### 4. Instalar Bootstrap, Type checker y Redux toolkit
+### 4. Añadir Bootstrap, verificador de tipos y Redux toolkit
 
-- Para incluir Bootstrap en el proyecto, ejecuta el siguiente comando en la terminal:
+- Para incorporar Bootstrap a tu proyecto, utiliza esta instrucción en la terminal:
 
   ```bash
   npm install bootstrap
