@@ -1,112 +1,233 @@
-.form-button-primary {
-    background-color: #243c6c !important; 
-    border-color: #243c6c !important;
-    color: #ffffff !important;
-  }
-  
-  .form-button-outline {
-    background-color: #ffffff !important; 
-    border: 2px solid #243c6c !important; 
-    color: #243c6c !important;
-  }
-  
-  .modal-save-button {
-    background-color: #243c6c !important;
-    border-color: #243c6c !important;
-    color: #fff !important;
-  }
-  
-  .card.p-4 {
-    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-  }
-  
-  input[type="radio"]:checked {
-    accent-color: #243c6c !important;
-  }
-  
-  .btn-volver {
-    background-color: #049c3c !important;
-    border-color: #049c3c !important;
-    color: #ffffff !important;
-    padding-left: 20px;
-    padding-right: 20px;
-    min-width: 150px !important;
-    display: inline-block !important;
-  }
+.main-content {
+  padding-top: 80px; 
+}
 
-  .main-content {
-    padding-top: 80px; 
-  }
-  
+/* Estilos para botones */
+.form-button-primary {
+  background-color: #243c6c !important; 
+  border-color: #243c6c !important;
+  color: #ffffff !important;
+}
+
+.form-button-primary:hover {
+  background-color: #1a2e54 !important;
+  border-color: #1a2e54 !important;
+}
+
+.form-button-outline {
+  background-color: #ffffff !important; 
+  border: 2px solid #243c6c !important; 
+  color: #243c6c !important;
+}
+
+.form-button-outline:hover {
+  background-color: #f8f9fa !important;
+}
+
+.modal-save-button {
+  background-color: #243c6c !important;
+  border-color: #243c6c !important;
+  color: #fff !important;
+}
+
+.btn-volver {
+  background-color: #049c3c !important;
+  border-color: #049c3c !important;
+  color: #ffffff !important;
+  padding-left: 20px;
+  padding-right: 20px;
+  min-width: 150px !important;
+  display: inline-block !important;
+}
+
+/* Estilos para tarjetas */
+.card {
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.card-title {
+  color: #243c6c !important;
+  font-weight: 600;
+}
+
+/* Estilos para formularios */
+input[type="radio"]:checked {
+  accent-color: #243c6c !important;
+}
+
+.form-label {
+  color: #243c6c;
+  font-weight: 500;
+}
+
+.form-control:focus {
+  border-color: #243c6c;
+  box-shadow: 0 0 0 0.25rem rgba(36, 60, 108, 0.25);
+}
+
+/* Sidebar menu */
+.sidebar-menu {
+  background-color: #b2cde6;
+  border-radius: 8px;
+  padding: 20px;
+  margin: 80px 10px 0 10px;
+  color: #243c6c;
+  font-family: 'Arial', sans-serif;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.sidebar-menu ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sidebar-menu li {
+  margin-bottom: 10px;
+}
+
+.sidebar-btn {
+  width: 100%;
+  background: transparent;
+  border: none;
+  color: #243c6c;
+  text-align: left;
+  padding: 12px;
+  font-size: 16px;
+  font-weight: 500;
+  border-radius: 4px;
+  transition: all 0.3s;
+  cursor: pointer;
+}
+
+.sidebar-btn:hover,
+.sidebar-btn.active {
+  background: rgba(255, 255, 255, 0.5);
+  color: #243c6c;
+  font-weight: 600;
+}
+
+/* Panel de contenido */
+.table-panel {
+  border-radius: 8px !important;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  margin-bottom: 1.5rem !important;
+  background-color: #fff;
+}
+
+.panel-content {
+  padding: 20px;
+}
+
+/* Encabezado del panel */
+.table-header {
+  background-color: #f8f9fa;
+  padding: 15px 20px !important;
+  border-bottom: 1px solid #dee2e6;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 0 !important;
+}
+
+.table-header h4 {
+  margin: 0 !important;
+  color: #243c6c !important;
+  font-weight: 600;
+}
+
+/* Estilos para tablas */
+.table-container {
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #ddd;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.custom-table {
+  width: 100%;
+  margin: 0 !important;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-family: 'Arial', sans-serif;
+  border: none;
+}
+
+.custom-table thead {
+  background-color: #243c6c;
+  color: #ffffff;
+}
+
+.custom-table th {
+  color: white !important;
+  padding: 12px 15px;
+  border-right: 1px solid #ddd;
+  border-bottom: 1px solid #ddd;
+  text-align: left;
+  vertical-align: middle;
+  font-weight: 600;
+}
+
+.custom-table td {
+  color: #243c6c !important;
+  padding: 12px 15px;
+  border-right: 1px solid #ddd;
+  border-bottom: 1px solid #ddd;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.custom-table th:last-child,
+.custom-table td:last-child {
+  border-right: none;
+}
+
+.custom-table tr:last-child td {
+  border-bottom: none;
+}
+
+.custom-table tbody tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+.custom-table tbody tr:hover {
+  background-color: #e9ecef;
+  transition: background-color 0.2s ease;
+}
+
+/* Paginación */
+.pagination-wrapper {
+  padding: 15px;
+  border-top: 1px solid #dee2e6;
+  background-color: #f8f9fa;
+  border-radius: 0 0 8px 8px;
+}
+
+/* Alertas y mensajes */
+.alert {
+  border-radius: 6px;
+}
+
+/* Badges */
+.badge {
+  font-weight: 500;
+  padding: 5px 8px;
+  border-radius: 4px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
   .sidebar-menu {
-    background-color: #b2cde6;
-    border-radius: 8px;
-    padding: 20px;
-    margin: 80px 10px 0 10px;
-    color: #ffffff;
-    font-family: 'Arial', sans-serif;
-  }
-  
-  .sidebar-menu ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-  }
-  
-  .sidebar-menu li {
-    margin-bottom: 10px;
-  }
-  
-  .sidebar-btn {
-    width: 100%;
-    background: transparent;
-    border: none;
-    color: inherit;
-    text-align: left;
-    padding: 10px;
-    font-size: 16px;
-    border-radius: 4px;
-    transition: background 0.3s;
-    cursor: pointer;
-  }
-  
-  .sidebar-btn:hover,
-  .sidebar-btn.active {
-    background: rgba(255, 255, 255, 0.2);
-  }
-  
-  .custom-table {
-    width: 100%;
-    border-collapse: collapse;
     margin-top: 20px;
-    font-family: 'Arial', sans-serif;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    margin-bottom: 20px;
   }
   
-  .custom-table thead {
-    background-color: #243c6c;
-    color: #ffffff;
+  .main-content {
+    padding-top: 20px;
   }
-  
-  .custom-table th,
-  .custom-table td {
-    padding: 12px 15px;
-    border: 1px solid #ddd;
-    text-align: left;
-  }
-  
-  .custom-table tbody tr:nth-child(even) {
-    background-color: #f9f9f9;
-  }
-  
-  .custom-table tbody tr:hover {
-    background-color: #e9ecef;
-    transition: background-color 0.2s ease;
-  }
-  
-  .pagination-buttons {
-    margin-top: 20px;
-  }
-  
+}
   
   

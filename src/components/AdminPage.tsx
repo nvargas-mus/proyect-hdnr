@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { getClienteById, asignarClientesAUsuario } from '../services/adminService';
 import SolicitudForm from './SolicitudForm'; 
+import ContratosTable from './ContratosTable';
 import "../styles/AdminStyle.css";
 
 const AdminPage = () => {
@@ -137,6 +138,15 @@ const AdminPage = () => {
                   Crear Solicitud
                 </button>
               </li>
+              {/* Opción de menú para Contratos */}
+              <li>
+                <button
+                  className={`sidebar-btn ${activeTab === 'contratos' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('contratos')}
+                >
+                  Contratos
+                </button>
+              </li>
             </ul>
           </div>
         </nav>
@@ -265,14 +275,17 @@ const AdminPage = () => {
                       disabled={currentPage === 1}
                       onClick={() => setCurrentPage(currentPage - 1)}
                     >
-                      Anterior
+                      <i className="fa fa-chevron-left mr-1"></i> Anterior
                     </button>
+                    <div className="pagination-info">
+                      Mostrando {solicitudes.slice((currentPage - 1) * 10, currentPage * 10).length} de {solicitudes.length} solicitudes
+                    </div>
                     <button
                       className="btn form-button-outline"
                       disabled={currentPage * 10 >= solicitudes.length}
                       onClick={() => setCurrentPage(currentPage + 1)}
                     >
-                      Siguiente
+                      Siguiente <i className="fa fa-chevron-right ml-1"></i>
                     </button>
                   </div>
                 </>
@@ -282,8 +295,14 @@ const AdminPage = () => {
 
           {activeTab === 'crearSolicitud' && (
             <div>
-        
               <SolicitudForm />
+            </div>
+          )}
+
+          {/* Tab para Contratos */}
+          {activeTab === 'contratos' && (
+            <div>
+              <ContratosTable />
             </div>
           )}
         </main>

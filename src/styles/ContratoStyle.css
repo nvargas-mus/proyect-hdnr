@@ -1,0 +1,126 @@
+.action-buttons {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+  }
+  
+  .btn-action {
+    width: 32px;
+    height: 32px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background-color: transparent;
+  }
+  
+  .btn-action i {
+    font-size: 14px;
+    color: #243c6c;
+  }
+  
+  .btn-action:hover {
+    background-color: rgba(36, 60, 108, 0.1);
+  }
+  
+  .btn-edit:hover {
+    background-color: rgba(0, 123, 255, 0.1);
+  }
+  
+  .btn-edit i {
+    color: #0d6efd;
+  }
+  
+  .btn-list:hover {
+    background-color: rgba(23, 162, 184, 0.1);
+  }
+  
+  .btn-list i {
+    color: #17a2b8;
+  }
+  
+  .btn-view:hover {
+    background-color: rgba(108, 117, 125, 0.1);
+  }
+  
+  .btn-view i {
+    color: #6c757d;
+  }
+  
+  .btn-delete:hover {
+    background-color: rgba(220, 53, 69, 0.1);
+  }
+  
+  .btn-delete i {
+    color: #dc3545;
+  }
+  
+  .documento-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .documento-nombre {
+    flex-grow: 1;
+  }
+  
+  .btn-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background-color: transparent;
+    cursor: pointer;
+    transition: all 0.2s;
+    padding: 0;
+  }
+  
+  .btn-download i {
+    color: #0d6efd;
+    font-size: 14px;
+  }
+  
+  .btn-download:hover {
+    background-color: rgba(13, 110, 253, 0.1);
+  }
+  
+  .custom-table {
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
+    margin-bottom: 1rem;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  
+  .custom-table thead th {
+    font-weight: 500;
+    font-size: 14px;
+    padding: 12px 15px;
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  .custom-table tbody td {
+    padding: 12px 15px;
+    font-size: 14px;
+    vertical-align: middle;
+  }
+  
+  .pagination-buttons {
+    margin-top: 15px;
+  }
+  
+  .pagination-info {
+    display: flex;
+    align-items: center;
+    color: #6c757d;
+    font-size: 14px;
+  }
