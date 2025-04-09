@@ -1,7 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getContratos, deleteContrato, downloadContrato, Contrato, PaginationInfo, ContratosResponse } from '../services/adminService';
-import '../styles/AdminStyle.css';
+import { 
+  getContratos, 
+  deleteContrato, 
+  downloadContrato,
+  Contrato, 
+  PaginationInfo, 
+  ContratosResponse 
+} from '../services/adminService';
+import ContratoModal from './ContratoModal';
 import '../styles/ContratoStyle.css';
 
 const ContratosTable = () => {
@@ -16,6 +23,9 @@ const ContratosTable = () => {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  const [showModal, setShowModal] = useState(false);
+  const [selectedContratoId, setSelectedContratoId] = useState<number | null>(null);
 
   const fetchContratos = async (limit: number, offset: number) => {
     setLoading(true);
@@ -50,7 +60,19 @@ const ContratosTable = () => {
   };
 
   const handleEdit = (id: number) => {
-    navigate(`/editar-contrato/${id}`);
+    setSelectedContratoId(id);
+    setShowModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setSelectedContratoId(null);
+  };
+
+  const handleSaveContrato = () => {
+    setShowModal(false);
+    setSelectedContratoId(null);
+    fetchContratos(pagination.limit, pagination.offset);
   };
 
   const handleViewTarifas = (id: number) => {
@@ -65,6 +87,7 @@ const ContratosTable = () => {
     if (window.confirm('¿Está seguro de que desea eliminar este contrato?')) {
       try {
         await deleteContrato(id);
+        // Recargar la tabla después de eliminar
         fetchContratos(pagination.limit, pagination.offset);
       } catch (err) {
         console.error('Error eliminando contrato:', err);
@@ -237,6 +260,16 @@ const ContratosTable = () => {
             </button>
           </div>
         </>
+      )}
+
+      {/* Modal para editar contrato */}
+      {showModal && selectedContratoId && (
+        <ContratoModal 
+          contratoId={selectedContratoId}
+          show={showModal}
+          onClose={handleCloseModal}
+          onSave={handleSaveContrato}
+        />
       )}
     </div>
   );

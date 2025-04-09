@@ -36,7 +36,6 @@ const TarifasContrato = () => {
   const navigate = useNavigate();
   
   const [tarifas, setTarifas] = useState<TarifaContrato[]>([]);
-  const [tiposTransporte, setTiposTransporte] = useState<TipoTransporte[]>([]);
   const [pagination, setPagination] = useState<PaginationInfo>({
     limit: 10,
     offset: 0,
@@ -70,11 +69,11 @@ const TarifasContrato = () => {
           'Accept': 'application/json'
         }
       });
-      
-      setTiposTransporte(tiposTransporteResponse.data);
+
+      const tiposTransporteData = tiposTransporteResponse.data;
       
       const tarifasConNombres = response.data.data.map((tarifa: TarifaContrato) => {
-        const tipoTransporte = tiposTransporteResponse.data.find(
+        const tipoTransporte = tiposTransporteData.find(
           (tipo: TipoTransporte) => tipo.id === tarifa.tipo_transporte_id
         );
         return {
@@ -135,7 +134,6 @@ const TarifasContrato = () => {
     navigate(`/asignaciones-tarifa/${tarifaId}`);
   };
 
-  // Formatear moneda
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('es-CL', { 
       style: 'decimal',
@@ -144,7 +142,6 @@ const TarifasContrato = () => {
     }).format(value);
   };
 
-  // Formatear fecha
   const formatDate = (dateString: string | null) => {
     if (!dateString) return 'N/A';
     return new Date(dateString).toLocaleDateString();
@@ -204,32 +201,32 @@ const TarifasContrato = () => {
                       <td>{formatDate(tarifa.fecha_inicio_vigencia)}</td>
                       <td>{formatDate(tarifa.fecha_fin_vigencia)}</td>
                       <td>
-                        <div className="btn-group">
+                        <div className="d-flex justify-content-around action-buttons">
                           {/* Botón Editar */}
                           <button
                             title="Editar tarifa"
-                            className="btn btn-sm btn-outline-primary mr-1"
+                            className="btn-action btn-edit"
                             onClick={() => navigate(`/editar-tarifa/${tarifa.tarifario_contrato_id}`)}
                           >
-                            <i className="fas fa-edit"></i>
+                            <i className="fa fa-edit"></i>
                           </button>
                           
                           {/* Botón Ver Asignaciones */}
                           <button
                             title="Ver asignaciones de tarifa"
-                            className="btn btn-sm btn-outline-info mr-1"
+                            className="btn-action btn-list"
                             onClick={() => verAsignaciones(tarifa.tarifario_contrato_id)}
                           >
-                            <i className="fas fa-list"></i>
+                            <i className="fa fa-list"></i>
                           </button>
                           
                           {/* Botón Eliminar */}
                           <button
                             title="Eliminar tarifa"
-                            className="btn btn-sm btn-outline-danger"
+                            className="btn-action btn-delete"
                             onClick={() => handleDelete(tarifa.tarifario_contrato_id)}
                           >
-                            <i className="fas fa-trash"></i>
+                            <i className="fa fa-trash"></i>
                           </button>
                         </div>
                       </td>
@@ -253,7 +250,7 @@ const TarifasContrato = () => {
                 disabled={pagination.prevOffset === null}
                 onClick={handlePrevPage}
               >
-                Anterior
+                <i className="fa fa-chevron-left mr-1"></i> Anterior
               </button>
               <div className="pagination-info">
                 Mostrando {tarifas.length} de {pagination.total} tarifas
@@ -263,7 +260,7 @@ const TarifasContrato = () => {
                 disabled={pagination.nextOffset === null}
                 onClick={handleNextPage}
               >
-                Siguiente
+                Siguiente <i className="fa fa-chevron-right ml-1"></i>
               </button>
             </div>
           )}

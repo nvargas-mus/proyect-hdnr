@@ -131,19 +131,34 @@ export const createContrato = async (contratoData: FormData): Promise<any> => {
   }
 };
 
+
 export const updateContrato = async (id: number, contratoData: FormData): Promise<any> => {
   try {
     const token = getToken();
+    
+    console.log(`Actualizando contrato ${id} con datos:`, 
+      Array.from(contratoData.entries()).reduce((obj, [key, val]) => {
+        obj[key] = val;
+        return obj;
+      }, {} as any)
+    );
+    
     const response = await axios.put(`${API_URL}/contratos/${id}`, contratoData, {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Accept': 'application/json',
-        'Content-Type': 'multipart/form-data'
       }
     });
+    
     return response.data;
-  } catch (error) {
+  } catch (error: any) {
     console.error(`Error actualizando contrato con ID ${id}:`, error);
+    
+    if (error.response) {
+      console.error('Respuesta del servidor:', error.response.data);
+      console.error('Estado HTTP:', error.response.status);
+    }
+    
     throw error;
   }
 };
