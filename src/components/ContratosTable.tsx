@@ -9,6 +9,7 @@ import {
   ContratosResponse 
 } from '../services/adminService';
 import ContratoModal from './ContratoModal';
+import ContratoViewModal from './ContratoViewModal';
 import '../styles/ContratoStyle.css';
 
 const ContratosTable = () => {
@@ -24,8 +25,11 @@ const ContratosTable = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
-  const [showModal, setShowModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [selectedContratoId, setSelectedContratoId] = useState<number | null>(null);
+
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [viewContratoId, setViewContratoId] = useState<number | null>(null);
 
   const fetchContratos = async (limit: number, offset: number) => {
     setLoading(true);
@@ -61,16 +65,16 @@ const ContratosTable = () => {
 
   const handleEdit = (id: number) => {
     setSelectedContratoId(id);
-    setShowModal(true);
+    setShowEditModal(true);
   };
 
-  const handleCloseModal = () => {
-    setShowModal(false);
+  const handleCloseEditModal = () => {
+    setShowEditModal(false);
     setSelectedContratoId(null);
   };
 
   const handleSaveContrato = () => {
-    setShowModal(false);
+    setShowEditModal(false);
     setSelectedContratoId(null);
     fetchContratos(pagination.limit, pagination.offset);
   };
@@ -80,7 +84,13 @@ const ContratosTable = () => {
   };
 
   const handleView = (id: number) => {
-    navigate(`/ver-contrato/${id}`);
+    setViewContratoId(id);
+    setShowViewModal(true);
+  };
+
+  const handleCloseViewModal = () => {
+    setShowViewModal(false);
+    setViewContratoId(null);
   };
 
   const handleDelete = async (id: number) => {
@@ -263,12 +273,21 @@ const ContratosTable = () => {
       )}
 
       {/* Modal para editar contrato */}
-      {showModal && selectedContratoId && (
+      {showEditModal && selectedContratoId && (
         <ContratoModal 
           contratoId={selectedContratoId}
-          show={showModal}
-          onClose={handleCloseModal}
+          show={showEditModal}
+          onClose={handleCloseEditModal}
           onSave={handleSaveContrato}
+        />
+      )}
+
+      {/* Modal para visualizar contrato */}
+      {showViewModal && viewContratoId && (
+        <ContratoViewModal
+          contratoId={viewContratoId}
+          show={showViewModal}
+          onClose={handleCloseViewModal}
         />
       )}
     </div>

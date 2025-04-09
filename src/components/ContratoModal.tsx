@@ -3,7 +3,6 @@ import {
   getContratoById, 
   updateContrato
 } from '../services/adminService';
-import '../styles/ModalStyles.css';
 
 interface ContratoModalProps {
   contratoId: number;
@@ -22,7 +21,126 @@ interface ContratoFormData {
   fecha_proximo_reajuste: string;
 }
 
+const modalStyles = {
+  overlay: {
+    position: 'fixed' as const,
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: '100%',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1050,
+  },
+  container: {
+    backgroundColor: 'white',
+    borderRadius: '8px',
+    width: '90%',
+    maxWidth: '600px',
+    maxHeight: '90vh',
+    overflow: 'auto',
+    boxShadow: '0 4px 15px rgba(0, 0, 0, 0.2)',
+  },
+  header: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: '16px 20px',
+    borderBottom: '1px solid #e9ecef',
+    backgroundColor: '#243c6c',
+    borderRadius: '8px 8px 0 0',
+  },
+  headerTitle: {
+    margin: 0,
+    color: 'white',
+    fontWeight: 600,
+    fontSize: '18px',
+  },
+  closeButton: {
+    background: 'transparent',
+    border: 'none',
+    fontSize: '20px',
+    color: 'white',
+    cursor: 'pointer',
+  },
+  body: {
+    padding: '20px 40px',
+  },
+  formGroup: {
+    marginBottom: '20px',
+  },
+  label: {
+    display: 'block',
+    marginBottom: '8px',
+    fontWeight: 600,
+    color: '#243c6c',
+  },
+  input: {
+    display: 'block',
+    width: '100%',
+    padding: '10px 12px',
+    fontSize: '15px',
+    border: '1px solid #ced4da',
+    borderRadius: '4px',
+  },
+  disabledInput: {
+    backgroundColor: '#f8f9fa',
+    color: '#6c757d',
+  },
+  helpText: {
+    color: '#6c757d',
+    fontSize: '13px',
+    marginTop: '5px',
+  },
+  checkboxContainer: {
+    display: 'flex',
+    alignItems: 'center',
+    marginTop: '8px',
+  },
+  checkbox: {
+    marginRight: '10px',
+    width: '20px',
+    height: '20px',
+  },
+  documentoActual: {
+    marginTop: '10px',
+    padding: '8px 12px',
+    backgroundColor: '#f8f9fa',
+    borderRadius: '4px',
+    border: '1px solid #e9ecef',
+  },
+  actions: {
+    display: 'flex',
+    justifyContent: 'flex-end',
+    gap: '15px',
+    marginTop: '20px',
+    paddingTop: '20px',
+    borderTop: '1px solid #e9ecef',
+  },
+  buttonCancel: {
+    minWidth: '120px',
+    padding: '8px 16px',
+    backgroundColor: 'white',
+    color: '#243c6c',
+    border: '1px solid #243c6c',
+    borderRadius: '4px',
+    cursor: 'pointer',
+  },
+  buttonSave: {
+    minWidth: '120px',
+    padding: '8px 16px',
+    backgroundColor: '#243c6c',
+    color: 'white',
+    border: 'none',
+    borderRadius: '4px',
+    cursor: 'pointer',
+  },
+};
+
 const ContratoModal = ({ contratoId, show, onClose, onSave }: ContratoModalProps) => {
+
   const [originalContrato, setOriginalContrato] = useState<any>(null);
   
   const [formData, setFormData] = useState<ContratoFormData>({
@@ -58,7 +176,6 @@ const ContratoModal = ({ contratoId, show, onClose, onSave }: ContratoModalProps
       setError(null);
       
       try {
-        // Cargar datos del contrato
         const contratoData = await getContratoById(contratoId);
         setOriginalContrato(contratoData);
         
@@ -121,7 +238,7 @@ const ContratoModal = ({ contratoId, show, onClose, onSave }: ContratoModalProps
     try {
       const formDataToSend = new FormData();
       let hasChanges = false;
-
+      
       if (formData.es_spot !== originalContrato.es_spot) {
         formDataToSend.append('es_spot', formData.es_spot.toString());
         hasChanges = true;
@@ -179,77 +296,87 @@ const ContratoModal = ({ contratoId, show, onClose, onSave }: ContratoModalProps
   }
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-container">
-        <div className="modal-header">
-          <h4>Editar Contrato #{contratoId}</h4>
-          <button type="button" className="modal-close-btn" onClick={onClose}>
-            <i className="fa fa-times"></i>
-          </button>
-        </div>
-        <div className="modal-body">
-          {error && <div className="alert alert-danger">{error}</div>}
+    <div style={modalStyles.overlay}>
+      <div style={modalStyles.container}>
+      <div style={modalStyles.header}>
+  <h4 id="contratoModalTitle" style={{
+    margin: 0,
+    color: '#ffffff',
+    fontWeight: 600,
+    fontSize: '18px'
+  }}>Editar Contrato - ID {contratoId}</h4>
+  <button type="button" style={modalStyles.closeButton} onClick={onClose}>
+    <i className="fa fa-times"></i>
+  </button>
+</div>
+        <div style={modalStyles.body}>
+          {error && (
+            <div style={{padding: '12px', backgroundColor: '#f8d7da', color: '#721c24', borderRadius: '4px', marginBottom: '20px'}}>
+              {error}
+            </div>
+          )}
           
           {loading ? (
-            <div className="text-center">
+            <div style={{textAlign: 'center', padding: '20px'}}>
               <p>Cargando datos del contrato...</p>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="contrato-form">
+            <form onSubmit={handleSubmit}>
               {/* Transportista ID */}
-              <div className="form-group">
-                <label className="form-label">ID Transportista</label>
+              <div style={modalStyles.formGroup}>
+                <label style={modalStyles.label}>ID Transportista</label>
                 <input
                   type="text"
-                  className="form-control"
+                  style={{...modalStyles.input, ...modalStyles.disabledInput}}
                   value={formData.transportista_id || ''}
                   disabled
                 />
-                <small className="text-muted">
+                <p style={modalStyles.helpText}>
                   Este campo no es editable. ID actual: {formData.transportista_id}
-                </small>
+                </p>
               </div>
               
               {/* Es Spot */}
-              <div className="form-group">
-                <div className="custom-checkbox">
+              <div style={modalStyles.formGroup}>
+                <div style={modalStyles.checkboxContainer}>
                   <input
                     type="checkbox"
                     id="es_spot"
                     name="es_spot"
                     checked={formData.es_spot}
                     onChange={handleChange}
+                    style={modalStyles.checkbox}
                   />
-                  <label htmlFor="es_spot">
+                  <label htmlFor="es_spot" style={{fontWeight: 500}}>
                     ¿Es un contrato Spot?
                   </label>
                 </div>
               </div>
               
               {/* Documento Respaldo */}
-              <div className="form-group">
-                <label htmlFor="documento_respaldo" className="form-label">Documento de Respaldo</label>
+              <div style={modalStyles.formGroup}>
+                <label style={modalStyles.label} htmlFor="documento_respaldo">Documento de Respaldo</label>
                 <input
                   type="file"
-                  className="form-control custom-file-input"
+                  style={modalStyles.input}
                   id="documento_respaldo"
                   name="documento_respaldo"
                   onChange={handleChange}
                 />
                 {originalFileName && (
-                  <div className="documento-actual">
-                    <span>Documento actual:</span> 
-                    <span className="documento-nombre">{originalFileName}</span>
+                  <div style={modalStyles.documentoActual}>
+                    <span style={{fontWeight: 600, marginRight: '8px'}}>Documento actual:</span> 
+                    <span>{originalFileName}</span>
                   </div>
                 )}
               </div>
               
               {/* Fecha Fin */}
-              <div className="form-group">
-                <label htmlFor="fecha_fin" className="form-label">Fecha de Fin</label>
+              <div style={modalStyles.formGroup}>
+                <label style={modalStyles.label} htmlFor="fecha_fin">Fecha de Fin</label>
                 <input
                   type="date"
-                  className="form-control custom-date"
+                  style={modalStyles.input}
                   id="fecha_fin"
                   name="fecha_fin"
                   value={formData.fecha_fin}
@@ -258,16 +385,16 @@ const ContratoModal = ({ contratoId, show, onClose, onSave }: ContratoModalProps
               </div>
               
               {/* Tipo Reajuste */}
-              <div className="form-group">
-                <label htmlFor="tipo_reajuste" className="form-label">Tipo de Reajuste</label>
+              <div style={modalStyles.formGroup}>
+                <label style={modalStyles.label} htmlFor="tipo_reajuste">Tipo de Reajuste</label>
                 <select
-                  className="form-control custom-select"
+                  style={modalStyles.input}
                   id="tipo_reajuste"
                   name="tipo_reajuste"
                   value={formData.tipo_reajuste}
                   onChange={handleChange}
                 >
-                  <option value="">Seleccione tipo de reajuste</option>
+                  <option key="empty-tipo" value="">Seleccione tipo de reajuste</option>
                   {tiposReajuste.map((tipo, index) => (
                     <option key={`tipo-${index}`} value={tipo.value}>
                       {tipo.label}
@@ -277,16 +404,16 @@ const ContratoModal = ({ contratoId, show, onClose, onSave }: ContratoModalProps
               </div>
               
               {/* Frecuencia Reajuste */}
-              <div className="form-group">
-                <label htmlFor="frecuencia_reajuste" className="form-label">Frecuencia de Reajuste</label>
+              <div style={modalStyles.formGroup}>
+                <label style={modalStyles.label} htmlFor="frecuencia_reajuste">Frecuencia de Reajuste</label>
                 <select
-                  className="form-control custom-select"
+                  style={modalStyles.input}
                   id="frecuencia_reajuste"
                   name="frecuencia_reajuste"
                   value={formData.frecuencia_reajuste}
                   onChange={handleChange}
                 >
-                  <option value="">Seleccione frecuencia</option>
+                  <option key="empty-frecuencia" value="">Seleccione frecuencia</option>
                   {frecuenciasReajuste.map((freq, index) => (
                     <option key={`freq-${index}`} value={freq.value}>
                       {freq.label}
@@ -296,11 +423,11 @@ const ContratoModal = ({ contratoId, show, onClose, onSave }: ContratoModalProps
               </div>
               
               {/* Fecha Próximo Reajuste */}
-              <div className="form-group">
-                <label htmlFor="fecha_proximo_reajuste" className="form-label">Fecha del Próximo Reajuste</label>
+              <div style={modalStyles.formGroup}>
+                <label style={modalStyles.label} htmlFor="fecha_proximo_reajuste">Fecha del Próximo Reajuste</label>
                 <input
                   type="date"
-                  className="form-control custom-date"
+                  style={modalStyles.input}
                   id="fecha_proximo_reajuste"
                   name="fecha_proximo_reajuste"
                   value={formData.fecha_proximo_reajuste}
@@ -308,10 +435,10 @@ const ContratoModal = ({ contratoId, show, onClose, onSave }: ContratoModalProps
                 />
               </div>
               
-              <div className="modal-actions">
+              <div style={modalStyles.actions}>
                 <button 
                   type="button" 
-                  className="btn-modal btn-cancel"
+                  style={modalStyles.buttonCancel}
                   onClick={onClose}
                   disabled={loading}
                 >
@@ -319,7 +446,7 @@ const ContratoModal = ({ contratoId, show, onClose, onSave }: ContratoModalProps
                 </button>
                 <button 
                   type="submit" 
-                  className="btn-modal btn-save"
+                  style={modalStyles.buttonSave}
                   disabled={loading}
                 >
                   {loading ? 'Guardando...' : 'Guardar Cambios'}
