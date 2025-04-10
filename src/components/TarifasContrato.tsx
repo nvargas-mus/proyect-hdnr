@@ -1,40 +1,20 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { 
+  getTarifasByContrato, 
+  getContratoById,
+  deleteTarifa,
+  Contrato, 
+  TarifaContrato, 
+  PaginationInfo 
+} from '../services/adminService';
 import '../styles/AdminStyle.css';
-
-interface TarifaContrato {
-  tarifario_contrato_id: number;
-  contrato_id: number;
-  descripcion_tarifa: string;
-  tipo_transporte_id: number;
-  tipo_transporte_nombre?: string;
-  tarifa_inicial: number;
-  tarifa_actual: number;
-  fecha_inicio_vigencia: string;
-  fecha_fin_vigencia: string;
-}
-
-interface TipoTransporte {
-  id: number;
-  nombre: string;
-}
-
-interface PaginationInfo {
-  limit: number;
-  offset: number;
-  total: number;
-  nextOffset: number | null;
-  prevOffset: number | null;
-}
-
-const API_URL = 'http://15.229.249.223:3000';
-const getToken = () => localStorage.getItem('authToken') || '';
 
 const TarifasContrato = () => {
   const { contratoId } = useParams<{ contratoId: string }>();
   const navigate = useNavigate();
   
+  const [contrato, setContrato] = useState<Contrato | null>(null);
   const [tarifas, setTarifas] = useState<TarifaContrato[]>([]);
   const [pagination, setPagination] = useState<PaginationInfo>({
     limit: 10,
@@ -45,6 +25,19 @@ const TarifasContrato = () => {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [shareMessage, setShareMessage] = useState<string | null>(null);
+
+  const fetchContratoDetails = async () => {
+    if (!contratoId) return;
+
+    try {
+      const contratoData = await getContratoById(parseInt(contratoId));
+      setContrato(contratoData);
+    } catch (err) {
+      console.error('Error fetching contrato details:', err);
+      setError('Error al obtener detalles del contrato. Por favor, intenta nuevamente.');
+    }
+  };
 
   const fetchTarifas = async (limit: number, offset: number) => {
     if (!contratoId) return;
@@ -53,38 +46,14 @@ const TarifasContrato = () => {
     setError(null);
 
     try {
-      const token = getToken();
+      const tarifasResponse = await getTarifasByContrato(
+        parseInt(contratoId),
+        limit,
+        offset
+      );
       
-      const response = await axios.get(`${API_URL}/tarifario_contrato/contrato/${contratoId}`, {
-        params: { limit, offset },
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/json'
-        }
-      });
-      
-      const tiposTransporteResponse = await axios.get(`${API_URL}/tiposTransporte`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/json'
-        }
-      });
-
-      const tiposTransporteData = tiposTransporteResponse.data;
-      
-      const tarifasConNombres = response.data.data.map((tarifa: TarifaContrato) => {
-        const tipoTransporte = tiposTransporteData.find(
-          (tipo: TipoTransporte) => tipo.id === tarifa.tipo_transporte_id
-        );
-        return {
-          ...tarifa,
-          tipo_transporte_nombre: tipoTransporte ? tipoTransporte.nombre : 'N/A'
-        };
-      });
-      
-      setTarifas(tarifasConNombres);
-      setPagination(response.data.pagination);
-      
+      setTarifas(tarifasResponse.data);
+      setPagination(tarifasResponse.pagination);
     } catch (err) {
       console.error('Error fetching tarifas:', err);
       setError('Error al obtener las tarifas del contrato. Por favor, intenta nuevamente.');
@@ -95,6 +64,7 @@ const TarifasContrato = () => {
 
   useEffect(() => {
     if (contratoId) {
+      fetchContratoDetails();
       fetchTarifas(pagination.limit, pagination.offset);
     }
   }, [contratoId]);
@@ -114,14 +84,7 @@ const TarifasContrato = () => {
   const handleDelete = async (tarifaId: number) => {
     if (window.confirm('¿Está seguro de que desea eliminar esta tarifa?')) {
       try {
-        const token = getToken();
-        await axios.delete(`${API_URL}/tarifario_contrato/${tarifaId}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Accept': 'application/json'
-          }
-        });
-        
+        await deleteTarifa(tarifaId);
         fetchTarifas(pagination.limit, pagination.offset);
       } catch (err) {
         console.error('Error eliminando tarifa:', err);
@@ -132,6 +95,30 @@ const TarifasContrato = () => {
 
   const verAsignaciones = (tarifaId: number) => {
     navigate(`/asignaciones-tarifa/${tarifaId}`);
+  };
+
+  const compartirTarifa = (tarifaId: number) => {
+    const shareUrl = `${window.location.origin}/detalles-tarifa/${tarifaId}`;
+    
+    if (navigator.share) {
+      navigator.share({
+        title: 'Compartir Tarifa',
+        text: `Detalles de la tarifa #${tarifaId}`,
+        url: shareUrl
+      }).catch(err => {
+        console.error('Error al compartir:', err);
+      });
+    } else {
+      navigator.clipboard.writeText(shareUrl)
+        .then(() => {
+          setShareMessage('¡Enlace copiado al portapapeles!');
+          setTimeout(() => setShareMessage(null), 3000);
+        })
+        .catch(err => {
+          console.error('Error al copiar enlace:', err);
+          alert('No se pudo copiar el enlace. Intente nuevamente.');
+        });
+    }
   };
 
   const formatCurrency = (value: number) => {
@@ -147,41 +134,118 @@ const TarifasContrato = () => {
     return new Date(dateString).toLocaleDateString();
   };
 
+  const volverAContratos = () => {
+    localStorage.setItem('adminActiveTab', 'contratos');
+    navigate('/admin');
+  };
+
   return (
-    <div>
+    <div className="tarifas-container">
       <div className="d-flex justify-content-between align-items-center mb-3">
-        <h2>Tarifas del Contrato #{contratoId}</h2>
+        <h2>Tarifas del Contrato - ID {contratoId}</h2>
         <div>
           <button 
             className="btn form-button-outline mr-2" 
-            onClick={() => navigate('/admin')}
+            onClick={volverAContratos}
           >
-            Volver a Contratos
+            <i className="fa fa-arrow-left mr-1"></i> Volver a Contratos
           </button>
           <button 
             className="btn form-button-primary" 
             onClick={() => navigate(`/crear-tarifa/${contratoId}`)}
           >
-            Agregar Nueva Tarifa
+            <i className="fa fa-plus mr-1"></i> Agregar Nueva Tarifa
           </button>
         </div>
       </div>
       
+      {shareMessage && (
+        <div className="alert alert-success alert-dismissible fade show" role="alert">
+          {shareMessage}
+          <button type="button" className="close" onClick={() => setShareMessage(null)}>
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+      )}
+      
+      {/* Tarjeta de detalles del contrato */}
+      {contrato && (
+        <div className="card contrato-details-card mb-4">
+          <div className="card-header">
+            <h5 className="mb-0">Detalles del Contrato</h5>
+          </div>
+          <div className="card-body">
+            <div className="row">
+              <div className="col-md-6 col-lg-3 mb-3 mb-lg-0">
+                <div className="detail-item">
+                  <span className="detail-label">ID:</span>
+                  <span className="detail-value">{contrato.contrato_id}</span>
+                </div>
+                <div className="detail-item">
+                  <span className="detail-label">Tipo:</span>
+                  <span className="detail-value">{contrato.es_spot ? 'Spot' : 'Regular'}</span>
+                </div>
+              </div>
+              
+              <div className="col-md-6 col-lg-3 mb-3 mb-lg-0">
+                <div className="detail-item">
+                  <span className="detail-label">Transportista:</span>
+                  <span className="detail-value">{contrato.nombre_transportista || 'N/A'}</span>
+                </div>
+                <div className="detail-item">
+                  <span className="detail-label">Fecha Fin:</span>
+                  <span className="detail-value">{formatDate(contrato.fecha_fin)}</span>
+                </div>
+              </div>
+              
+              <div className="col-md-6 col-lg-3 mb-3 mb-md-0">
+                <div className="detail-item">
+                  <span className="detail-label">Tipo Reajuste:</span>
+                  <span className="detail-value">{contrato.tipo_reajuste || 'N/A'}</span>
+                </div>
+                <div className="detail-item">
+                  <span className="detail-label">Frecuencia:</span>
+                  <span className="detail-value">{contrato.frecuencia_reajuste || 'N/A'}</span>
+                </div>
+              </div>
+              
+              <div className="col-md-6 col-lg-3">
+                <div className="detail-item">
+                  <span className="detail-label">Próx. Reajuste:</span>
+                  <span className="detail-value">{formatDate(contrato.fecha_proximo_reajuste)}</span>
+                </div>
+                <div className="detail-item">
+                  <span className="detail-label">Estado:</span>
+                  <span className={`detail-value status-badge ${
+                    !contrato.fecha_fin ? 'status-active' : 
+                    new Date(contrato.fecha_fin) < new Date() ? 'status-expired' : 'status-active'
+                  }`}>
+                    {!contrato.fecha_fin ? 'Activo' : 
+                     new Date(contrato.fecha_fin) < new Date() ? 'Vencido' : 'Activo'}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
       {error && <div className="alert alert-danger">{error}</div>}
       
       {loading ? (
-        <div className="text-center">
+        <div className="text-center py-4">
           <p>Cargando tarifas...</p>
         </div>
       ) : (
         <>
           <div className="table-responsive">
-            <table className="custom-table">
+            <table className="custom-table table-bordered">
               <thead>
                 <tr>
                   <th>ID</th>
                   <th>Descripción</th>
                   <th>Tipo Transporte</th>
+                  <th>Transportista</th>
                   <th>Tarifa Inicial</th>
                   <th>Tarifa Actual</th>
                   <th>Inicio Vigencia</th>
@@ -195,11 +259,12 @@ const TarifasContrato = () => {
                     <tr key={tarifa.tarifario_contrato_id}>
                       <td>{tarifa.tarifario_contrato_id}</td>
                       <td>{tarifa.descripcion_tarifa}</td>
-                      <td>{tarifa.tipo_transporte_nombre}</td>
+                      <td>{tarifa.nombre_tipo_transporte}</td>
+                      <td>{tarifa.nombre_transportista || 'N/A'}</td>
                       <td className="text-right">${formatCurrency(tarifa.tarifa_inicial)}</td>
                       <td className="text-right">${formatCurrency(tarifa.tarifa_actual)}</td>
-                      <td>{formatDate(tarifa.fecha_inicio_vigencia)}</td>
-                      <td>{formatDate(tarifa.fecha_fin_vigencia)}</td>
+                      <td>{formatDate(tarifa.fecha_inicio_vigencia_actual)}</td>
+                      <td>{formatDate(tarifa.fecha_fin_vigencia_actual)}</td>
                       <td>
                         <div className="d-flex justify-content-around action-buttons">
                           {/* Botón Editar */}
@@ -220,6 +285,15 @@ const TarifasContrato = () => {
                             <i className="fa fa-list"></i>
                           </button>
                           
+                          {/* Botón Compartir  */}
+                          <button
+                            title="Compartir enlace de tarifa"
+                            className="btn-action btn-share"
+                            onClick={() => compartirTarifa(tarifa.tarifario_contrato_id)}
+                          >
+                            <i className="fa fa-link"></i>
+                          </button>
+                          
                           {/* Botón Eliminar */}
                           <button
                             title="Eliminar tarifa"
@@ -234,7 +308,7 @@ const TarifasContrato = () => {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={8} className="text-center">
+                    <td colSpan={9} className="text-center">
                       No hay tarifas disponibles para este contrato
                     </td>
                   </tr>

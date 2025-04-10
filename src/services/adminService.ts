@@ -210,3 +210,145 @@ export const getTransportistas = async (): Promise<Transportista[]> => {
     throw error;
   }
 };
+
+// Funciones gestión de tarifas
+
+export interface TarifaContrato {
+  tarifario_contrato_id: number;
+  contrato_id: number;
+  descripcion_tarifa: string;
+  tipo_transporte_id: number;
+  tarifa_inicial: number;
+  es_spot: boolean;
+  nombre_tipo_transporte: string;
+  nombre_transportista: string | null;
+  tarifa_actual: number;
+  fecha_inicio_vigencia_actual: string;
+  fecha_fin_vigencia_actual: string;
+}
+
+export interface TipoTransporte {
+  id: number;
+  nombre: string;
+}
+
+export interface TarifasResponse {
+  data: TarifaContrato[];
+  pagination: PaginationInfo;
+}
+
+export const getTarifasByContrato = async (contratoId: number, limit: number = 10, offset: number = 0): Promise<TarifasResponse> => {
+  try {
+    const token = getToken();
+    const response = await axios.get(`${API_URL}/tarifario_contrato/contrato/${contratoId}`, {
+      params: { limit, offset },
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'application/json'
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error(`Error obteniendo tarifas del contrato ${contratoId}:`, error);
+    throw error;
+  }
+};
+
+export const getTiposTransporte = async (): Promise<TipoTransporte[]> => {
+  try {
+    const token = getToken();
+    const response = await axios.get(`${API_URL}/tiposTransporte`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'application/json'
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error obteniendo tipos de transporte:', error);
+    throw error;
+  }
+};
+
+export const getTarifaById = async (tarifaId: number): Promise<TarifaContrato> => {
+  try {
+    const token = getToken();
+    const response = await axios.get(`${API_URL}/tarifario_contrato/${tarifaId}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'application/json'
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error(`Error obteniendo tarifa con ID ${tarifaId}:`, error);
+    throw error;
+  }
+};
+
+export const createTarifa = async (tarifaData: any): Promise<any> => {
+  try {
+    const token = getToken();
+    const response = await axios.post(`${API_URL}/tarifario_contrato`, tarifaData, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error creando tarifa:', error);
+    throw error;
+  }
+};
+
+export const updateTarifa = async (tarifaId: number, tarifaData: any): Promise<any> => {
+  try {
+    const token = getToken();
+    const response = await axios.put(`${API_URL}/tarifario_contrato/${tarifaId}`, tarifaData, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error(`Error actualizando tarifa con ID ${tarifaId}:`, error);
+    throw error;
+  }
+};
+
+export const deleteTarifa = async (tarifaId: number): Promise<any> => {
+  try {
+    const token = getToken();
+    const response = await axios.delete(`${API_URL}/tarifario_contrato/${tarifaId}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'application/json'
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error(`Error eliminando tarifa con ID ${tarifaId}:`, error);
+    throw error;
+  }
+};
+
+export const getAsignacionesByTarifa = async (tarifaId: number, limit: number = 10, offset: number = 0): Promise<any> => {
+  try {
+    const token = getToken();
+    const response = await axios.get(`${API_URL}/tarifario_contrato/${tarifaId}/asignaciones`, {
+      params: { limit, offset },
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'application/json'
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error(`Error obteniendo asignaciones para la tarifa ${tarifaId}:`, error);
+    throw error;
+  }
+};

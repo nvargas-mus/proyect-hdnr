@@ -5,6 +5,7 @@ import SolicitudForm from './components/SolicitudForm';
 import HomePage from './components/HomePage';
 import CoordinadorPage from './components/CoordinadorPage';
 import AdminPage from './components/AdminPage';
+import TarifasContrato from './components/TarifasContrato';
 import NotFoundPage from './components/NotFoundPage';
 import Navbar from './components/NavBar';
 import { SolicitudProvider } from './context/SolicitudContext';
@@ -22,6 +23,7 @@ const App = () => {
           <Route path="/crear-solicitud" element={<SolicitudForm />} />
           <Route path="/coordinador" element={<CoordinadorPage />} /> 
           <Route path="/admin" element={<AdminPage />} />
+          <Route path="/tarifas-contrato/:contratoId" element={<TarifasContrato />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </div>
