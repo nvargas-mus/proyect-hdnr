@@ -124,3 +124,105 @@
     color: #6c757d;
     font-size: 14px;
   }
+
+/* Estilos modal confirmación eliminación */
+.delete-confirm-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1050;
+}
+
+.delete-confirm-modal {
+  background-color: white;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 450px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+}
+
+.delete-confirm-header {
+  padding: 15px 20px;
+  border-bottom: 1px solid #e9ecef;
+  display: flex;
+  align-items: center;
+  background-color: #f8f9fa;
+}
+
+.delete-confirm-header h5 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: #333;
+}
+
+.delete-confirm-body {
+  padding: 20px;
+  text-align: center;
+}
+
+.delete-icon {
+  margin: 10px 0 20px;
+}
+
+.delete-icon i {
+  font-size: 48px;
+  color: #dc3545;
+}
+
+.delete-message {
+  font-size: 18px;
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.delete-warning {
+  color: #6c757d;
+  font-size: 14px;
+}
+
+.delete-confirm-footer {
+  padding: 15px 20px;
+  border-top: 1px solid #e9ecef;
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+}
+
+.delete-confirm-footer .btn-cancel {
+  padding: 8px 16px;
+  background-color: #f8f9fa;
+  color: #333;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.delete-confirm-footer .btn-cancel:hover {
+  background-color: #e9ecef;
+}
+
+.delete-confirm-footer .btn-delete {
+  padding: 8px 16px;
+  background-color: #dc3545;
+  color: white;
+  border: 1px solid #dc3545;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.delete-confirm-footer .btn-delete:hover {
+  background-color: #c82333;
+  border-color: #bd2130;
+}

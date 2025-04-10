@@ -12,37 +12,7 @@ const ContratoViewModal = ({ contratoId, show, onClose }: ContratoViewModalProps
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchContrato = async () => {
-      setLoading(true);
-      setError(null);
-      
-      try {
-        const data = await getContratoById(contratoId);
-        setContrato(data);
-      } catch (err) {
-        console.error('Error cargando datos del contrato:', err);
-        setError('Error al cargar los datos del contrato. Por favor, intenta nuevamente.');
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    if (show && contratoId) {
-      fetchContrato();
-    }
-  }, [contratoId, show]);
-
-  if (!show) {
-    return null;
-  }
-
-  const formatDate = (dateString: string | null) => {
-    if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleDateString();
-  };
-
-  const modalStyles = {
+  const styles = {
     overlay: {
       position: 'fixed' as const,
       top: 0,
@@ -73,7 +43,7 @@ const ContratoViewModal = ({ contratoId, show, onClose }: ContratoViewModalProps
       backgroundColor: '#243c6c',
       borderRadius: '8px 8px 0 0',
     },
-    headerTitle: {
+    title: {
       margin: 0,
       color: 'white',
       fontWeight: 600,
@@ -89,29 +59,33 @@ const ContratoViewModal = ({ contratoId, show, onClose }: ContratoViewModalProps
     body: {
       padding: '20px 40px',
     },
-    infoSection: {
+    group: {
       marginBottom: '20px',
       paddingBottom: '15px',
       borderBottom: '1px solid #e9ecef',
     },
     label: {
+      display: 'block',
+      marginBottom: '8px',
       fontWeight: 600,
       color: '#243c6c',
-      marginBottom: '5px',
-      display: 'block',
+      fontSize: '15px',
     },
     value: {
-      marginBottom: '15px',
       color: '#333',
+      fontSize: '15px',
+      lineHeight: 1.5,
     },
-    documentLink: {
-      color: '#0d6efd',
-      textDecoration: 'none',
-      display: 'inline-flex',
+    documentInfo: {
+      display: 'flex',
       alignItems: 'center',
-      gap: '5px',
+      gap: '8px',
     },
-    footer: {
+    documentIcon: {
+      color: '#dc3545',
+      fontSize: '16px',
+    },
+    actions: {
       display: 'flex',
       justifyContent: 'flex-end',
       padding: '15px 40px 20px',
@@ -128,17 +102,47 @@ const ContratoViewModal = ({ contratoId, show, onClose }: ContratoViewModalProps
     }
   };
 
+  useEffect(() => {
+    const fetchContrato = async () => {
+      setLoading(true);
+      setError(null);
+      
+      try {
+        const data = await getContratoById(contratoId);
+        setContrato(data);
+      } catch (err) {
+        console.error('Error cargando datos del contrato:', err);
+        setError('Error al cargar los datos del contrato. Por favor, intenta nuevamente.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    if (show && contratoId) {
+      fetchContrato();
+    }
+  }, [contratoId, show]);
+
+  if (!show) {
+    return null;
+  }
+
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return 'N/A';
+    return new Date(dateString).toLocaleDateString();
+  };
+
   return (
-    <div style={modalStyles.overlay}>
-      <div style={modalStyles.container}>
-        <div style={modalStyles.header}>
-          <h4 id="contratoViewModalTitle" style={modalStyles.headerTitle}>Detalles del Contrato #{contratoId}</h4>
-          <button type="button" style={modalStyles.closeButton} onClick={onClose}>
+    <div style={styles.overlay}>
+      <div style={styles.container}>
+        <div style={styles.header}>
+          <h4 id="contratoModalTitle" style={styles.title}>Detalles del Contrato - ID {contratoId}</h4>
+          <button type="button" style={styles.closeButton} onClick={onClose}>
             <i className="fa fa-times"></i>
           </button>
         </div>
         
-        <div style={modalStyles.body}>
+        <div style={styles.body}>
           {error && (
             <div style={{padding: '12px', backgroundColor: '#f8d7da', color: '#721c24', borderRadius: '4px', marginBottom: '20px'}}>
               {error}
@@ -151,49 +155,59 @@ const ContratoViewModal = ({ contratoId, show, onClose }: ContratoViewModalProps
             </div>
           ) : contrato ? (
             <div>
-              <div style={modalStyles.infoSection}>
-                <div style={modalStyles.label}>ID del Contrato</div>
-                <div style={modalStyles.value}>{contrato.contrato_id}</div>
-                
-                <div style={modalStyles.label}>¿Es un contrato Spot?</div>
-                <div style={modalStyles.value}>{contrato.es_spot ? 'Sí' : 'No'}</div>
+              <div style={styles.group}>
+                <div style={styles.label}>ID del Contrato</div>
+                <div style={styles.value}>{contrato.contrato_id}</div>
               </div>
               
-              <div style={modalStyles.infoSection}>
-                <div style={modalStyles.label}>Transportista</div>
-                <div style={modalStyles.value}>
+              <div style={styles.group}>
+                <div style={styles.label}>¿Es un contrato Spot?</div>
+                <div style={styles.value}>{contrato.es_spot ? 'Sí' : 'No'}</div>
+              </div>
+              
+              <div style={styles.group}>
+                <div style={styles.label}>Transportista</div>
+                <div style={styles.value}>
                   {contrato.nombre_transportista || 'N/A'} 
                   {contrato.rut_transportista ? ` (RUT: ${contrato.rut_transportista})` : ''}
                 </div>
-                
-                <div style={modalStyles.label}>ID Transportista</div>
-                <div style={modalStyles.value}>{contrato.transportista_id || 'N/A'}</div>
               </div>
               
-              <div style={modalStyles.infoSection}>
-                <div style={modalStyles.label}>Documento de Respaldo</div>
-                <div style={modalStyles.value}>
+              <div style={styles.group}>
+                <div style={styles.label}>ID Transportista</div>
+                <div style={styles.value}>{contrato.transportista_id || 'N/A'}</div>
+              </div>
+              
+              <div style={styles.group}>
+                <div style={styles.label}>Documento de Respaldo</div>
+                <div style={styles.value}>
                   {contrato.documento_respaldo ? (
-                    <div style={{display: 'flex', alignItems: 'center', gap: '5px'}}>
-                      <i className="fa fa-file-pdf-o" style={{color: '#dc3545'}}></i>
-                      {contrato.documento_respaldo.split('/').pop() || 'documento.pdf'}
+                    <div style={styles.documentInfo}>
+                      <i className="fa fa-file-pdf-o" style={styles.documentIcon}></i>
+                      <span>{contrato.documento_respaldo.split('/').pop() || 'documento.pdf'}</span>
                     </div>
                   ) : 'No hay documento disponible'}
                 </div>
               </div>
               
-              <div style={modalStyles.infoSection}>
-                <div style={modalStyles.label}>Fecha de Fin</div>
-                <div style={modalStyles.value}>{formatDate(contrato.fecha_fin)}</div>
-                
-                <div style={modalStyles.label}>Tipo de Reajuste</div>
-                <div style={modalStyles.value}>{contrato.tipo_reajuste || 'N/A'}</div>
-                
-                <div style={modalStyles.label}>Frecuencia de Reajuste</div>
-                <div style={modalStyles.value}>{contrato.frecuencia_reajuste || 'N/A'}</div>
-                
-                <div style={modalStyles.label}>Fecha del Próximo Reajuste</div>
-                <div style={modalStyles.value}>{formatDate(contrato.fecha_proximo_reajuste)}</div>
+              <div style={styles.group}>
+                <div style={styles.label}>Fecha de Fin</div>
+                <div style={styles.value}>{formatDate(contrato.fecha_fin)}</div>
+              </div>
+              
+              <div style={styles.group}>
+                <div style={styles.label}>Tipo de Reajuste</div>
+                <div style={styles.value}>{contrato.tipo_reajuste || 'N/A'}</div>
+              </div>
+              
+              <div style={styles.group}>
+                <div style={styles.label}>Frecuencia de Reajuste</div>
+                <div style={styles.value}>{contrato.frecuencia_reajuste || 'N/A'}</div>
+              </div>
+              
+              <div style={styles.group}>
+                <div style={styles.label}>Fecha del Próximo Reajuste</div>
+                <div style={styles.value}>{formatDate(contrato.fecha_proximo_reajuste)}</div>
               </div>
             </div>
           ) : (
@@ -203,8 +217,12 @@ const ContratoViewModal = ({ contratoId, show, onClose }: ContratoViewModalProps
           )}
         </div>
         
-        <div style={modalStyles.footer}>
-          <button style={modalStyles.button} onClick={onClose}>
+        <div style={styles.actions}>
+          <button 
+            type="button" 
+            style={styles.button}
+            onClick={onClose}
+          >
             Cerrar
           </button>
         </div>

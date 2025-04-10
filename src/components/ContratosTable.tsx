@@ -12,6 +12,57 @@ import ContratoModal from './ContratoModal';
 import ContratoViewModal from './ContratoViewModal';
 import '../styles/ContratoStyle.css';
 
+interface DeleteConfirmModalProps {
+  show: boolean;
+  contratoId: number;
+  onClose: () => void;
+  onConfirm: () => void;
+}
+
+const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({ 
+  show, 
+  contratoId, 
+  onClose, 
+  onConfirm 
+}) => {
+  if (!show) return null;
+
+  return (
+    <div className="delete-confirm-modal-overlay">
+      <div className="delete-confirm-modal">
+        <div className="delete-confirm-header">
+          <h5>Confirmar eliminación</h5>
+        </div>
+        <div className="delete-confirm-body">
+          <div className="delete-icon">
+            <i className="fa fa-exclamation-triangle"></i>
+          </div>
+          <p className="delete-message">
+            ¿Está seguro que desea eliminar el contrato con ID <strong>{contratoId}</strong>?
+          </p>
+          <p className="delete-warning">
+            Esta acción no se puede deshacer.
+          </p>
+        </div>
+        <div className="delete-confirm-footer">
+          <button 
+            className="btn-cancel" 
+            onClick={onClose}
+          >
+            Cancelar
+          </button>
+          <button 
+            className="btn-delete" 
+            onClick={onConfirm}
+          >
+            Eliminar
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const ContratosTable = () => {
   const navigate = useNavigate();
   const [contratos, setContratos] = useState<Contrato[]>([]);
@@ -30,6 +81,9 @@ const ContratosTable = () => {
 
   const [showViewModal, setShowViewModal] = useState(false);
   const [viewContratoId, setViewContratoId] = useState<number | null>(null);
+  
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteContratoId, setDeleteContratoId] = useState<number | null>(null);
 
   const fetchContratos = async (limit: number, offset: number) => {
     setLoading(true);
@@ -93,16 +147,29 @@ const ContratosTable = () => {
     setViewContratoId(null);
   };
 
-  const handleDelete = async (id: number) => {
-    if (window.confirm('¿Está seguro de que desea eliminar este contrato?')) {
-      try {
-        await deleteContrato(id);
-        // Recargar la tabla después de eliminar
-        fetchContratos(pagination.limit, pagination.offset);
-      } catch (err) {
-        console.error('Error eliminando contrato:', err);
-        alert('Error al eliminar el contrato');
-      }
+  const handleShowDeleteConfirm = (id: number) => {
+    setDeleteContratoId(id);
+    setShowDeleteModal(true);
+  };
+
+  const handleCloseDeleteModal = () => {
+    setShowDeleteModal(false);
+    setDeleteContratoId(null);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (deleteContratoId === null) return;
+    
+    try {
+      await deleteContrato(deleteContratoId);
+      
+      setShowDeleteModal(false);
+      setDeleteContratoId(null);
+      
+      fetchContratos(pagination.limit, pagination.offset);
+    } catch (err) {
+      console.error('Error eliminando contrato:', err);
+      setError('Error al eliminar el contrato. Por favor, intente nuevamente.');
     }
   };
 
@@ -183,7 +250,7 @@ const ContratosTable = () => {
                               'N/A'
                             }
                           </span>
-                          {/* Siempre mostrar el icono de descarga */}
+                          {/* icono de descarga */}
                           <button 
                             className="btn-icon btn-download"
                             onClick={() => handleDownload(contrato.contrato_id)}
@@ -231,7 +298,7 @@ const ContratosTable = () => {
                           <button
                             title="Eliminar contrato"
                             className="btn-action btn-delete"
-                            onClick={() => handleDelete(contrato.contrato_id)}
+                            onClick={() => handleShowDeleteConfirm(contrato.contrato_id)}
                           >
                             <i className="fa fa-trash"></i>
                           </button>
@@ -288,6 +355,16 @@ const ContratosTable = () => {
           contratoId={viewContratoId}
           show={showViewModal}
           onClose={handleCloseViewModal}
+        />
+      )}
+
+      {/* Modal para confirmar eliminación */}
+      {showDeleteModal && deleteContratoId !== null && (
+        <DeleteConfirmModal
+          contratoId={deleteContratoId}
+          show={showDeleteModal}
+          onClose={handleCloseDeleteModal}
+          onConfirm={handleConfirmDelete}
         />
       )}
     </div>
