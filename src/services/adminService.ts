@@ -72,10 +72,12 @@ export interface ContratosResponse {
 }
 
 export interface Transportista {
-  id: number;
-  nombre: string;
-  rut?: string;
-  direccion?: string;
+  transportista_id: number;
+  nombre_transportista: string;
+  rut_transportista: string;
+  direccion_transportista: string;
+  fecha_creacion: string;
+  ultima_actualizacion: string;
 }
 
 export const getContratos = async (limit: number = 10, offset: number = 0): Promise<ContratosResponse> => {

@@ -10,6 +10,7 @@ import {
 } from '../services/adminService';
 import ContratoModal from './ContratoModal';
 import ContratoViewModal from './ContratoViewModal';
+import NuevoContratoModal from './NuevoContratoModal';
 import '../styles/ContratoStyle.css';
 
 interface DeleteConfirmModalProps {
@@ -84,6 +85,8 @@ const ContratosTable = () => {
   
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteContratoId, setDeleteContratoId] = useState<number | null>(null);
+  
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   const fetchContratos = async (limit: number, offset: number) => {
     setLoading(true);
@@ -130,6 +133,19 @@ const ContratosTable = () => {
   const handleSaveContrato = () => {
     setShowEditModal(false);
     setSelectedContratoId(null);
+    fetchContratos(pagination.limit, pagination.offset);
+  };
+  
+  const handleOpenCreateModal = () => {
+    setShowCreateModal(true);
+  };
+
+  const handleCloseCreateModal = () => {
+    setShowCreateModal(false);
+  };
+
+  const handleSaveNewContrato = () => {
+    setShowCreateModal(false);
     fetchContratos(pagination.limit, pagination.offset);
   };
 
@@ -207,7 +223,7 @@ const ContratosTable = () => {
         
         <button 
           className="btn form-button-primary" 
-          onClick={() => navigate('/crear-contrato')}
+          onClick={handleOpenCreateModal}
         >
           <i className="fa fa-plus mr-2"></i> Crear Nuevo Contrato
         </button>
@@ -242,6 +258,7 @@ const ContratosTable = () => {
                     <tr key={contrato.contrato_id}>
                       <td>{contrato.contrato_id}</td>
                       <td>{contrato.es_spot ? 'Sí' : 'No'}</td>
+
                       <td>
                         <div className="documento-container">
                           <span className="documento-nombre">
@@ -250,14 +267,15 @@ const ContratosTable = () => {
                               'N/A'
                             }
                           </span>
-                          {/* icono de descarga */}
-                          <button 
-                            className="btn-icon btn-download"
-                            onClick={() => handleDownload(contrato.contrato_id)}
-                            title="Descargar documento"
-                          >
-                            <i className="fa fa-download"></i>
-                          </button>
+                          {contrato.documento_respaldo && (
+                            <button 
+                              className="btn-icon btn-download"
+                              onClick={() => handleDownload(contrato.contrato_id)}
+                              title="Descargar documento"
+                            >
+                              <i className="fa fa-download"></i>
+                            </button>
+                          )}
                         </div>
                       </td>
                       <td>{contrato.nombre_transportista || 'N/A'}</td>
@@ -267,7 +285,6 @@ const ContratosTable = () => {
                       <td>{formatDate(contrato.fecha_proximo_reajuste)}</td>
                       <td>
                         <div className="d-flex justify-content-around action-buttons">
-                          {/* Botón Editar */}
                           <button
                             title="Editar contrato"
                             className="btn-action btn-edit"
@@ -276,7 +293,6 @@ const ContratosTable = () => {
                             <i className="fa fa-edit"></i>
                           </button>
                           
-                          {/* Botón Ver Tarifas */}
                           <button
                             title="Ver tarifas"
                             className="btn-action btn-list"
@@ -285,7 +301,6 @@ const ContratosTable = () => {
                             <i className="fa fa-list"></i>
                           </button>
                           
-                          {/* Botón Visualizar */}
                           <button
                             title="Visualizar contrato"
                             className="btn-action btn-view"
@@ -294,7 +309,6 @@ const ContratosTable = () => {
                             <i className="fa fa-eye"></i>
                           </button>
                           
-                          {/* Botón Eliminar */}
                           <button
                             title="Eliminar contrato"
                             className="btn-action btn-delete"
@@ -339,7 +353,6 @@ const ContratosTable = () => {
         </>
       )}
 
-      {/* Modal para editar contrato */}
       {showEditModal && selectedContratoId && (
         <ContratoModal 
           contratoId={selectedContratoId}
@@ -349,7 +362,6 @@ const ContratosTable = () => {
         />
       )}
 
-      {/* Modal para visualizar contrato */}
       {showViewModal && viewContratoId && (
         <ContratoViewModal
           contratoId={viewContratoId}
@@ -358,7 +370,6 @@ const ContratosTable = () => {
         />
       )}
 
-      {/* Modal para confirmar eliminación */}
       {showDeleteModal && deleteContratoId !== null && (
         <DeleteConfirmModal
           contratoId={deleteContratoId}
@@ -367,6 +378,12 @@ const ContratosTable = () => {
           onConfirm={handleConfirmDelete}
         />
       )}
+      
+      <NuevoContratoModal
+        show={showCreateModal}
+        onClose={handleCloseCreateModal}
+        onSave={handleSaveNewContrato}
+      />
     </div>
   );
 };
