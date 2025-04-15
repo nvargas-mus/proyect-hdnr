@@ -43,7 +43,7 @@ export const asignarClientesAUsuario = async (
   }
 };
 
-// Funciones gestión de contratos
+// -- Funciones gestión de contratos
 
 export interface Contrato {
   contrato_id: number; 
@@ -213,7 +213,7 @@ export const getTransportistas = async (): Promise<Transportista[]> => {
   }
 };
 
-// Funciones gestión de tarifas
+// -- Funciones gestión de tarifas
 
 export interface TarifaContrato {
   tarifario_contrato_id: number;
@@ -230,8 +230,8 @@ export interface TarifaContrato {
 }
 
 export interface TipoTransporte {
-  id: number;
-  nombre: string;
+  tipo_transporte_id: number;
+  nombre_tipo_transporte: string;
 }
 
 export interface TarifasResponse {
@@ -265,7 +265,13 @@ export const getTiposTransporte = async (): Promise<TipoTransporte[]> => {
         'Accept': 'application/json'
       }
     });
-    return response.data;
+    
+    const tiposTransporte = response.data.map((tipo: any) => ({
+      tipo_transporte_id: tipo.id || tipo.tipo_transporte_id,
+      nombre_tipo_transporte: tipo.nombre || tipo.nombre_tipo_transporte
+    }));
+    
+    return tiposTransporte;
   } catch (error) {
     console.error('Error obteniendo tipos de transporte:', error);
     throw error;
@@ -288,7 +294,14 @@ export const getTarifaById = async (tarifaId: number): Promise<TarifaContrato> =
   }
 };
 
-export const createTarifa = async (tarifaData: any): Promise<any> => {
+export const createTarifa = async (tarifaData: {
+  contrato_id: number;
+  descripcion_tarifa: string;
+  tipo_transporte_id: number;
+  tarifa_inicial: number;
+  fecha_inicio_vigencia: string;
+  fecha_fin_vigencia: string | null;
+}): Promise<any> => {
   try {
     const token = getToken();
     const response = await axios.post(`${API_URL}/tarifario_contrato`, tarifaData, {
