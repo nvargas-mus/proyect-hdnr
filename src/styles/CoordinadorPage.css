@@ -84,6 +84,7 @@
   border-spacing: 0;
   font-family: 'Arial', sans-serif;
   border: none;
+  color: #243c6c !important;
 }
 
 .custom-table thead {

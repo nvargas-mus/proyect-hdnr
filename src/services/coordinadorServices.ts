@@ -2,6 +2,21 @@ import axios from 'axios';
 
 const API_URL = 'http://15.229.249.223:3000';
 
+export interface DetalleConTransporte {
+  codigo_material_matnr: number;
+  nombre_tipo_transporte: string | null;
+  valor_capacidad: string | null;
+  nombre_unidad: string | null;
+  nombre_material_maktg: string;
+  unidad_venta_kmein: string;
+  nombre_transportista: string | null;
+  nombre: string | null;
+  rut: string | null;
+  patente: string | null;
+  cantidad: number;
+  transportista_id?: number | null;
+}
+
 export interface Residuo {
   nombre_material: string;
   cantidad_declarada: number;
@@ -22,6 +37,8 @@ export interface Solicitud {
   comuna: string | null;
   direccion_completa: string;
   residuos: Residuo[] | null;
+  detalles_con_transporte?: DetalleConTransporte[] | null;
+  detalles_sin_transporte?: any[] | null;
 }
 
 export interface SolicitudesResponse {
@@ -40,7 +57,20 @@ export interface SolicitudesResponse {
   datos: Solicitud[];
 }
 
-// Interfaz para opciones de filtro
+export interface AgendamientoData {
+  fecha_servicio_programada: string;
+  hora_servicio_programada: string;
+  id_linea_descarga: number;
+  numero_nota_venta: string;
+  descripcion: string;
+  clase_peligrosidad?: string;
+  declaracion_numero?: string;
+  transportista_id?: number | null;
+  asignacion_id?: number | null;
+  conductor_id?: number | null;
+  vehiculo_id?: number | null;
+}
+
 interface FilterOptions {
   cliente?: number;
   usuario?: number;
@@ -52,7 +82,6 @@ interface FilterOptions {
   [key: string]: any;
 }
 
-//token de autenticación
 export const getAuthToken = () => {
   return localStorage.getItem('authToken');
 };
@@ -131,5 +160,42 @@ export const getSolicitudById = async (solicitudId: number): Promise<Solicitud> 
   } catch (error) {
     console.error(`Error al obtener la solicitud #${solicitudId}:`, error);
     throw error;
+  }
+};
+
+export const agendarSolicitud = async (
+  solicitudId: number,
+  datosAgendamiento: AgendamientoData
+): Promise<Solicitud> => {
+  const token = getAuthToken();
+  if (!token) {
+    throw new Error('No se encontró token de autenticación. Por favor inicie sesión.');
+  }
+
+  const payload: Record<string, any> = { ...datosAgendamiento };
+  if (payload.transportista_id === null) payload.transportista_id = undefined;
+  if (payload.asignacion_id   === null) payload.asignacion_id   = undefined;
+
+  /*Para depurar: muestra lo que realmente saldrá en la petición */
+  console.log('🟦 Payload agendarSolicitud:', JSON.stringify(payload, null, 2));
+
+  try {
+    const { data } = await axios.put<Solicitud>(
+      `${API_URL}/solicitudes/${solicitudId}/agendar`,
+      payload,
+      {
+        headers: {
+          accept: 'application/json',
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        }
+      }
+    );
+    return data;
+  } catch (error: any) {
+    /* Para depurar: muestra el cuerrpo de error que devuelve el backend */
+    console.error('🟥 Backend error body:', error.response?.data);
+    console.error(`Error al agendar la solicitud #${solicitudId}:`, error);
+    throw error;   // vuelve a lanzar para que lo capture el componente- 
   }
 };

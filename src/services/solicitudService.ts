@@ -1,5 +1,9 @@
 import api from './api';
 
+export const getAuthToken = () => {
+  return localStorage.getItem('authToken');
+};
+
 export const crearSolicitud = async (solicitudData: {
   usuario_id: number;
   codigo_cliente_kunnr: number;
@@ -130,6 +134,53 @@ export const getSolicitudesPorUsuario = async (usuario_id: number, include?: str
   return response.data;
 };
 
+export const crearDetalleConTransporte = async (data: {
+  solicitud_id: number;
+  codigo_material_matnr: number;
+  unidad_venta_kmein: string;
+  cantidad: number;
+}) => {
+  const token = getAuthToken();
+  
+  if (!token) {
+    throw new Error('No se encontró token de autenticación. Por favor inicie sesión.');
+  }
+  
+  try {
+    if (!data.solicitud_id || !data.codigo_material_matnr || !data.unidad_venta_kmein || data.cantidad <= 0) {
+      throw new Error('Datos incompletos para crear detalle con transporte');
+    }
 
-
-
+    const datosFormateados = {
+      solicitud_id: Number(data.solicitud_id),
+      codigo_material_matnr: Number(data.codigo_material_matnr),
+      unidad_venta_kmein: data.unidad_venta_kmein,
+      cantidad: Number(data.cantidad)
+    };
+    
+    console.log('Enviando datos de transporte:', datosFormateados);
+    
+    const response = await api.post(
+      '/detalle_con_transporte',
+      datosFormateados,
+      {
+        headers: {
+          'accept': '*/*',
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      }
+    );
+    
+    return response.data;
+  } catch (error: any) {
+    console.error('Error al crear detalle con transporte:', error);
+    if (error.response) {
+      throw new Error(`Error ${error.response.status}: ${error.response.data?.message || 'Error en la solicitud'}`);
+    } else if (error.request) {
+      throw new Error('No se recibió respuesta del servidor');
+    } else {
+      throw error;
+    }
+  }
+};

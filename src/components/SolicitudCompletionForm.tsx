@@ -7,6 +7,7 @@ import {
   getTiposTransporte,
   getCapacidadesTransporte,
   crearSolicitudMateriales,
+  crearDetalleConTransporte,
 } from '../services/solicitudService';
 import '../styles/Form.css';
 
@@ -28,6 +29,8 @@ const SolicitudCompletionForm: React.FC<SolicitudCompletionFormProps> = ({
   const [servicios, setServicios] = useState<any[]>([]);
   const [tiposTransporte, setTiposTransporte] = useState<any[]>([]);
   const [capacidades, setCapacidades] = useState<any[]>([]);
+  const [loading, setLoading] = useState<boolean>(false); 
+  const [errorMessage, setErrorMessage] = useState<string | null>(null); 
 
   const [residuosSeleccionados, setResiduosSeleccionados] = useState<
     {
@@ -69,6 +72,7 @@ const SolicitudCompletionForm: React.FC<SolicitudCompletionFormProps> = ({
         setCapacidades(capacidadesData);
       } catch (error) {
         console.error('Error al cargar datos:', error);
+        setErrorMessage('Error al cargar datos iniciales. Por favor, intente nuevamente.');
       }
     };
     fetchData();
@@ -116,36 +120,78 @@ const SolicitudCompletionForm: React.FC<SolicitudCompletionFormProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
+    setErrorMessage(null);
+    
     try {
       const atLeastOne = residuosSeleccionados.some(
         (row) => row.codigo_material_matnr_residuo.trim() !== ''
       );
       if (!atLeastOne) {
-        alert('Debes seleccionar al menos un residuo.');
+        setErrorMessage('Debes seleccionar al menos un residuo.');
+        setLoading(false);
         return;
       }
+      
       for (const row of residuosSeleccionados) {
         if (!row.codigo_material_matnr_residuo.trim()) continue;
-        const codeString = row.codigo_material_matnr_residuo.split(' - ')[0].trim();
+        
+        let codeString = row.codigo_material_matnr_residuo;
+        if (codeString.includes(' - ')) {
+          codeString = codeString.split(' - ')[0].trim();
+        }
+        
         const codigo = Number(codeString);
         const cantidad = Number(row.cantidad_declarada);
         const unidad = Number(row.unidad_medida_id_residuo);
+        
         if (isNaN(codigo) || isNaN(cantidad) || isNaN(unidad)) {
-          alert('Verifica que todos los campos de residuos sean válidos.');
+          setErrorMessage('Verifica que todos los campos de residuos sean válidos.');
+          setLoading(false);
           return;
         }
+        
         const dataToSend = {
           solicitud_id: solicitudId,
           codigo_material_matnr: codigo,
           cantidad_declarada: cantidad,
           unidad_medida_id: unidad,
         };
+        
         await crearSolicitudMateriales(dataToSend);
       }
+      
+      if (requiereTransporte && formData.codigo_material_matnr_servicio) {
+        let codigoServicio = formData.codigo_material_matnr_servicio;
+        if (codigoServicio.includes(' - ')) {
+          codigoServicio = codigoServicio.split(' - ')[0].trim();
+        }
+        
+        const cantidadServicio = Number(formData.cantidad_servicio);
+        
+        if (isNaN(Number(codigoServicio)) || isNaN(cantidadServicio) || !formData.unidad_venta_kmein) {
+          setErrorMessage('Verifica que todos los campos de servicio sean válidos.');
+          setLoading(false);
+          return;
+        }
+        
+        const detalleTransporte = {
+          solicitud_id: solicitudId,
+          codigo_material_matnr: Number(codigoServicio),
+          unidad_venta_kmein: formData.unidad_venta_kmein,
+          cantidad: cantidadServicio
+        };
+        
+        console.log('Enviando detalle con transporte:', detalleTransporte);
+        await crearDetalleConTransporte(detalleTransporte);
+      }
+      
       setShowSuccessModal(true);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error al completar la solicitud:', err);
-      alert('Error al completar la solicitud. Verifica los datos e intente nuevamente.');
+      setErrorMessage(`Error al completar la solicitud: ${err.message || 'Verifica los datos e intente nuevamente.'}`);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -164,6 +210,14 @@ const SolicitudCompletionForm: React.FC<SolicitudCompletionFormProps> = ({
         <div className="col-md-8">
           <div className="card p-4">
             <h3 className="card-title text-center">Completar Solicitud (ID: {solicitudId})</h3>
+            
+            {/* Mensaje de error */}
+            {errorMessage && (
+              <div className="alert alert-danger" role="alert">
+                {errorMessage}
+              </div>
+            )}
+            
             <form onSubmit={handleSubmit}>
               <input type="hidden" name="solicitud_id" value={solicitudId} />
 
@@ -350,8 +404,12 @@ const SolicitudCompletionForm: React.FC<SolicitudCompletionFormProps> = ({
                 </>
               )}
 
-              <button type="submit" className="btn btn-primary w-100 form-button-primary">
-                Completar Solicitud
+              <button 
+                type="submit" 
+                className="btn btn-primary w-100 form-button-primary"
+                disabled={loading}
+              >
+                {loading ? 'Guardando...' : 'Completar Solicitud'}
               </button>
             </form>
           </div>
@@ -360,7 +418,7 @@ const SolicitudCompletionForm: React.FC<SolicitudCompletionFormProps> = ({
 
       {/* Botón Volver */}
       <div className="col-12 d-flex justify-content-start mt-3">
-        <button type="button" className="btn btn-secondary btn-volver" onClick={onBack}>
+        <button type="button" className="btn btn-secondary btn-volver" onClick={onBack} disabled={loading}>
           Volver
         </button>
       </div>
