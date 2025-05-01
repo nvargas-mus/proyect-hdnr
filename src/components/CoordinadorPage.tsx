@@ -1,12 +1,38 @@
+
+// src/pages/CoordinadorPage.tsx
 import React, { useEffect, useState } from 'react';
-import { Container, Row, Col, Card, Button, Modal, Table, Badge, Pagination, Form, Spinner, Alert } from 'react-bootstrap';
-import { FaEye, FaEdit, FaCalendarAlt, FaTruck, FaTimesCircle, FaSave } from 'react-icons/fa';
-import { 
-  getSolicitudesCoordinador, 
-  getSolicitudById, 
-  agendarSolicitud, 
-  Solicitud, 
-  AgendamientoData
+import {
+  Container,
+  Row,
+  Col,
+  Card,
+  Button,
+  Modal,
+  Table,
+  Badge,
+  Pagination,
+  Form,
+  Spinner,
+  Alert
+} from 'react-bootstrap';
+import {
+  FaEye,
+  FaEdit,
+  FaCalendarAlt,
+  FaTruck,
+  FaTimesCircle,
+  FaSave
+} from 'react-icons/fa';
+import {
+  getSolicitudesCoordinador,
+  getSolicitudById,
+  agendarSolicitud,
+  getTransportistas,
+  getAsignacionesTarifa,
+  Solicitud,
+  AgendamientoData,
+  Transportista,
+  AsignacionTarifa
 } from '../services/coordinadorServices';
 import { useNavigate } from 'react-router-dom';
 import FiltrosSolicitudes from '../components/FiltrosSolicitudes';
@@ -14,24 +40,39 @@ import '../styles/CoordinadorPage.css';
 
 const CoordinadorPage: React.FC = () => {
   const navigate = useNavigate();
-  
-  const [solicitudes, setSolicitudes] = useState<Solicitud[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-  const [paginaActual, setPaginaActual] = useState<number>(1);
-  const [totalPaginas, setTotalPaginas] = useState<number>(1);
-  const [totalSolicitudes, setTotalSolicitudes] = useState<number>(0);
-  
-  const [showDetalleModal, setShowDetalleModal] = useState<boolean>(false);
-  const [selectedSolicitudId, setSelectedSolicitudId] = useState<number | null>(null);
-  const [solicitudDetalle, setSolicitudDetalle] = useState<Solicitud | null>(null);
-  const [loadingDetalle, setLoadingDetalle] = useState<boolean>(false);
 
-  const [showAgendamientoModal, setShowAgendamientoModal] = useState<boolean>(false);
-  const [loadingAgendamiento, setLoadingAgendamiento] = useState<boolean>(false);
+  /* ───── Estados generales ───── */
+  const [solicitudes, setSolicitudes] = useState<Solicitud[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [paginaActual, setPaginaActual] = useState(1);
+  const [totalPaginas, setTotalPaginas] = useState(1);
+  const [totalSolicitudes, setTotalSolicitudes] = useState(0);
+  const [activeFilters, setActiveFilters] = useState<Record<string, any>>({});
+
+  /* ───── Modales ───── */
+  const [showDetalleModal, setShowDetalleModal] = useState(false);
+  const [showAgendamientoModal, setShowAgendamientoModal] = useState(false);
+  const [loadingDetalle, setLoadingDetalle] = useState(false);
+  const [loadingAgendamiento, setLoadingAgendamiento] = useState(false);
+
+  /* ───── Selección y catálogos ───── */
+  const [selectedSolicitudId, setSelectedSolicitudId] = useState<number | null>(
+    null
+  );
+  const [solicitudDetalle, setSolicitudDetalle] = useState<Solicitud | null>(
+    null
+  );
+  const [transportistas, setTransportistas] = useState<Transportista[]>([]);
+  const [asignaciones, setAsignaciones] = useState<AsignacionTarifa[]>([]);
+
+  /* ───── Feedback ───── */
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [agendamientoError, setAgendamientoError] = useState<string | null>(null);
-  
+  const [agendamientoError, setAgendamientoError] = useState<string | null>(
+    null
+  );
+
+  /* ───── Formulario ───── */
   const [formAgendamiento, setFormAgendamiento] = useState<AgendamientoData>({
     fecha_servicio_programada: '',
     hora_servicio_programada: '',
@@ -46,111 +87,174 @@ const CoordinadorPage: React.FC = () => {
     vehiculo_id: null
   });
 
-  const [activeFilters, setActiveFilters] = useState<Record<string, any>>({});
-
+  /* ═════════ 1. Carga de solicitudes ═════════ */
   useEffect(() => {
-    const fetchSolicitudes = async () => {
+    const fetch = async () => {
       try {
-        const token = localStorage.getItem('authToken');
-        if (!token) {
-          setError('Usuario no autenticado. Por favor inicie sesión');
-          setLoading(false);
-          setTimeout(() => {
-            navigate('/');
-          }, 2000);
-          return;
-        }
-        
         setLoading(true);
-        const response = await getSolicitudesCoordinador(
+        const { datos, metadatos } = await getSolicitudesCoordinador(
           paginaActual,
           20,
           activeFilters
         );
-        
-        setSolicitudes(response.datos);
-        setTotalPaginas(response.metadatos.total_paginas);
-        setTotalSolicitudes(response.metadatos.total_resultados);
-        setLoading(false);
+        setSolicitudes(datos);
+        setTotalPaginas(metadatos.total_paginas);
+        setTotalSolicitudes(metadatos.total_resultados);
       } catch (err: any) {
-        if (err.response && err.response.status === 401) {
-          setError('Sesión expirada. Por favor inicie sesión nuevamente.');
-          setTimeout(() => {
-            navigate('/');
-          }, 2000);
-        } else {
-          setError(`Error al cargar solicitudes: ${err.message || 'Error desconocido'}`);
-        }
+        if (err.response?.status === 401) {
+          setError('Sesión expirada.');
+          setTimeout(() => navigate('/'), 2000);
+        } else setError(err.message || 'Error al cargar solicitudes');
+      } finally {
         setLoading(false);
-        console.error(err);
       }
     };
+    fetch();
+  }, [paginaActual, activeFilters]);
 
-    fetchSolicitudes();
-  }, [paginaActual, navigate, activeFilters]);
-
-  const handlePageChange = (pageNumber: number) => {
-    setPaginaActual(pageNumber);
-  };
-
+  /* ═════════ 2. Ver detalle ═════════ */
   const handleVerDetalle = (id: number) => {
     setSelectedSolicitudId(id);
     setShowDetalleModal(true);
-
     setLoadingDetalle(true);
-
     getSolicitudById(id)
-      .then(solicitud => {
-        setSolicitudDetalle(solicitud);
-        setLoadingDetalle(false);
-      })
-      .catch(error => {
-        console.error('Error al obtener detalles:', error);
-        setLoadingDetalle(false);
-      });
+      .then(setSolicitudDetalle)
+      .finally(() => setLoadingDetalle(false));
   };
 
-  const handleEditar = (id: number) => {
-    console.log('Editar solicitud:', id);
-  };
-
+  /* ═════════ 3. Abrir modal agendamiento ═════════ */
   const handleVerFecha = async (id: number) => {
     setSelectedSolicitudId(id);
     setAgendamientoError(null);
     setSuccessMessage(null);
-    
+
     try {
       setLoadingDetalle(true);
-      
-      // detalles solicitud
-      const solicitudCompleta = await getSolicitudById(id);
-      setSolicitudDetalle(solicitudCompleta);
-      
-      const fechaSolicitada = new Date(solicitudCompleta.fecha_servicio_solicitada);
-      const fechaFormateada = fechaSolicitada.toISOString().split('T')[0];
-      
-      let transportistaId: number | undefined = undefined;
-      if (solicitudCompleta.detalles_con_transporte && 
-          solicitudCompleta.detalles_con_transporte.length > 0 && 
-          solicitudCompleta.detalles_con_transporte[0].transportista_id) {
-        transportistaId = solicitudCompleta.detalles_con_transporte[0].transportista_id;
-      }
+      const sol = await getSolicitudById(id);
+      setSolicitudDetalle(sol);
+
+      /* transportistas */
+      setTransportistas(await getTransportistas());
+
+      /* asignaciones */
+      if (sol.requiere_transporte && sol.detalles_con_transporte?.length) {
+        const mat = sol.detalles_con_transporte[0].codigo_material_matnr;
+        try {
+          setAsignaciones(
+            await getAsignacionesTarifa(
+              sol.codigo_cliente_kunnr,
+              sol.direccion_id,
+              mat
+            )
+          );
+        } catch {
+          setAsignaciones([]);
+        }
+      } else setAsignaciones([]);
+
+      /* init form */
+      const fechaSolicitada = new Date(sol.fecha_servicio_solicitada)
+        .toISOString()
+        .split('T')[0];
 
       setFormAgendamiento({
-        ...formAgendamiento,
-        fecha_servicio_programada: fechaFormateada,
-        hora_servicio_programada: solicitudCompleta.hora_servicio_solicitada,
+        fecha_servicio_programada: fechaSolicitada,
+        hora_servicio_programada: sol.hora_servicio_solicitada,
+        id_linea_descarga: 1,
+        numero_nota_venta: '',
         descripcion: `Agendamiento para solicitud #${id}`,
-        transportista_id: transportistaId
+        clase_peligrosidad: '',
+        declaracion_numero: '',
+        transportista_id:
+          sol.detalles_con_transporte?.[0]?.transportista_id ?? undefined,
+        asignacion_id: undefined,
+        conductor_id: null,
+        vehiculo_id: null
       });
-      
-      setLoadingDetalle(false);
+
       setShowAgendamientoModal(true);
-    } catch (error) {
-      console.error('Error al obtener detalles de la solicitud:', error);
-      setAgendamientoError('Error al cargar los detalles de la solicitud');
+    } catch {
+      setAgendamientoError('Error al cargar datos de agendamiento');
+    } finally {
       setLoadingDetalle(false);
     }
+  };
+
+  /* ═════════ 4. Handle change ═════════ */
+  const handleFormChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >
+  ) => {
+    const { name, value } = e.target;
+    const toNum = (v: string) => (v === '' ? undefined : parseInt(v, 10));
+
+    switch (name) {
+      case 'id_linea_descarga':
+      case 'transportista_id':
+      case 'asignacion_id':
+      case 'conductor_id':
+      case 'vehiculo_id':
+        setFormAgendamiento((a) => ({ ...a, [name]: toNum(value) }));
+        break;
+      default:
+        setFormAgendamiento((a) => ({ ...a, [name]: value }));
+    }
+  };
+
+  /* ═════════ 5. Submit agendamiento ═════════ */
+  const handleSubmitAgendamiento = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedSolicitudId) return;
+
+    try {
+      setLoadingAgendamiento(true);
+      setAgendamientoError(null);
+
+      const hora =
+        formAgendamiento.hora_servicio_programada.length === 5
+          ? `${formAgendamiento.hora_servicio_programada}:00`
+          : formAgendamiento.hora_servicio_programada;
+
+      const datos: AgendamientoData = {
+        ...formAgendamiento,
+        hora_servicio_programada: hora
+      };
+
+      if (
+        solicitudDetalle?.requiere_transporte &&
+        (!datos.transportista_id || !datos.asignacion_id)
+      ) {
+        setAgendamientoError(
+          'Selecciona transportista y asignación antes de agendar.'
+        );
+        return;
+      }
+
+      await agendarSolicitud(selectedSolicitudId, datos);
+      setSuccessMessage(
+        `Solicitud #${selectedSolicitudId} agendada correctamente`
+      );
+
+      setTimeout(() => {
+        getSolicitudesCoordinador(paginaActual, 20, activeFilters)
+          .then((r) => setSolicitudes(r.datos))
+          .catch(console.error);
+        handleCloseAgendamientoModal();
+      }, 2000);
+    } catch (err: any) {
+      setAgendamientoError(err.response?.data?.error || 'Error al agendar');
+    } finally {
+      setLoadingAgendamiento(false);
+    }
+  };
+
+  /* ═════════ Helpers ═════════ */
+  const handlePageChange = (p: number) => setPaginaActual(p);
+
+  const handleApplyFilters = (f: any) => {
+    setActiveFilters(f);
+    setPaginaActual(1);
   };
 
   const handleCloseDetalleModal = () => {
@@ -167,113 +271,15 @@ const CoordinadorPage: React.FC = () => {
     setSolicitudDetalle(null);
   };
 
-  const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
+  const formatDate = (d: string) =>
+    new Date(d).toLocaleDateString('es-ES', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
 
-    if (name === 'id_linea_descarga' || name === 'transportista_id' || name === 'asignacion_id') {
-      setFormAgendamiento({
-        ...formAgendamiento,
-        [name]: value === '' ? undefined : parseInt(value, 10)
-      });
-    } 
-    else if (name === 'conductor_id' || name === 'vehiculo_id') {
-      setFormAgendamiento({
-        ...formAgendamiento,
-        [name]: value === '' ? null : parseInt(value, 10)
-      });
-    }
-    else {
-      setFormAgendamiento({
-        ...formAgendamiento,
-        [name]: value
-      });
-    }
-  };
-
-  const handleSubmitAgendamiento = async (e: React.FormEvent) => {
-    e.preventDefault();
-  
-    if (!selectedSolicitudId) {
-      setAgendamientoError('No se ha seleccionado ninguna solicitud');
-      return;
-    }
-  
-    try {
-      setLoadingAgendamiento(true);
-      setAgendamientoError(null);
-  
-      const hora =
-        formAgendamiento.hora_servicio_programada.length === 5
-          ? `${formAgendamiento.hora_servicio_programada}:00`
-          : formAgendamiento.hora_servicio_programada;
-  
-      const datosAgendamiento: AgendamientoData = {
-        ...formAgendamiento,
-        hora_servicio_programada: hora
-      };
-  
-      if (datosAgendamiento.transportista_id === null)
-        datosAgendamiento.transportista_id = undefined;
-      if (datosAgendamiento.asignacion_id === null)
-        datosAgendamiento.asignacion_id = undefined;
-  
-      /* Validación: si requiere transporte, ambos IDs son obligatorios */
-      if (
-        solicitudDetalle?.requiere_transporte &&
-        (!datosAgendamiento.transportista_id ||
-          !datosAgendamiento.asignacion_id)
-      ) {
-        setAgendamientoError(
-          'Esta solicitud requiere transporte: selecciona transportista y asignación antes de agendar.'
-        );
-        setLoadingAgendamiento(false);
-        return;
-      }
-  
-      /* Llamada al servicio */
-      await agendarSolicitud(selectedSolicitudId, datosAgendamiento);
-  
-      setSuccessMessage(`Solicitud #${selectedSolicitudId} agendada correctamente`);
-  
-      setTimeout(() => {
-        getSolicitudesCoordinador(paginaActual, 20, activeFilters)
-          .then(r => setSolicitudes(r.datos))
-          .catch(err => console.error('Error al actualizar solicitudes:', err));
-  
-        handleCloseAgendamientoModal();
-      }, 2000);
-    } catch (error: any) {
-      console.error('Error al agendar la solicitud:', error);
-      setAgendamientoError(
-        error.response?.data?.message || 'Error al agendar la solicitud'
-      );
-    } finally {
-      setLoadingAgendamiento(false);
-    }
-  };
-  
-  
-
-  const handleApplyFilters = (filters: any) => {
-    setActiveFilters(filters);
-    setPaginaActual(1);
-  };
-
-  const formatDate = (dateString: string) => {
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString('es-ES', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric'
-      });
-    } catch (e) {
-      return 'Fecha inválida';
-    }
-  };
-
-  const getEstadoBadge = (estado: string) => {
-    switch (estado?.toLowerCase()) {
+  const getEstadoBadge = (e: string) => {
+    switch (e?.toLowerCase()) {
       case 'incompleta':
         return <Badge bg="warning">Incompleta</Badge>;
       case 'completada':
@@ -281,16 +287,22 @@ const CoordinadorPage: React.FC = () => {
       case 'rechazada':
         return <Badge bg="danger">Rechazada</Badge>;
       case 'en proceso':
-        return <Badge bg="info">En Proceso</Badge>;
+        return <Badge bg="info">En Proceso</Badge>;
       default:
-        return <Badge bg="secondary">{estado}</Badge>;
+        return <Badge bg="secondary">{e}</Badge>;
     }
   };
 
-  const pendientes = solicitudes.filter(s => s.nombre_estado.toLowerCase() === 'incompleta').length;
-  const completadas = solicitudes.filter(s => s.nombre_estado.toLowerCase() === 'completada').length;
-  const conTransporte = solicitudes.filter(s => s.requiere_transporte).length;
+  /* ═════════ Dashboard stats ═════════ */
+  const pendientes = solicitudes.filter(
+    (s) => s.nombre_estado.toLowerCase() === 'incompleta'
+  ).length;
+  const completadas = solicitudes.filter(
+    (s) => s.nombre_estado.toLowerCase() === 'completada'
+  ).length;
+  const conTransporte = solicitudes.filter((s) => s.requiere_transporte).length;
 
+  /* ═════════ Render principal ═════════ */
   if (error && !solicitudes.length) {
     return (
       <Container fluid className="main-content">
@@ -304,12 +316,14 @@ const CoordinadorPage: React.FC = () => {
 
   return (
     <Container fluid className="main-content">
+      {/* ---------- encabezado ---------- */}
       <Row className="mb-4">
         <Col>
           <h2 className="mb-4">Panel de Coordinador</h2>
         </Col>
       </Row>
-      
+
+      {/* ---------- tarjetas resumen ---------- */}
       <Row className="mb-4">
         <Col lg={3} md={6} className="mb-4">
           <Card className="h-100 p-4">
@@ -344,14 +358,15 @@ const CoordinadorPage: React.FC = () => {
           </Card>
         </Col>
       </Row>
-      
-      {/* Componente de Filtros */}
+
+      {/* ---------- filtros ---------- */}
       <Row>
         <Col>
           <FiltrosSolicitudes onApplyFilters={handleApplyFilters} />
         </Col>
       </Row>
-      
+
+      {/* ---------- tabla ---------- */}
       <Row>
         <Col>
           <div className="table-panel">
@@ -359,11 +374,9 @@ const CoordinadorPage: React.FC = () => {
               <h4>Solicitudes de Servicio</h4>
               <span className="text-muted">Total: {totalSolicitudes}</span>
             </div>
-            
+
             {loading ? (
-              <div className="text-center py-5">Cargando solicitudes...</div>
-            ) : error ? (
-              <div className="alert alert-danger m-3">{error}</div>
+              <div className="text-center py-5">Cargando solicitudes…</div>
             ) : (
               <>
                 <Table className="custom-table" responsive>
@@ -382,43 +395,53 @@ const CoordinadorPage: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {solicitudes.map((solicitud) => (
-                      <tr key={`${solicitud.solicitud_id}-${solicitud.fecha_solicitud}`}>
-                        <td>{solicitud.solicitud_id}</td>
-                        <td>{solicitud.codigo_cliente_kunnr}</td>
-                        <td>{solicitud.nombre_name1}</td>
-                        <td>{solicitud.sucursal_name2}</td>
-                        <td>{formatDate(solicitud.fecha_servicio_solicitada)}</td>
-                        <td>{solicitud.hora_servicio_solicitada.substring(0, 5)}</td>
-                        <td>{getEstadoBadge(solicitud.nombre_estado)}</td>
-                        <td>{solicitud.comuna || 'N/A'}</td>
+                    {solicitudes.map((s) => (
+                      <tr key={`${s.solicitud_id}-${s.fecha_solicitud}`}>
+                        <td>{s.solicitud_id}</td>
+                        <td>{s.codigo_cliente_kunnr}</td>
+                        <td>{s.nombre_name1}</td>
+                        <td>{s.sucursal_name2}</td>
+                        <td>{formatDate(s.fecha_servicio_solicitada)}</td>
+                        <td>{s.hora_servicio_solicitada.substring(0, 5)}</td>
+                        <td>{getEstadoBadge(s.nombre_estado)}</td>
+                        <td>{s.comuna || 'N/A'}</td>
                         <td className="text-center">
-                          {solicitud.requiere_transporte ? 
-                            <FaTruck size={20} color="#28a745" title="Requiere transporte" /> : 
-                            <FaTimesCircle size={20} color="#dc3545" title="No requiere transporte" />}
+                          {s.requiere_transporte ? (
+                            <FaTruck
+                              size={20}
+                              color="#28a745"
+                              title="Requiere transporte"
+                            />
+                          ) : (
+                            <FaTimesCircle
+                              size={20}
+                              color="#dc3545"
+                              title="No requiere transporte"
+                            />
+                          )}
                         </td>
                         <td>
                           <div className="d-flex gap-2">
-                            <Button 
+                            <Button
                               className="form-button-primary"
                               size="sm"
-                              onClick={() => handleVerFecha(solicitud.solicitud_id)}
+                              onClick={() => handleVerFecha(s.solicitud_id)}
                               title="Agendar"
                             >
                               <FaCalendarAlt />
                             </Button>
-                            <Button 
+                            <Button
                               className="form-button-primary"
                               size="sm"
-                              onClick={() => handleEditar(solicitud.solicitud_id)}
+                              onClick={() => console.log('Editar', s.solicitud_id)}
                               title="Editar"
                             >
                               <FaEdit />
                             </Button>
-                            <Button 
+                            <Button
                               className="form-button-primary"
                               size="sm"
-                              onClick={() => handleVerDetalle(solicitud.solicitud_id)}
+                              onClick={() => handleVerDetalle(s.solicitud_id)}
                               title="Ver detalles"
                             >
                               <FaEye />
@@ -430,32 +453,33 @@ const CoordinadorPage: React.FC = () => {
                   </tbody>
                 </Table>
 
+                {/* paginación */}
                 <div className="pagination-wrapper">
                   <Pagination className="justify-content-center mb-0">
-                    <Pagination.First 
-                      onClick={() => handlePageChange(1)} 
-                      disabled={paginaActual === 1} 
+                    <Pagination.First
+                      onClick={() => handlePageChange(1)}
+                      disabled={paginaActual === 1}
                     />
-                    <Pagination.Prev 
+                    <Pagination.Prev
                       onClick={() => handlePageChange(paginaActual - 1)}
                       disabled={paginaActual === 1}
                     />
-                    
-                    {[...Array(totalPaginas)].map((_, i) => (
-                      <Pagination.Item
-                        key={i + 1}
-                        active={i + 1 === paginaActual}
-                        onClick={() => handlePageChange(i + 1)}
-                      >
-                        {i + 1}
-                      </Pagination.Item>
-                    ))}
-                    
-                    <Pagination.Next 
+                    {Array.from({ length: totalPaginas }, (_, i) => i + 1).map(
+                      (n) => (
+                        <Pagination.Item
+                          key={n}
+                          active={n === paginaActual}
+                          onClick={() => handlePageChange(n)}
+                        >
+                          {n}
+                        </Pagination.Item>
+                      )
+                    )}
+                    <Pagination.Next
                       onClick={() => handlePageChange(paginaActual + 1)}
                       disabled={paginaActual === totalPaginas}
                     />
-                    <Pagination.Last 
+                    <Pagination.Last
                       onClick={() => handlePageChange(totalPaginas)}
                       disabled={paginaActual === totalPaginas}
                     />
@@ -467,20 +491,26 @@ const CoordinadorPage: React.FC = () => {
         </Col>
       </Row>
 
-      {/* Modal de Detalle de Solicitud */}
-      <Modal show={showDetalleModal} onHide={handleCloseDetalleModal} size="lg" centered>
+      {/* ---------- Modal Detalle ---------- */}
+      <Modal
+        show={showDetalleModal}
+        onHide={handleCloseDetalleModal}
+        size="lg"
+        centered
+      >
         <Modal.Header closeButton>
-          <Modal.Title>
-            Detalle de Solicitud #{selectedSolicitudId}
-          </Modal.Title>
+          <Modal.Title>Detalle de Solicitud #{selectedSolicitudId}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           {loadingDetalle ? (
-            <div className="text-center py-4">Cargando detalles...</div>
+            <div className="text-center py-4">Cargando detalles…</div>
           ) : !solicitudDetalle ? (
-            <div className="alert alert-warning">No se encontró la solicitud</div>
+            <div className="alert alert-warning">
+              No se encontró la solicitud
+            </div>
           ) : (
             <>
+              {/* ─── Información general ─── */}
               <Row className="mb-4">
                 <Col md={6}>
                   <h5>Información General</h5>
@@ -527,13 +557,15 @@ const CoordinadorPage: React.FC = () => {
                         <tr>
                           <td><strong>Requiere Transporte:</strong></td>
                           <td>
-                            {solicitudDetalle.requiere_transporte ? 
+                            {solicitudDetalle.requiere_transporte ? (
                               <span className="d-flex align-items-center">
                                 <FaTruck size={16} color="#28a745" className="me-2" /> Sí
-                              </span> : 
+                              </span>
+                            ) : (
                               <span className="d-flex align-items-center">
                                 <FaTimesCircle size={16} color="#dc3545" className="me-2" /> No
-                              </span>}
+                              </span>
+                            )}
                           </td>
                         </tr>
                       </tbody>
@@ -542,6 +574,7 @@ const CoordinadorPage: React.FC = () => {
                 </Col>
               </Row>
 
+              {/* ─── Dirección ─── */}
               <Row className="mb-4">
                 <Col>
                   <h5>Dirección</h5>
@@ -550,43 +583,48 @@ const CoordinadorPage: React.FC = () => {
                 </Col>
               </Row>
 
-              {/* Información de transporte si existe */}
-              {solicitudDetalle.detalles_con_transporte && solicitudDetalle.detalles_con_transporte.length > 0 && (
-                <Row className="mb-4">
-                  <Col>
-                    <h5>Información de Transporte</h5>
-                    <div className="modal-table-container">
-                      <Table striped hover size="sm" className="custom-table">
-                        <thead>
-                          <tr>
-                            <th>Material</th>
-                            <th>Código</th>
-                            <th>Unidad</th>
-                            <th>Cantidad</th>
-                            <th>Transportista</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {solicitudDetalle.detalles_con_transporte.map((detalle, index) => (
-                            <tr key={index}>
-                              <td>{detalle.nombre_material_maktg}</td>
-                              <td>{detalle.codigo_material_matnr}</td>
-                              <td>{detalle.unidad_venta_kmein}</td>
-                              <td>{detalle.cantidad}</td>
-                              <td>{detalle.nombre_transportista || 'No asignado'}</td>
+              {/* ─── Transporte (si hay) ─── */}
+              {solicitudDetalle.detalles_con_transporte &&
+                solicitudDetalle.detalles_con_transporte.length > 0 && (
+                  <Row className="mb-4">
+                    <Col>
+                      <h5>Información de Transporte</h5>
+                      <div className="modal-table-container">
+                        <Table striped hover size="sm" className="custom-table">
+                          <thead>
+                            <tr>
+                              <th>Material</th>
+                              <th>Código</th>
+                              <th>Unidad</th>
+                              <th>Cantidad</th>
+                              <th>Transportista</th>
                             </tr>
-                          ))}
-                        </tbody>
-                      </Table>
-                    </div>
-                  </Col>
-                </Row>
-              )}
+                          </thead>
+                          <tbody>
+                            {solicitudDetalle.detalles_con_transporte.map(
+                              (d, i) => (
+                                <tr key={i}>
+                                  <td>{d.nombre_material_maktg}</td>
+                                  <td>{d.codigo_material_matnr}</td>
+                                  <td>{d.unidad_venta_kmein}</td>
+                                  <td>{d.cantidad}</td>
+                                  <td>{d.nombre_transportista || 'No asignado'}</td>
+                                </tr>
+                              )
+                            )}
+                          </tbody>
+                        </Table>
+                      </div>
+                    </Col>
+                  </Row>
+                )}
 
+              {/* ─── Residuos ─── */}
               <Row>
                 <Col>
                   <h5>Residuos</h5>
-                  {solicitudDetalle.residuos && solicitudDetalle.residuos.length > 0 ? (
+                  {solicitudDetalle.residuos &&
+                  solicitudDetalle.residuos.length > 0 ? (
                     <div className="modal-table-container">
                       <Table striped hover size="sm" className="custom-table">
                         <thead>
@@ -597,11 +635,11 @@ const CoordinadorPage: React.FC = () => {
                           </tr>
                         </thead>
                         <tbody>
-                          {solicitudDetalle.residuos.map((residuo, index) => (
-                            <tr key={index}>
-                              <td>{residuo.nombre_material}</td>
-                              <td>{residuo.cantidad_declarada}</td>
-                              <td>{residuo.nombre_unidad}</td>
+                          {solicitudDetalle.residuos.map((r, i) => (
+                            <tr key={i}>
+                              <td>{r.nombre_material}</td>
+                              <td>{r.cantidad_declarada}</td>
+                              <td>{r.nombre_unidad}</td>
                             </tr>
                           ))}
                         </tbody>
@@ -619,17 +657,12 @@ const CoordinadorPage: React.FC = () => {
           <Button variant="secondary" onClick={handleCloseDetalleModal}>
             Cerrar
           </Button>
-          {solicitudDetalle && (
-            <Button className="modal-save-button">
-              Editar Solicitud
-            </Button>
-          )}
         </Modal.Footer>
       </Modal>
 
-      {/* Modal de Agendamiento */}
-      <Modal 
-        show={showAgendamientoModal} 
+      {/* ---------- Modal Agendamiento ---------- */}
+      <Modal
+        show={showAgendamientoModal}
         onHide={handleCloseAgendamientoModal}
         size="lg"
         centered
@@ -644,50 +677,18 @@ const CoordinadorPage: React.FC = () => {
           <Modal.Body>
             {loadingDetalle ? (
               <div className="text-center py-4">
-                <Spinner animation="border" role="status">
-                  <span className="visually-hidden">Cargando...</span>
-                </Spinner>
-                <p className="mt-2">Cargando detalles de la solicitud...</p>
+                <Spinner animation="border" />
               </div>
             ) : (
               <>
-                {/* Mensajes de éxito o error */}
                 {successMessage && (
-                  <Alert variant="success" className="mb-4">
-                    {successMessage}
-                  </Alert>
+                  <Alert variant="success">{successMessage}</Alert>
                 )}
-                
                 {agendamientoError && (
-                  <Alert variant="danger" className="mb-4">
-                    {agendamientoError}
-                  </Alert>
+                  <Alert variant="danger">{agendamientoError}</Alert>
                 )}
-                
-                {/* Mostrar información sobre detalle de transporte si existe */}
-                {solicitudDetalle && solicitudDetalle.detalles_con_transporte && solicitudDetalle.detalles_con_transporte.length > 0 && (
-                  <Alert variant="info" className="mb-4">
-                    <h6 className="alert-heading">Información de transporte existente:</h6>
-                    <p className="mb-1"><strong>Material:</strong> {solicitudDetalle.detalles_con_transporte[0].nombre_material_maktg}</p>
-                    <p className="mb-1"><strong>Código:</strong> {solicitudDetalle.detalles_con_transporte[0].codigo_material_matnr}</p>
-                    <p className="mb-1"><strong>Unidad:</strong> {solicitudDetalle.detalles_con_transporte[0].unidad_venta_kmein}</p>
-                    <p className="mb-0"><strong>Cantidad:</strong> {solicitudDetalle.detalles_con_transporte[0].cantidad}</p>
-                  </Alert>
-                )}
-                
-                {/* Si no tiene detalles de transporte y debería tenerlos */}
-                {solicitudDetalle && 
-                 solicitudDetalle.requiere_transporte && 
-                 (!solicitudDetalle.detalles_con_transporte || solicitudDetalle.detalles_con_transporte.length === 0) && (
-                  <Alert variant="warning" className="mb-4">
-                    <h6 className="alert-heading">¡Advertencia!</h6>
-                    <p className="mb-0">
-                      Esta solicitud requiere transporte pero no tiene detalles de transporte registrados. 
-                      Por favor, complete la información de la solicitud antes de agendar.
-                    </p>
-                  </Alert>
-                )}
-                
+
+                {/* —— Fecha / hora —— */}
                 <Row className="mb-3">
                   <Col md={6}>
                     <Form.Group controlId="fecha_servicio_programada">
@@ -714,7 +715,8 @@ const CoordinadorPage: React.FC = () => {
                     </Form.Group>
                   </Col>
                 </Row>
-                
+
+                {/* —— Línea / NV —— */}
                 <Row className="mb-3">
                   <Col md={6}>
                     <Form.Group controlId="id_linea_descarga">
@@ -722,12 +724,12 @@ const CoordinadorPage: React.FC = () => {
                       <Form.Select
                         name="id_linea_descarga"
                         required
-                        value={formAgendamiento.id_linea_descarga.toString()}
+                        value={formAgendamiento.id_linea_descarga}
                         onChange={handleFormChange}
                       >
-                        <option value="1">Línea 1</option>
-                        <option value="2">Línea 2</option>
-                        <option value="3">Línea 3</option>
+                        <option value={1}>Línea 1</option>
+                        <option value={2}>Línea 2</option>
+                        <option value={3}>Línea 3</option>
                       </Form.Select>
                     </Form.Group>
                   </Col>
@@ -738,131 +740,141 @@ const CoordinadorPage: React.FC = () => {
                         type="text"
                         name="numero_nota_venta"
                         required
-                        placeholder="Ej: 1234567890"
                         value={formAgendamiento.numero_nota_venta}
                         onChange={handleFormChange}
                       />
                     </Form.Group>
                   </Col>
                 </Row>
-                
+
+                {/* —— Descripción —— */}
                 <Form.Group className="mb-3" controlId="descripcion">
                   <Form.Label>Descripción</Form.Label>
                   <Form.Control
                     as="textarea"
                     name="descripcion"
-                    rows={3}
-                    placeholder="Descripción del agendamiento"
+                    rows={2}
                     value={formAgendamiento.descripcion}
                     onChange={handleFormChange}
                   />
                 </Form.Group>
-                
+
+                {/* —— Peligrosidad opcional —— */}
                 <h5 className="mt-4 mb-3">Información de peligrosidad (opcional)</h5>
                 <Row className="mb-3">
                   <Col md={6}>
                     <Form.Group controlId="clase_peligrosidad">
-                      <Form.Label>Clase de peligrosidad</Form.Label>
+                      <Form.Label>Clase</Form.Label>
                       <Form.Control
-                        type="text"
                         name="clase_peligrosidad"
-                        placeholder="Ej: Inflamable"
-                        value={formAgendamiento.clase_peligrosidad || ''}
+                        value={formAgendamiento.clase_peligrosidad}
                         onChange={handleFormChange}
                       />
                     </Form.Group>
                   </Col>
                   <Col md={6}>
                     <Form.Group controlId="declaracion_numero">
-                      <Form.Label>Número de declaración</Form.Label>
+                      <Form.Label>N° declaración</Form.Label>
                       <Form.Control
-                        type="text"
                         name="declaracion_numero"
-                        placeholder="Número de declaración"
-                        value={formAgendamiento.declaracion_numero || ''}
+                        value={formAgendamiento.declaracion_numero}
                         onChange={handleFormChange}
                       />
                     </Form.Group>
                   </Col>
                 </Row>
-                
-                <h5 className="mt-4 mb-3">Información de transporte</h5>
-                <Row className="mb-3">
-                  <Col md={6}>
-                    <Form.Group controlId="transportista_id">
-                      <Form.Label>Transportista</Form.Label>
-                      <Form.Select
-                        name="transportista_id"
-                        value={formAgendamiento.transportista_id === undefined || formAgendamiento.transportista_id === null ? '' : formAgendamiento.transportista_id.toString()}
-                        onChange={handleFormChange}
-                      >
-                        <option value="">Seleccionar transportista</option>
-                        <option value="1">Transportista prueba</option>
-                        <option value="2">Transportista 2</option>
-                      </Form.Select>
-                    </Form.Group>
-                  </Col>
-                  <Col md={6}>
-                    <Form.Group controlId="asignacion_id">
-                      <Form.Label>Asignación</Form.Label>
-                      <Form.Select
-                        name="asignacion_id"
-                        value={formAgendamiento.asignacion_id === undefined || formAgendamiento.asignacion_id === null ? '' : formAgendamiento.asignacion_id.toString()}
-                        onChange={handleFormChange}
-                      >
-                        <option value="">Seleccionar asignación</option>
-                        <option value="1">Asignación 1</option>
-                        <option value="2">Asignación 2</option>
-                      </Form.Select>
-                    </Form.Group>
-                  </Col>
-                </Row>
-                
-                <Row className="mb-3">
-                  <Col md={6}>
-                    <Form.Group controlId="conductor_id">
-                      <Form.Label>Conductor</Form.Label>
-                      <Form.Select
-                        name="conductor_id"
-                        value={formAgendamiento.conductor_id === null ? '' : String(formAgendamiento.conductor_id || '')}
-                        onChange={handleFormChange}
-                      >
-                        <option value="">Seleccionar conductor</option>
-                        <option value="1">Conductor 1</option>
-                        <option value="2">Conductor 2</option>
-                      </Form.Select>
-                    </Form.Group>
-                  </Col>
-                  <Col md={6}>
-                    <Form.Group controlId="vehiculo_id">
-                      <Form.Label>Vehículo</Form.Label>
-                      <Form.Select
-                        name="vehiculo_id"
-                        value={formAgendamiento.vehiculo_id === null ? '' : String(formAgendamiento.vehiculo_id || '')}
-                        onChange={handleFormChange}
-                      >
-                        <option value="">Seleccionar vehículo</option>
-                        <option value="1">Vehículo 1</option>
-                        <option value="2">Vehículo 2</option>
-                      </Form.Select>
-                    </Form.Group>
-                  </Col>
-                </Row>
+
+                {/* —— Transporte —— */}
+                {solicitudDetalle?.requiere_transporte && (
+                  <>
+                    <h5 className="mt-4 mb-3">Transporte</h5>
+                    <Row className="mb-3">
+                      <Col md={6}>
+                        <Form.Group controlId="transportista_id">
+                          <Form.Label>Transportista*</Form.Label>
+                          <Form.Select
+                            name="transportista_id"
+                            value={formAgendamiento.transportista_id ?? ''}
+                            onChange={handleFormChange}
+                            required
+                          >
+                            <option value="">Seleccionar…</option>
+                            {transportistas.map((t) => (
+                              <option
+                                key={t.transportista_id}
+                                value={t.transportista_id}
+                              >
+                                {t.transportista_id} – {t.nombre_transportista}
+                              </option>
+                            ))}
+                          </Form.Select>
+                        </Form.Group>
+                      </Col>
+                      <Col md={6}>
+                        <Form.Group controlId="asignacion_id">
+                          <Form.Label>Asignación*</Form.Label>
+                          <Form.Select
+                            name="asignacion_id"
+                            value={formAgendamiento.asignacion_id ?? ''}
+                            onChange={handleFormChange}
+                            required
+                          >
+                            <option value="">Seleccionar…</option>
+                            {asignaciones.map((a) => (
+                              <option
+                                key={a.asignacion_id}
+                                value={a.asignacion_id}
+                              >
+                                {a.asignacion_id} – {a.descripcion_tarifa}
+                              </option>
+                            ))}
+                          </Form.Select>
+                        </Form.Group>
+                      </Col>
+                    </Row>
+
+                    {/* opcionales conductor/vehículo */}
+                    <Row className="mb-3">
+                      <Col md={6}>
+                        <Form.Group controlId="conductor_id">
+                          <Form.Label>Conductor</Form.Label>
+                          <Form.Control
+                            type="number"
+                            name="conductor_id"
+                            value={formAgendamiento.conductor_id ?? ''}
+                            onChange={handleFormChange}
+                          />
+                        </Form.Group>
+                      </Col>
+                      <Col md={6}>
+                        <Form.Group controlId="vehiculo_id">
+                          <Form.Label>Vehículo</Form.Label>
+                          <Form.Control
+                            type="number"
+                            name="vehiculo_id"
+                            value={formAgendamiento.vehiculo_id ?? ''}
+                            onChange={handleFormChange}
+                          />
+                        </Form.Group>
+                      </Col>
+                    </Row>
+                  </>
+                )}
               </>
             )}
           </Modal.Body>
           <Modal.Footer>
-            <Button variant="secondary" onClick={handleCloseAgendamientoModal} disabled={!!loadingAgendamiento}>
+            <Button
+              variant="secondary"
+              onClick={handleCloseAgendamientoModal}
+              disabled={loadingAgendamiento}
+            >
               Cancelar
             </Button>
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               className="modal-save-button"
-              disabled={!!loadingAgendamiento || 
-                !!(solicitudDetalle && 
-                  solicitudDetalle.requiere_transporte && 
-                  (!solicitudDetalle.detalles_con_transporte || 
-                  solicitudDetalle.detalles_con_transporte.length === 0))}
+              disabled={loadingAgendamiento}
             >
               {loadingAgendamiento ? (
                 <>
@@ -870,11 +882,9 @@ const CoordinadorPage: React.FC = () => {
                     as="span"
                     animation="border"
                     size="sm"
-                    role="status"
-                    aria-hidden="true"
                     className="me-2"
                   />
-                  Agendando...
+                  Agendando…
                 </>
               ) : (
                 <>
