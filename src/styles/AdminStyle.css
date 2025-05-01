@@ -2,6 +2,96 @@
   padding-top: 80px; 
 }
 
+/* Estilos responsivos para el menú lateral */
+
+/* En dispositivos móviles, ocultar el menú por defecto */
+@media (max-width: 767.98px) {
+  .sidebar-wrapper {
+    position: fixed;
+    top: 0;
+    left: -280px;
+    height: 100vh;
+    width: 280px;
+    z-index: 1050;
+    transition: left 0.3s ease;
+    overflow-y: auto;
+  }
+  
+  /* Cuando se muestra el menú en móviles */
+  .sidebar-wrapper.show-mobile-menu {
+    left: 0;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+  }
+  
+  /* Ajustar el contenido principal para ocupar todo el ancho en móviles */
+  .main-content {
+    margin-left: 0 !important;
+    width: 100% !important;
+    padding-top: 60px !important; /* Espacio para el botón hamburguesa */
+  }
+  
+  .mobile-menu-toggle {
+    display: block;
+  }
+}
+
+/* Para tabletas y escritorio */
+@media (min-width: 768px) {
+  .sidebar-wrapper {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+  }
+  
+  .mobile-menu-toggle {
+    display: none;
+  }
+  
+  .main-content {
+    margin-left: 0;
+  }
+}
+
+/* Estilo para el botón de hamburguesa */
+.mobile-menu-toggle button {
+  background-color: #243c6c;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+}
+
+/* Ajustes de la tabla responsive */
+.table-responsive {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Mejoras para tablas en dispositivos pequeños */
+@media (max-width: 767.98px) {
+  .custom-table {
+    width: 100%;
+    min-width: 650px; /* Asegura un ancho mínimo para permitir scroll horizontal */
+  }
+  
+  /* Reducir el padding en las celdas en móviles */
+  .custom-table th,
+  .custom-table td {
+    padding: 8px 4px;
+    font-size: 0.85rem;
+  }
+  
+  /* Ajustar botones de acción en tablas */
+  .action-buttons {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .btn-action {
+    margin: 2px;
+  }
+}
+
 /* Estilos para botones */
 .form-button-primary {
   background-color: #243c6c !important; 

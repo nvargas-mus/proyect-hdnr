@@ -367,3 +367,63 @@ export const getAsignacionesByTarifa = async (tarifaId: number, limit: number = 
     throw error;
   }
 };
+
+export interface AsignacionManualTarifa {
+  asignacion_id: number;
+  codigo_cliente_kunnr: number;
+  nombre_name1: string;
+  sucursal_name2: string;
+  direccion_id: number;
+  direccion: string;
+  codigo_material_matnr: number;
+  nombre_material_maktg: string;
+  tarifario_contrato_id: number;
+}
+
+export interface AsignacionesResponse {
+  data: AsignacionManualTarifa[];
+  pagination: PaginationInfo;
+}
+
+/**
+ * Obtiene las asignaciones manuales de tarifas asociadas a un tarifario de contrato --- <<
+ * @param tarifarioId -- ID del tarifario de contrato
+ * @param limit --- Límite de resultados por página
+ * @param offset -- Desplazamiento para paginación
+ */
+export const getAsignacionesManualesByTarifario = async (
+  tarifarioId: number,
+  limit: number = 10,
+  offset: number = 0
+): Promise<AsignacionesResponse> => {
+  try {
+    const token = getToken();
+    const response = await axios.get(`${API_URL}/asignaciones_manuales_tarifas/tarifario/${tarifarioId}`, {
+      params: { limit, offset },
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'application/json'
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error(`Error obteniendo asignaciones manuales para tarifario ${tarifarioId}:`, error);
+    throw error;
+  }
+};
+
+export const deleteAsignacionManual = async (asignacionId: number): Promise<any> => {
+  try {
+    const token = getToken();
+    const response = await axios.delete(`${API_URL}/asignaciones_manuales_tarifas/${asignacionId}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'application/json'
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error(`Error eliminando asignación manual con ID ${asignacionId}:`, error);
+    throw error;
+  }
+};

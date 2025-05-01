@@ -10,6 +10,7 @@ import NotFoundPage from './components/NotFoundPage';
 import Navbar from './components/NavBar';
 import { SolicitudProvider } from './context/SolicitudContext';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import AsignacionesTarifa from './components/AsignacionesTarifa';
 
 const App = () => {
   return (
@@ -25,6 +26,7 @@ const App = () => {
           <Route path="/admin" element={<AdminPage />} />
           <Route path="/tarifas-contrato/:contratoId" element={<TarifasContrato />} />
           <Route path="*" element={<NotFoundPage />} />
+          <Route path="/asignaciones-tarifa/:tarifaId" element={<AsignacionesTarifa />} />
         </Routes>
       </div>
     </SolicitudProvider>
