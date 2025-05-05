@@ -10,3 +10,44 @@ h1, h2, h3, h4, h5, h6, p, label, table, input, ul, li, span, th {
   font-size: 18px !important;
   text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2) !important;
 }
+
+/* En index.css o tu archivo de estilos principal */
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000; /* Mayor que el sidebar para estar siempre por encima */
+  background-color: #fff; /* Asegura que tenga fondo */
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+/* Añadir padding al cuerpo para compensar el navbar fijo */
+body {
+  padding-top: 56px; /* Ajusta este valor según la altura de tu navbar */
+}
+
+/* Asegurar que el contenido principal tenga margen suficiente */
+.main-content {
+  margin-top: 15px;
+  transition: all 0.3s ease;
+}
+
+/* Para pantallas pequeñas */
+@media (max-width: 767.98px) {
+  .sidebar-wrapper {
+    width: 100% !important;
+    position: static !important;
+    height: auto !important;
+  }
+  
+  .main-content {
+    margin-left: 0 !important;
+    width: 100% !important;
+  }
+  
+  .container-fluid {
+    padding-left: 15px !important;
+    padding-right: 15px !important;
+  }
+}

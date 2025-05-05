@@ -18,7 +18,6 @@ const Navbar: React.FC = () => {
     window.addEventListener('localStorageUpdated', updateLoginStatus);
 
     const isAdmin = location.pathname.includes('/admin');
-
     const hasAdminClass = document.body.classList.contains('admin-page');
     
     setIsAdminPage(isAdmin || hasAdminClass);
@@ -37,7 +36,17 @@ const Navbar: React.FC = () => {
   };
 
   return (
-    <nav className="navbar navbar-light bg-light">
+    <nav 
+      className="navbar navbar-light bg-light"
+      style={{
+        position: isAdminPage ? 'fixed' : 'static',
+        top: 0,
+        left: 0,
+        right: 0,
+        zIndex: 1070, 
+        boxShadow: isAdminPage ? '0 2px 4px rgba(0,0,0,0.1)' : 'none'
+      }}
+    >
       <div className="container">
         <a className="navbar-brand" href="#">
           <img src={Logo} alt="Hidronor" style={{ height: '50px' }} />
