@@ -94,10 +94,9 @@ const AsignacionesTarifa = () => {
   
   const volverATarifas = () => {
     if (tarifa) {
-      navigate(`/tarifas-contrato/${tarifa.contrato_id}`);
+      navigate(`/admin/tarifas-contrato/${tarifa.contrato_id}`);
     } else {
-      localStorage.setItem('adminActiveTab', 'contratos');
-      navigate('/admin');
+      navigate('/admin/contratos');
     }
   };
   

@@ -150,7 +150,7 @@ const ContratosTable = () => {
   };
 
   const handleViewTarifas = (id: number) => {
-    navigate(`/tarifas-contrato/${id}`);
+    navigate(`/admin/tarifas-contrato/${id}`);
   };
 
   const handleView = (id: number) => {

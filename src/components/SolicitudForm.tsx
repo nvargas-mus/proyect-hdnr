@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   crearSolicitud,
   getClientesAsociados,
@@ -26,6 +26,8 @@ const SolicitudForm = () => {
   const [step, setStep] = useState(1);
   const [solicitudId, setSolicitudId] = useState<number | null>(null);
   const navigate = useNavigate();
+  const location = useLocation();
+  const isAdminContext = location.pathname.startsWith('/admin');
 
   const [formData, setFormData] = useState<{
     usuario_id: number;
@@ -640,7 +642,13 @@ const SolicitudForm = () => {
             <button
               type="button"
               className="btn btn-secondary btn-volver"
-              onClick={() => navigate('/home')}
+              onClick={() => {
+                if (isAdminContext) {
+                  navigate('/admin');
+                } else {
+                  navigate('/home');
+                }
+              }}
             >
               Volver
             </button>

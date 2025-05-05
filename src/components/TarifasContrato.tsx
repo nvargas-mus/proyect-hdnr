@@ -113,7 +113,7 @@ const modalStyles: Record<string, CSSProperties> = {
   },
 };
 
-// Interfaz datos del formulario de creación de tarifa
+// Interfaz datos formulario de creación de tarifa
 interface TarifaFormData {
   contrato_id: number;
   descripcion_tarifa: string;
@@ -264,7 +264,7 @@ const TarifasContrato = () => {
   };
 
   const verAsignaciones = (tarifaId: number) => {
-    navigate(`/asignaciones-tarifa/${tarifaId}`);
+    navigate(`/admin/asignaciones-tarifa/${tarifaId}`);
   };
 
   const compartirTarifa = (tarifaId: number) => {
@@ -305,8 +305,7 @@ const TarifasContrato = () => {
   };
 
   const volverAContratos = () => {
-    localStorage.setItem('adminActiveTab', 'contratos');
-    navigate('/admin');
+    navigate('/admin/contratos');
   };
 
   const openModal = () => {
