@@ -8,7 +8,7 @@ export interface Residuo {
 
 export interface Solicitud {
   solicitud_id: number;
-  centro_vwerk: any;
+  centro_vwerk: unknown;
   codigo_cliente_kunnr: number;
   nombre_name1: string;
   sucursal_name2: string;

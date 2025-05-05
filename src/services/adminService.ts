@@ -4,46 +4,12 @@ const API_URL = 'http://15.229.249.223:3000';
 
 const getToken = () => localStorage.getItem('authToken') || '';
 
-export const getClienteById = async (id: number | string): Promise<any> => {
-  try {
-    const token = getToken();
-    const response = await axios.get(`${API_URL}/clientes/${id}`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Accept': 'application/json'
-      }
-    });
-    return response.data;
-  } catch (error) {
-    console.error(`Error obteniendo datos para cliente/usuario con ID ${id}:`, error);
-    throw error;
-  }
-};
-
-export const asignarClientesAUsuario = async (
-  usuarioId: number | string,
-  clienteIds: number[]
-): Promise<any> => {
-  try {
-    const token = getToken();
-    const payload = {
-      usuario_id: usuarioId,
-      cliente_ids: clienteIds,
-    };
-    const response = await axios.post(`${API_URL}/usuarios/${usuarioId}/asignar-clientes`, payload, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Accept': 'application/json'
-      }
-    });
-    return response.data;
-  } catch (error) {
-    console.error(`Error asignando clientes al usuario con ID ${usuarioId}:`, error);
-    throw error;
-  }
-};
-
-// -- Funciones gestión de contratos
+// Interfaces generales
+export interface Cliente {
+  id: number;
+  nombre: string;
+  // Agrega los campos reales del cliente aquí
+}
 
 export interface Contrato {
   contrato_id: number; 
@@ -80,141 +46,6 @@ export interface Transportista {
   ultima_actualizacion: string;
 }
 
-export const getContratos = async (limit: number = 10, offset: number = 0): Promise<ContratosResponse> => {
-  try {
-    const token = getToken();
-    const response = await axios.get<ContratosResponse>(`${API_URL}/contratos`, {
-      params: {
-        limit,
-        offset
-      },
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Accept': 'application/json'
-      }
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Error obteniendo contratos:', error);
-    throw error;
-  }
-};
-
-export const getContratoById = async (id: number): Promise<Contrato> => {
-  try {
-    const token = getToken();
-    const response = await axios.get(`${API_URL}/contratos/${id}`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Accept': 'application/json'
-      }
-    });
-    return response.data;
-  } catch (error) {
-    console.error(`Error obteniendo contrato con ID ${id}:`, error);
-    throw error;
-  }
-};
-
-export const createContrato = async (contratoData: FormData): Promise<any> => {
-  try {
-    const token = getToken();
-    const response = await axios.post(`${API_URL}/contratos`, contratoData, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Accept': 'application/json',
-        'Content-Type': 'multipart/form-data'
-      }
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Error creando contrato:', error);
-    throw error;
-  }
-};
-
-
-export const updateContrato = async (id: number, contratoData: FormData): Promise<any> => {
-  try {
-    const token = getToken();
-    
-    console.log(`Actualizando contrato ${id} con datos:`, 
-      Array.from(contratoData.entries()).reduce((obj, [key, val]) => {
-        obj[key] = val;
-        return obj;
-      }, {} as any)
-    );
-    
-    const response = await axios.put(`${API_URL}/contratos/${id}`, contratoData, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Accept': 'application/json',
-      }
-    });
-    
-    return response.data;
-  } catch (error: any) {
-    console.error(`Error actualizando contrato con ID ${id}:`, error);
-    
-    if (error.response) {
-      console.error('Respuesta del servidor:', error.response.data);
-      console.error('Estado HTTP:', error.response.status);
-    }
-    
-    throw error;
-  }
-};
-
-export const deleteContrato = async (id: number): Promise<any> => {
-  try {
-    const token = getToken();
-    const response = await axios.delete(`${API_URL}/contratos/${id}`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Accept': 'application/json'
-      }
-    });
-    return response.data;
-  } catch (error) {
-    console.error(`Error eliminando contrato con ID ${id}:`, error);
-    throw error;
-  }
-};
-
-export const downloadContrato = async (id: number): Promise<Blob> => {
-  try {
-    const token = getToken();
-    const response = await axios.get(`${API_URL}/contratos/${id}/download`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
-      responseType: 'blob'
-    });
-    return response.data;
-  } catch (error: any) {
-    console.error(`Error descargando contrato con ID ${id}:`, error);
-    throw error;
-  }
-};
-
-export const getTransportistas = async (): Promise<Transportista[]> => {
-  try {
-    const token = getToken();
-    const response = await axios.get(`${API_URL}/transportistas`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Accept': 'application/json'
-      }
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Error obteniendo transportistas:', error);
-    throw error;
-  }
-};
-
-// -- Funciones gestión de tarifas
-
 export interface TarifaContrato {
   tarifario_contrato_id: number;
   contrato_id: number;
@@ -239,135 +70,6 @@ export interface TarifasResponse {
   pagination: PaginationInfo;
 }
 
-export const getTarifasByContrato = async (contratoId: number, limit: number = 10, offset: number = 0): Promise<TarifasResponse> => {
-  try {
-    const token = getToken();
-    const response = await axios.get(`${API_URL}/tarifario_contrato/contrato/${contratoId}`, {
-      params: { limit, offset },
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Accept': 'application/json'
-      }
-    });
-    return response.data;
-  } catch (error) {
-    console.error(`Error obteniendo tarifas del contrato ${contratoId}:`, error);
-    throw error;
-  }
-};
-
-export const getTiposTransporte = async (): Promise<TipoTransporte[]> => {
-  try {
-    const token = getToken();
-    const response = await axios.get(`${API_URL}/tiposTransporte`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Accept': 'application/json'
-      }
-    });
-    
-    const tiposTransporte = response.data.map((tipo: any) => ({
-      tipo_transporte_id: tipo.id || tipo.tipo_transporte_id,
-      nombre_tipo_transporte: tipo.nombre || tipo.nombre_tipo_transporte
-    }));
-    
-    return tiposTransporte;
-  } catch (error) {
-    console.error('Error obteniendo tipos de transporte:', error);
-    throw error;
-  }
-};
-
-export const getTarifaById = async (tarifaId: number): Promise<TarifaContrato> => {
-  try {
-    const token = getToken();
-    const response = await axios.get(`${API_URL}/tarifario_contrato/${tarifaId}`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Accept': 'application/json'
-      }
-    });
-    return response.data;
-  } catch (error) {
-    console.error(`Error obteniendo tarifa con ID ${tarifaId}:`, error);
-    throw error;
-  }
-};
-
-export const createTarifa = async (tarifaData: {
-  contrato_id: number;
-  descripcion_tarifa: string;
-  tipo_transporte_id: number;
-  tarifa_inicial: number;
-  fecha_inicio_vigencia: string;
-  fecha_fin_vigencia: string | null;
-}): Promise<any> => {
-  try {
-    const token = getToken();
-    const response = await axios.post(`${API_URL}/tarifario_contrato`, tarifaData, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
-      }
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Error creando tarifa:', error);
-    throw error;
-  }
-};
-
-export const updateTarifa = async (tarifaId: number, tarifaData: any): Promise<any> => {
-  try {
-    const token = getToken();
-    const response = await axios.put(`${API_URL}/tarifario_contrato/${tarifaId}`, tarifaData, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
-      }
-    });
-    return response.data;
-  } catch (error) {
-    console.error(`Error actualizando tarifa con ID ${tarifaId}:`, error);
-    throw error;
-  }
-};
-
-export const deleteTarifa = async (tarifaId: number): Promise<any> => {
-  try {
-    const token = getToken();
-    const response = await axios.delete(`${API_URL}/tarifario_contrato/${tarifaId}`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Accept': 'application/json'
-      }
-    });
-    return response.data;
-  } catch (error) {
-    console.error(`Error eliminando tarifa con ID ${tarifaId}:`, error);
-    throw error;
-  }
-};
-
-export const getAsignacionesByTarifa = async (tarifaId: number, limit: number = 10, offset: number = 0): Promise<any> => {
-  try {
-    const token = getToken();
-    const response = await axios.get(`${API_URL}/tarifario_contrato/${tarifaId}/asignaciones`, {
-      params: { limit, offset },
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Accept': 'application/json'
-      }
-    });
-    return response.data;
-  } catch (error) {
-    console.error(`Error obteniendo asignaciones para la tarifa ${tarifaId}:`, error);
-    throw error;
-  }
-};
-
 export interface AsignacionManualTarifa {
   asignacion_id: number;
   codigo_cliente_kunnr: number;
@@ -385,45 +87,229 @@ export interface AsignacionesResponse {
   pagination: PaginationInfo;
 }
 
-/**
- * Obtiene las asignaciones manuales de tarifas asociadas a un tarifario de contrato --- <<
- * @param tarifarioId -- ID del tarifario de contrato
- * @param limit --- Límite de resultados por página
- * @param offset -- Desplazamiento para paginación
- */
+export const getClienteById = async (id: number | string): Promise<Cliente> => {
+  const token = getToken();
+  const response = await axios.get<Cliente>(`${API_URL}/clientes/${id}`, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Accept': 'application/json'
+    }
+  });
+  return response.data;
+};
+
+export const asignarClientesAUsuario = async (
+  usuarioId: number | string,
+  clienteIds: number[]
+): Promise<{ success: boolean }> => {
+  const token = getToken();
+  const payload = {
+    usuario_id: usuarioId,
+    cliente_ids: clienteIds,
+  };
+  const response = await axios.post<{ success: boolean }>(`${API_URL}/usuarios/${usuarioId}/asignar-clientes`, payload, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Accept': 'application/json'
+    }
+  });
+  return response.data;
+};
+
+export const getContratos = async (limit: number = 10, offset: number = 0): Promise<ContratosResponse> => {
+  const token = getToken();
+  const response = await axios.get<ContratosResponse>(`${API_URL}/contratos`, {
+    params: { limit, offset },
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Accept': 'application/json'
+    }
+  });
+  return response.data;
+};
+
+export const getContratoById = async (id: number): Promise<Contrato> => {
+  const token = getToken();
+  const response = await axios.get<Contrato>(`${API_URL}/contratos/${id}`, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Accept': 'application/json'
+    }
+  });
+  return response.data;
+};
+
+export const createContrato = async (contratoData: FormData): Promise<Contrato> => {
+  const token = getToken();
+  const response = await axios.post<Contrato>(`${API_URL}/contratos`, contratoData, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Accept': 'application/json',
+      'Content-Type': 'multipart/form-data'
+    }
+  });
+  return response.data;
+};
+
+export const updateContrato = async (id: number, contratoData: FormData): Promise<Contrato> => {
+  const token = getToken();
+  const response = await axios.put<Contrato>(`${API_URL}/contratos/${id}`, contratoData, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Accept': 'application/json',
+    }
+  });
+  return response.data;
+};
+
+export const deleteContrato = async (id: number): Promise<{ success: boolean }> => {
+  const token = getToken();
+  const response = await axios.delete<{ success: boolean }>(`${API_URL}/contratos/${id}`, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Accept': 'application/json'
+    }
+  });
+  return response.data;
+};
+
+export const downloadContrato = async (id: number): Promise<Blob> => {
+  const token = getToken();
+  const response = await axios.get(`${API_URL}/contratos/${id}/download`, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+    responseType: 'blob'
+  });
+  return response.data;
+};
+
+export const getTransportistas = async (): Promise<Transportista[]> => {
+  const token = getToken();
+  const response = await axios.get<Transportista[]>(`${API_URL}/transportistas`, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Accept': 'application/json'
+    }
+  });
+  return response.data;
+};
+
+export const getTarifasByContrato = async (contratoId: number, limit: number = 10, offset: number = 0): Promise<TarifasResponse> => {
+  const token = getToken();
+  const response = await axios.get<TarifasResponse>(`${API_URL}/tarifario_contrato/contrato/${contratoId}`, {
+    params: { limit, offset },
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Accept': 'application/json'
+    }
+  });
+  return response.data;
+};
+
+export const getTiposTransporte = async (): Promise<TipoTransporte[]> => {
+  const token = getToken();
+  const response = await axios.get(`${API_URL}/tiposTransporte`, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Accept': 'application/json'
+    }
+  });
+  const tiposTransporte = response.data.map((tipo: any): TipoTransporte => ({
+    tipo_transporte_id: tipo.id || tipo.tipo_transporte_id,
+    nombre_tipo_transporte: tipo.nombre || tipo.nombre_tipo_transporte
+  }));
+  return tiposTransporte;
+};
+
+export const getTarifaById = async (tarifaId: number): Promise<TarifaContrato> => {
+  const token = getToken();
+  const response = await axios.get<TarifaContrato>(`${API_URL}/tarifario_contrato/${tarifaId}`, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Accept': 'application/json'
+    }
+  });
+  return response.data;
+};
+
+export const createTarifa = async (tarifaData: {
+  contrato_id: number;
+  descripcion_tarifa: string;
+  tipo_transporte_id: number;
+  tarifa_inicial: number;
+  fecha_inicio_vigencia: string;
+  fecha_fin_vigencia: string | null;
+}): Promise<TarifaContrato> => {
+  const token = getToken();
+  const response = await axios.post<TarifaContrato>(`${API_URL}/tarifario_contrato`, tarifaData, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Accept': 'application/json',
+      'Content-Type': 'application/json'
+    }
+  });
+  return response.data;
+};
+
+export const updateTarifa = async (tarifaId: number, tarifaData: Partial<TarifaContrato>): Promise<TarifaContrato> => {
+  const token = getToken();
+  const response = await axios.put<TarifaContrato>(`${API_URL}/tarifario_contrato/${tarifaId}`, tarifaData, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Accept': 'application/json',
+      'Content-Type': 'application/json'
+    }
+  });
+  return response.data;
+};
+
+export const deleteTarifa = async (tarifaId: number): Promise<{ success: boolean }> => {
+  const token = getToken();
+  const response = await axios.delete<{ success: boolean }>(`${API_URL}/tarifario_contrato/${tarifaId}`, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Accept': 'application/json'
+    }
+  });
+  return response.data;
+};
+
+export const getAsignacionesByTarifa = async (tarifaId: number, limit: number = 10, offset: number = 0): Promise<AsignacionesResponse> => {
+  const token = getToken();
+  const response = await axios.get<AsignacionesResponse>(`${API_URL}/tarifario_contrato/${tarifaId}/asignaciones`, {
+    params: { limit, offset },
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Accept': 'application/json'
+    }
+  });
+  return response.data;
+};
+
 export const getAsignacionesManualesByTarifario = async (
   tarifarioId: number,
   limit: number = 10,
   offset: number = 0
 ): Promise<AsignacionesResponse> => {
-  try {
-    const token = getToken();
-    const response = await axios.get(`${API_URL}/asignaciones_manuales_tarifas/tarifario/${tarifarioId}`, {
-      params: { limit, offset },
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Accept': 'application/json'
-      }
-    });
-    return response.data;
-  } catch (error) {
-    console.error(`Error obteniendo asignaciones manuales para tarifario ${tarifarioId}:`, error);
-    throw error;
-  }
+  const token = getToken();
+  const response = await axios.get<AsignacionesResponse>(`${API_URL}/asignaciones_manuales_tarifas/tarifario/${tarifarioId}`, {
+    params: { limit, offset },
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Accept': 'application/json'
+    }
+  });
+  return response.data;
 };
 
-export const deleteAsignacionManual = async (asignacionId: number): Promise<any> => {
-  try {
-    const token = getToken();
-    const response = await axios.delete(`${API_URL}/asignaciones_manuales_tarifas/${asignacionId}`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Accept': 'application/json'
-      }
-    });
-    return response.data;
-  } catch (error) {
-    console.error(`Error eliminando asignación manual con ID ${asignacionId}:`, error);
-    throw error;
-  }
+export const deleteAsignacionManual = async (asignacionId: number): Promise<{ success: boolean }> => {
+  const token = getToken();
+  const response = await axios.delete<{ success: boolean }>(`${API_URL}/asignaciones_manuales_tarifas/${asignacionId}`, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Accept': 'application/json'
+    }
+  });
+  return response.data;
 };

@@ -2,8 +2,6 @@ import axios from 'axios';
 
 const API_URL = 'http://15.229.249.223:3000';
 
-/* ────────────────────  TYPES  ──────────────────── */
-
 export interface DetalleConTransporte {
   codigo_material_matnr: number;
   nombre_tipo_transporte: string | null;
@@ -17,6 +15,10 @@ export interface DetalleConTransporte {
   patente: string | null;
   cantidad: number;
   transportista_id?: number | null;
+}
+
+export interface DetalleSinTransporte {
+  [key: string]: unknown;
 }
 
 export interface Residuo {
@@ -38,10 +40,10 @@ export interface Solicitud {
   fecha_solicitud: string;
   comuna: string | null;
   direccion_completa: string;
-  direccion_id: number;                         // ← nuevo
+  direccion_id: number;
   residuos: Residuo[] | null;
   detalles_con_transporte?: DetalleConTransporte[] | null;
-  detalles_sin_transporte?: any[] | null;
+  detalles_sin_transporte?: DetalleSinTransporte[] | null;
 }
 
 export interface SolicitudesResponse {
@@ -95,17 +97,12 @@ interface FilterOptions {
   usuario?: number;
   estado?: string;
   centro?: number;
-  fecha_desde?: string;
-  fecha_hasta?: string;
-  requiere_transporte?: string;
-  [key: string]: any;
+  fechaDesde?: string;
+  fechaHasta?: string;
+  requiereTransporte?: string;
 }
 
-/* ────────────────────  HELPERS  ──────────────────── */
-
 export const getAuthToken = () => localStorage.getItem('authToken');
-
-/* ────────────────────  ENDPOINTS  ──────────────────── */
 
 export const getSolicitudesCoordinador = async (
   pagina: number = 1,
@@ -115,14 +112,14 @@ export const getSolicitudesCoordinador = async (
   const token = getAuthToken();
   if (!token) throw new Error('No se encontró token de autenticación.');
 
-  const params: FilterOptions = { pagina, tamano_pagina: tamanoPagina };
+  const params: Record<string, string | number | undefined> = { pagina, tamano_pagina: tamanoPagina };
   if (filters.cliente)  params.cliente  = filters.cliente;
   if (filters.usuario)  params.usuario  = filters.usuario;
   if (filters.estado)   params.estado   = filters.estado;
   if (filters.centro)   params.centro   = filters.centro;
-  if (filters.fechaDesde) params.fecha_desde = filters.fechaDesde;
-  if (filters.fechaHasta) params.fecha_hasta = filters.fechaHasta;
-  if (filters.requiereTransporte) params.requiere_transporte = filters.requiereTransporte;
+  if (filters.fechaDesde) params["fecha_desde"] = filters.fechaDesde;
+  if (filters.fechaHasta) params["fecha_hasta"] = filters.fechaHasta;
+  if (filters.requiereTransporte) params["requiere_transporte"] = filters.requiereTransporte;
 
   const { data } = await axios.get<SolicitudesResponse>(
     `${API_URL}/solicitudes/dashboard/coordinador`,
@@ -181,7 +178,7 @@ export const agendarSolicitud = async (
   const token = getAuthToken();
   if (!token) throw new Error('No token');
 
-  const payload: Record<string, any> = { ...datosAgendamiento };
+  const payload: Record<string, unknown> = { ...datosAgendamiento };
   if (payload.transportista_id === null) payload.transportista_id = undefined;
   if (payload.asignacion_id   === null) payload.asignacion_id   = undefined;
   if (payload.conductor_id    === null) payload.conductor_id    = undefined;
@@ -202,8 +199,17 @@ export const agendarSolicitud = async (
       }
     );
     return data;
-  } catch (error: any) {
-    console.error('🟥 Backend error body:', error.response?.data);
+  } catch (error: unknown) {
+    if (
+      typeof error === 'object' &&
+      error !== null &&
+      'response' in error &&
+      typeof (error as Record<string, unknown>).response === 'object'
+    ) {
+      console.error('🟥 Backend error body:', (error as any).response?.data);
+    }
     throw error;
   }
 };
+
+

@@ -4,6 +4,20 @@ export const getAuthToken = () => {
   return localStorage.getItem('authToken');
 };
 
+export interface Contacto {
+  codigo_cliente_kunnr: number;
+  nombre: string;
+  telefono: string;
+  email: string;
+  referencia_id: number;
+  [key: string]: unknown;
+}
+
+export interface CompletarSolicitudData {
+  solicitud_id: number;
+  otros_campos?: unknown;
+}
+
 export const crearSolicitud = async (solicitudData: {
   usuario_id: number;
   codigo_cliente_kunnr: number;
@@ -22,7 +36,7 @@ export const crearSolicitud = async (solicitudData: {
   if (serviceDate < today) {
     console.warn("Advertencia: La fecha de servicio seleccionada está en el pasado.");
   }
-  
+
   const [hourStr, minuteStr] = solicitudData.hora_servicio_solicitada.split(':');
   const hour = parseInt(hourStr, 10);
   const minute = parseInt(minuteStr, 10);
@@ -48,9 +62,9 @@ export const getDirecciones = async (codigo_cliente_kunnr: number) => {
   return response.data;
 };
 
-export const getContactos = async (codigo_cliente: number) => {
+export const getContactos = async (codigo_cliente: number): Promise<Contacto[]> => {
   const response = await api.get('/contactos_clientes');
-  return response.data.filter((contacto: any) => contacto.codigo_cliente_kunnr === codigo_cliente);
+  return response.data.filter((contacto: Contacto) => contacto.codigo_cliente_kunnr === codigo_cliente);
 };
 
 export const getDeclaraciones = async () => {
@@ -88,7 +102,7 @@ export const getCapacidadesTransporte = async () => {
   return response.data;
 };
 
-export const completarSolicitud = async (data: any) => {
+export const completarSolicitud = async (data: CompletarSolicitudData) => {
   const response = await api.post('/solicitudes/completar', data);
   return response.data;
 };
@@ -106,13 +120,7 @@ export const postDireccion = async (direccionData: {
   return response.data;
 };
 
-export const postContacto = async (contactoData: {
-  codigo_cliente_kunnr: number;
-  nombre: string;
-  telefono: string;
-  email: string;
-  referencia_id: number;
-}) => {
+export const postContacto = async (contactoData: Contacto) => {
   const response = await api.post('/contactos_clientes', contactoData);
   return response.data;
 };
@@ -141,11 +149,11 @@ export const crearDetalleConTransporte = async (data: {
   cantidad: number;
 }) => {
   const token = getAuthToken();
-  
+
   if (!token) {
     throw new Error('No se encontró token de autenticación. Por favor inicie sesión.');
   }
-  
+
   try {
     if (!data.solicitud_id || !data.codigo_material_matnr || !data.unidad_venta_kmein || data.cantidad <= 0) {
       throw new Error('Datos incompletos para crear detalle con transporte');
@@ -157,9 +165,9 @@ export const crearDetalleConTransporte = async (data: {
       unidad_venta_kmein: data.unidad_venta_kmein,
       cantidad: Number(data.cantidad)
     };
-    
+
     console.log('Enviando datos de transporte:', datosFormateados);
-    
+
     const response = await api.post(
       '/detalle_con_transporte',
       datosFormateados,
@@ -171,13 +179,24 @@ export const crearDetalleConTransporte = async (data: {
         }
       }
     );
-    
+
     return response.data;
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error al crear detalle con transporte:', error);
-    if (error.response) {
-      throw new Error(`Error ${error.response.status}: ${error.response.data?.message || 'Error en la solicitud'}`);
-    } else if (error.request) {
+
+    if (
+      typeof error === 'object' &&
+      error !== null &&
+      'response' in error &&
+      typeof (error as Record<string, unknown>).response === 'object'
+    ) {
+      const err = error as { response: { status: number; data?: { message?: string } } };
+      throw new Error(`Error ${err.response.status}: ${err.response.data?.message || 'Error en la solicitud'}`);
+    } else if (
+      typeof error === 'object' &&
+      error !== null &&
+      'request' in error
+    ) {
       throw new Error('No se recibió respuesta del servidor');
     } else {
       throw error;
