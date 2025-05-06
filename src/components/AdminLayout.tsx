@@ -153,13 +153,15 @@ const AdminLayout = (): JSX.Element => {
             padding: '60px 0 0',
             boxShadow: '0 0 10px rgba(0,0,0,0.1)',
             overflowY: 'auto',
-            width: '16.666%', // col-md-2
+            width: '16.666%', 
             transition: 'all 0.3s ease',
+            backgroundColor: '#ffffff'
           }}
         >
-          <div className="sidebar-header d-flex justify-content-between align-items-center px-3 py-2">
+          <div className="sidebar-header d-flex justify-content-between align-items-center px-3 py-2" 
+            style={{ paddingTop: '50px' }}>
             <h2 className="sidebar-title">Gestión Logística</h2>
-            {/* Botón para colapsar el menú en desktop */}
+
             <button 
               className="collapse-toggle d-none d-md-block"
               onClick={() => setMenuCollapsed(!menuCollapsed)}
@@ -186,7 +188,7 @@ const AdminLayout = (): JSX.Element => {
                 </button>
               </li>
               
-              {/* Crear Solicitud (antes Filtrar Solicitudes) */}
+              {/* Crear Solicitud */}
               <li>
                 <button
                   className={`menu-item ${activeTab === 'crearSolicitud' ? 'active' : ''}`}
@@ -416,14 +418,15 @@ const AdminLayout = (): JSX.Element => {
           ></div>
         )}
 
-        {/* Spacer column */}
         <div className={`d-none d-md-block ${menuCollapsed ? 'col-md-1' : 'col-md-2'}`}></div>
 
-        {/* Contenido principal con ancho adaptativo */}
-        <main role="main" className={`${menuCollapsed ? 'col-md-11' : 'col-md-10'} px-4 py-4 main-content`}
+        <main 
+          role="main" 
+          className={`px-4 py-4 main-content`}
           style={{
-            marginLeft: window.innerWidth < 768 ? '0' : 'auto',
-            marginTop: '60px', // Espacio para el navbar
+            marginLeft: menuCollapsed ? '60px' : '16.666%',
+            width: menuCollapsed ? 'calc(100% - 60px)' : 'calc(100% - 16.666%)',
+            marginTop: '60px',
             transition: 'all 0.3s ease'
           }}
         >

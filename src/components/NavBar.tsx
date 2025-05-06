@@ -39,12 +39,13 @@ const Navbar: React.FC = () => {
     <nav 
       className="navbar navbar-light bg-light"
       style={{
-        position: isAdminPage ? 'fixed' : 'static',
+        position: 'fixed',
         top: 0,
         left: 0,
         right: 0,
-        zIndex: 1070, 
-        boxShadow: isAdminPage ? '0 2px 4px rgba(0,0,0,0.1)' : 'none'
+        width: '100%',
+        zIndex: 1070,
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
       }}
     >
       <div className="container">

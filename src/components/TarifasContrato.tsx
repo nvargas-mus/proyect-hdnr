@@ -1,4 +1,4 @@
-import { useState, useEffect, CSSProperties } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
   getTarifasByContrato, 
@@ -13,107 +13,6 @@ import {
 } from '../services/adminService';
 import '../styles/AdminStyle.css';
 
-
-const modalStyles: Record<string, CSSProperties> = {
-  overlay: {
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    width: '100%',
-    height: '100%',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 1050,
-  },
-  container: {
-    backgroundColor: 'white',
-    borderRadius: '8px',
-    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.25)',
-    width: '90%',
-    maxWidth: '600px',
-    maxHeight: '90vh',
-    overflow: 'auto',
-    zIndex: 1051,
-    padding: 0,
-  },
-  header: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: '16px 24px',
-    borderBottom: '1px solid #e0e0e0',
-    backgroundColor: '#f8f9fa',
-    borderTopLeftRadius: '8px',
-    borderTopRightRadius: '8px',
-  },
-  headerTitle: {
-    margin: 0,
-    fontSize: '1.25rem',
-    fontWeight: 600,
-    color: '#243c6c',
-  },
-  closeButton: {
-    background: 'none',
-    border: 'none',
-    fontSize: '1.5rem',
-    cursor: 'pointer',
-    color: '#6c757d',
-    padding: 0,
-    lineHeight: 1,
-  },
-  body: {
-    padding: '24px',
-  },
-  footer: {
-    display: 'flex',
-    justifyContent: 'flex-end',
-    padding: '16px 24px',
-    borderTop: '1px solid #e0e0e0',
-    backgroundColor: '#f8f9fa',
-    borderBottomLeftRadius: '8px',
-    borderBottomRightRadius: '8px',
-    gap: '12px',
-  },
-  formGroup: {
-    marginBottom: '20px',
-  },
-  formLabel: {
-    display: 'block',
-    marginBottom: '8px',
-    fontWeight: 500,
-    color: '#243c6c',
-  },
-  formControl: {
-    display: 'block',
-    width: '100%',
-    padding: '8px 12px',
-    border: '1px solid #ced4da',
-    borderRadius: '4px',
-  },
-  button: {
-    minWidth: '100px',
-  },
-  alertSuccess: {
-    marginBottom: '20px',
-  },
-  alertDanger: {
-    marginBottom: '20px',
-  },
-  formRow: {
-    display: 'flex',
-    marginLeft: '-10px',
-    marginRight: '-10px',
-  },
-  formColumn: {
-    flex: 1,
-    paddingLeft: '10px',
-    paddingRight: '10px',
-  },
-};
-
-// Interfaz datos formulario de creación de tarifa
 interface TarifaFormData {
   contrato_id: number;
   descripcion_tarifa: string;
@@ -615,39 +514,35 @@ const TarifasContrato = () => {
         </>
       )}
       
-      {/* Modal para agregar nueva tarifa con estilos en línea compatibles con TypeScript */}
       {showModal && (
-        <div style={modalStyles.overlay} onClick={closeModal}>
-          <div style={modalStyles.container} onClick={(e) => e.stopPropagation()}>
-            <div style={modalStyles.header}>
-              <h3 style={modalStyles.headerTitle}>Agregar Nueva Tarifa</h3>
-              <button style={modalStyles.closeButton} onClick={closeModal}>×</button>
+        <div className="modal-overlay" onClick={closeModal}>
+          <div className="modal-container" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3 className="modal-header-title">Agregar Nueva Tarifa</h3>
+              <button className="modal-close-button" onClick={closeModal}>×</button>
             </div>
-            <div style={modalStyles.body}>
+            <div className="modal-body">
               {successMessage && (
-                <div className="alert alert-success" style={modalStyles.alertSuccess}>
+                <div className="alert alert-success">
                   {successMessage}
                 </div>
               )}
               
               {error && (
-                <div className="alert alert-danger" style={modalStyles.alertDanger}>
+                <div className="alert alert-danger">
                   {error}
                 </div>
               )}
               
               <form>
-                <div style={modalStyles.formGroup}>
-                  <label style={modalStyles.formLabel} htmlFor="descripcion_tarifa">
+                <div className="form-group">
+                  <label className="form-label" htmlFor="descripcion_tarifa">
                     Descripción <span className="text-danger">*</span>
                   </label>
                   <textarea
                     id="descripcion_tarifa"
                     name="descripcion_tarifa"
-                    style={{
-                      ...modalStyles.formControl, 
-                      ...(formErrors.descripcion_tarifa ? {border: '1px solid #dc3545'} : {})
-                    }}
+                    className={`form-control ${formErrors.descripcion_tarifa ? 'error' : ''}`}
                     value={formData.descripcion_tarifa}
                     onChange={handleInputChange}
                     rows={2}
@@ -660,17 +555,14 @@ const TarifasContrato = () => {
                   )}
                 </div>
                 
-                <div style={modalStyles.formGroup}>
-                  <label style={modalStyles.formLabel} htmlFor="tipo_transporte_id">
+                <div className="form-group">
+                  <label className="form-label" htmlFor="tipo_transporte_id">
                     Tipo de Transporte <span className="text-danger">*</span>
                   </label>
                   <select
                     id="tipo_transporte_id"
                     name="tipo_transporte_id"
-                    style={{
-                      ...modalStyles.formControl, 
-                      ...(formErrors.tipo_transporte_id ? {border: '1px solid #dc3545'} : {})
-                    }}
+                    className={`form-control ${formErrors.tipo_transporte_id ? 'error' : ''}`}
                     value={formData.tipo_transporte_id}
                     onChange={handleInputChange}
                   >
@@ -688,18 +580,15 @@ const TarifasContrato = () => {
                   )}
                 </div>
                 
-                <div style={modalStyles.formGroup}>
-                  <label style={modalStyles.formLabel} htmlFor="tarifa_inicial">
+                <div className="form-group">
+                  <label className="form-label" htmlFor="tarifa_inicial">
                     Tarifa Inicial (CLP) <span className="text-danger">*</span>
                   </label>
                   <input
                     type="number"
                     id="tarifa_inicial"
                     name="tarifa_inicial"
-                    style={{
-                      ...modalStyles.formControl, 
-                      ...(formErrors.tarifa_inicial ? {border: '1px solid #dc3545'} : {})
-                    }}
+                    className={`form-control ${formErrors.tarifa_inicial ? 'error' : ''}`}
                     value={formData.tarifa_inicial || ''}
                     onChange={handleInputChange}
                     min="0"
@@ -713,19 +602,16 @@ const TarifasContrato = () => {
                   )}
                 </div>
                 
-                <div style={modalStyles.formRow}>
-                  <div style={{...modalStyles.formGroup, ...modalStyles.formColumn}}>
-                    <label style={modalStyles.formLabel} htmlFor="fecha_inicio_vigencia">
+                <div className="form-row">
+                  <div className="form-column form-group">
+                    <label className="form-label" htmlFor="fecha_inicio_vigencia">
                       Fecha Inicio Vigencia <span className="text-danger">*</span>
                     </label>
                     <input
                       type="date"
                       id="fecha_inicio_vigencia"
                       name="fecha_inicio_vigencia"
-                      style={{
-                        ...modalStyles.formControl, 
-                        ...(formErrors.fecha_inicio_vigencia ? {border: '1px solid #dc3545'} : {})
-                      }}
+                      className={`form-control ${formErrors.fecha_inicio_vigencia ? 'error' : ''}`}
                       value={formData.fecha_inicio_vigencia}
                       onChange={handleInputChange}
                     />
@@ -736,18 +622,15 @@ const TarifasContrato = () => {
                     )}
                   </div>
                   
-                  <div style={{...modalStyles.formGroup, ...modalStyles.formColumn}}>
-                    <label style={modalStyles.formLabel} htmlFor="fecha_fin_vigencia">
+                  <div className="form-column form-group">
+                    <label className="form-label" htmlFor="fecha_fin_vigencia">
                       Fecha Fin Vigencia <small>(Opcional)</small>
                     </label>
                     <input
                       type="date"
                       id="fecha_fin_vigencia"
                       name="fecha_fin_vigencia"
-                      style={{
-                        ...modalStyles.formControl, 
-                        ...(formErrors.fecha_fin_vigencia ? {border: '1px solid #dc3545'} : {})
-                      }}
+                      className={`form-control ${formErrors.fecha_fin_vigencia ? 'error' : ''}`}
                       value={formData.fecha_fin_vigencia || ''}
                       onChange={handleInputChange}
                     />
@@ -760,11 +643,10 @@ const TarifasContrato = () => {
                 </div>
               </form>
             </div>
-            <div style={modalStyles.footer}>
+            <div className="modal-footer">
               <button
                 type="button"
-                className="btn form-button-outline"
-                style={modalStyles.button}
+                className="btn form-button-outline form-button"
                 onClick={closeModal}
                 disabled={submitting}
               >
@@ -772,8 +654,7 @@ const TarifasContrato = () => {
               </button>
               <button
                 type="button"
-                className="btn form-button-primary"
-                style={modalStyles.button}
+                className="btn form-button-primary form-button"
                 onClick={handleSubmit}
                 disabled={submitting}
               >
