@@ -889,3 +889,12 @@ body.admin-page .navbar .btn-outline-danger {
     padding-bottom: 60px;
   }
 }
+
+table.custom-table thead {
+  background-color: #619bf1;
+}
+
+table.custom-table thead th {
+  color: #243c6c !important;
+  font-weight: bold;
+}

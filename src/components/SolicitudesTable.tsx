@@ -5,6 +5,7 @@ import { Solicitud } from '../services/coordinadorServices';
 import { format } from 'date-fns';
 import { useLocation } from 'react-router-dom';
 import '../styles/CoordinadorPage.css';
+import '../styles/SolicitudesTable.css';
 
 interface SolicitudesTableProps {
   solicitudes: Solicitud[];
@@ -70,25 +71,32 @@ const SolicitudesTable: React.FC<SolicitudesTableProps> = ({
 
   const containerClassName = isAdminContext ? 'content-container' : '';
 
+  const containerStyle = {
+    width: '95%',
+    maxWidth: '1400px',
+    margin: '0 auto'
+  };
+
   return (
-    <div className={containerClassName}>
+    <div className={containerClassName} style={containerStyle}>
       <h4 className="mb-4">Solicitudes de Servicio</h4>
       <div className="table-responsive">
         <Table className="custom-table" striped bordered hover>
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Código</th>
-              <th>Cliente</th>
-              <th>Sucursal</th>
-              <th>Fecha</th>
-              <th>Hora</th>
-              <th>Estado</th>
-              <th>Comuna</th>
-              <th>Transporte</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Código</th>
+            <th>Cliente</th>
+            <th>Sucursal</th>
+            <th>Fecha</th>
+            <th>Hora</th>
+            <th>Estado</th>
+            <th>Comuna</th>
+            <th>Transporte</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+
           <tbody>
             {solicitudes.length > 0 ? (
               solicitudes.map((solicitud) => (

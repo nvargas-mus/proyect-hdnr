@@ -77,6 +77,14 @@
   margin: 0 !important;
 }
 
+.table-responsive {
+  overflow-x: auto;
+  width: 100%;
+  max-width: 100%;
+  margin-left: 0;
+  margin-right: 0;
+}
+
 .custom-table {
   width: 100% !important;
   margin: 0 !important;
@@ -88,11 +96,11 @@
 }
 
 .custom-table thead {
-  background-color: #243c6c;
-  color: #ffffff;
+  background-color: #f8f9fa;
   border-top: none;
 }
 
+.custom-table thead th,
 .custom-table th {
   color: #243c6c !important;
   padding: 12px 15px;
@@ -101,8 +109,10 @@
   text-align: left;
   margin: 0;
   vertical-align: middle;
+  font-weight: bold;
 }
 
+/* Estilos para celdas de tabla */
 .custom-table td {
   color: #243c6c !important;
   padding: 12px 15px;
@@ -203,9 +213,46 @@
 .row {
   margin-left: 0 !important;
   margin-right: 0 !important;
+  width: 100% !important;
 }
 
 .container-fluid, .container {
   padding-left: 15px !important;
   padding-right: 15px !important;
+}
+
+/* Media query */
+@media screen and (min-width: 1920px) and (-webkit-min-device-pixel-ratio: 1.25),
+       screen and (min-width: 1920px) and (min-resolution: 120dpi) {
+  .table-responsive {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    overflow-x: auto !important;
+  }
+
+  .custom-table {
+    width: 100% !important;
+    margin: 0 auto !important;
+  }
+
+  .solicitudes-container .table-responsive,
+  .solicitudes-container .custom-table {
+    width: 100% !important;
+    margin: 0 !important;
+  }
+}
+
+table.custom-table thead th {
+  color: #243c6c !important;
+}
+
+table.custom-table thead {
+  background-color: #e6ecf5;
+}
+
+table.custom-table thead th {
+  color: #243c6c !important;
+  font-weight: bold;
 }
