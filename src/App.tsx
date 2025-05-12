@@ -10,6 +10,7 @@ import TarifasContrato from './components/TarifasContrato';
 import AsignacionesTarifa from './components/AsignacionesTarifa';
 import TransportistasTable from './components/TransportistasTable';
 import CoordinadorPage from './components/CoordinadorPage';
+import AsignacionTarifaPage from './components/AsignacionTarifaPage';
 import NotFoundPage from './components/NotFoundPage';
 import Navbar from './components/NavBar';
 import { SolicitudProvider } from './context/SolicitudContext';
@@ -36,8 +37,10 @@ const App = () => {
             <Route path="tarifas-contrato/:contratoId" element={<TarifasContrato />} />
             <Route path="asignaciones-tarifa/:tarifaId" element={<AsignacionesTarifa />} />
             <Route path="solicitudes" element={<CoordinadorPage />} />
+            <Route path="asignar-tarifa/:tarifaId" element={<AsignacionTarifaPage />} />
           </Route>
           
+          {/* Rutas de redirección */}
           <Route 
             path="/tarifas-contrato/:contratoId" 
             element={<Navigate to="/admin/tarifas-contrato/:contratoId" replace />} 
@@ -45,6 +48,10 @@ const App = () => {
           <Route 
             path="/asignaciones-tarifa/:tarifaId" 
             element={<Navigate to="/admin/asignaciones-tarifa/:tarifaId" replace />} 
+          />
+          <Route 
+            path="/asignar-tarifa/:tarifaId" 
+            element={<Navigate to="/admin/asignar-tarifa/:tarifaId" replace />} 
           />
           
           <Route path="*" element={<NotFoundPage />} />

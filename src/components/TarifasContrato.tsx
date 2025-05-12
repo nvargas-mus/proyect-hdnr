@@ -167,27 +167,7 @@ const TarifasContrato = () => {
   };
 
   const compartirTarifa = (tarifaId: number) => {
-    const shareUrl = `${window.location.origin}/detalles-tarifa/${tarifaId}`;
-    
-    if (navigator.share) {
-      navigator.share({
-        title: 'Compartir Tarifa',
-        text: `Detalles de la tarifa #${tarifaId}`,
-        url: shareUrl
-      }).catch(err => {
-        console.error('Error al compartir:', err);
-      });
-    } else {
-      navigator.clipboard.writeText(shareUrl)
-        .then(() => {
-          setShareMessage('¡Enlace copiado al portapapeles!');
-          setTimeout(() => setShareMessage(null), 3000);
-        })
-        .catch(err => {
-          console.error('Error al copiar enlace:', err);
-          alert('No se pudo copiar el enlace. Intente nuevamente.');
-        });
-    }
+    navigate(`/admin/asignar-tarifa/${tarifaId}`);
   };
 
   const formatCurrency = (value: number) => {
@@ -412,7 +392,7 @@ const TarifasContrato = () => {
       ) : (
         <>
           <div className="table-responsive">
-            <table className="custom-table table-bordered">
+            <table className="custom-table">
               <thead>
                 <tr>
                   <th>ID</th>
@@ -458,9 +438,9 @@ const TarifasContrato = () => {
                             <i className="fa fa-list"></i>
                           </button>
                           
-                          {/* Botón Compartir  */}
+                          {/* Botón Asignar a Cliente */}
                           <button
-                            title="Compartir enlace de tarifa"
+                            title="Asignar tarifa a cliente"
                             className="btn-action btn-share"
                             onClick={() => compartirTarifa(tarifa.tarifario_contrato_id)}
                           >

@@ -4,11 +4,9 @@ const API_URL = 'http://15.229.249.223:3000';
 
 const getToken = () => localStorage.getItem('authToken') || '';
 
-// Interfaces generales
 export interface Cliente {
   id: number;
   nombre: string;
-  // Agrega los campos reales del cliente aquí
 }
 
 export interface Contrato {
@@ -85,6 +83,35 @@ export interface AsignacionManualTarifa {
 export interface AsignacionesResponse {
   data: AsignacionManualTarifa[];
   pagination: PaginationInfo;
+}
+
+// Interfaces para la asignación de tarifas
+export interface ClienteAsociado {
+  codigo_cliente_kunnr: number;
+  nombre_name1: string;
+  sucursal_name2: string;
+}
+
+export interface DireccionCliente {
+  direccion_id: number;
+  calle: string;
+  numero: string;
+  complemento: string;
+  comuna: string;
+  region: string;
+  contacto_terreno_id: number;
+}
+
+export interface MaterialServicio {
+  codigo_material_matnr: number;
+  nombre_material_maktg: string;
+}
+
+export interface AsignacionTarifaData {
+  codigo_cliente_kunnr: number;
+  direccion_id: number;
+  codigo_material_matnr: number;
+  tarifario_contrato_id: number;
 }
 
 export const getClienteById = async (id: number | string): Promise<Cliente> => {
@@ -311,5 +338,65 @@ export const deleteAsignacionManual = async (asignacionId: number): Promise<{ su
       'Accept': 'application/json'
     }
   });
+  return response.data;
+};
+
+// --Funciones para la asignación de tarifas
+export const createAsignacionTarifa = async (data: AsignacionTarifaData): Promise<any> => {
+  const token = getToken();
+  const response = await axios.post(`${API_URL}/asignaciones_manuales_tarifas`, data, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Accept': 'application/json',
+      'Content-Type': 'application/json'
+    }
+  });
+  return response.data;
+};
+
+export const getClientesAsociados = async (q: string = ''): Promise<ClienteAsociado[]> => {
+  const token = getToken();
+  const response = await axios.get(`${API_URL}/usuarios/clientes/asociados`, {
+    params: { limit: 10, offset: 0, q },
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Accept': 'application/json'
+    }
+  });
+  
+  let clientesList: any[] = [];
+  const data = response.data;
+  
+  if (Array.isArray(data)) {
+    clientesList = data;
+  } else if (data && typeof data === 'object') {
+    clientesList = data.clientes || data.data || [];
+  }
+  
+  return clientesList;
+};
+
+export const getDireccionesCliente = async (codigo_cliente_kunnr: number): Promise<DireccionCliente[]> => {
+  const token = getToken();
+  const response = await axios.get(`${API_URL}/direcciones_cliente`, {
+    params: { codigo_cliente_kunnr },
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Accept': 'application/json'
+    }
+  });
+  
+  return response.data;
+};
+
+export const getMaterialesCliente = async (codigo_cliente_kunnr: number): Promise<MaterialServicio[]> => {
+  const token = getToken();
+  const response = await axios.get(`${API_URL}/materiales_cotizados/servicios/${codigo_cliente_kunnr}`, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Accept': 'application/json'
+    }
+  });
+  
   return response.data;
 };
