@@ -1,0 +1,139 @@
+
+.container.mt-5 {
+    max-width: 1400px;
+    padding: 1.5rem;
+  }
+
+  .solicitudes-table-container {
+    border-radius: 8px !important;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    margin-bottom: 1.5rem !important;
+    background-color: #fff;
+  }
+  
+  div[style*="width: 95%"] {
+    width: 100% !important;
+    max-width: 1400px !important;
+    margin: 0 auto !important;
+    background-color: #fff !important;
+    border-radius: 8px !important;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1) !important;
+    overflow: hidden !important;
+  }
+  
+  div[style*="width: 95%"] h4.mb-4 {
+    background-color: #f8f9fa !important;
+    padding: 15px 20px !important;
+    margin: 0 !important;
+    border-bottom: 1px solid #dee2e6 !important;
+    color: #243c6c !important;
+    font-weight: 600 !important;
+  }
+  
+  .solicitud-completion-container .card {
+    border-radius: 8px !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15) !important;
+    border: none !important;
+  }
+  
+  .solicitud-completion-container .card-title {
+    color: #243c6c !important;
+    font-weight: 600 !important;
+    padding-bottom: 1rem !important;
+    margin-bottom: 1.5rem !important;
+    border-bottom: 1px solid #e9ecef !important;
+  }
+
+  div[style*="border: 1px solid #f9f9f9"] {
+    border: 1px solid #e9ecef !important;
+    border-radius: 8px !important;
+    background-color: #f8f9fa !important;
+    padding: 15px !important;
+    margin-bottom: 15px !important;
+    transition: all 0.2s ease !important;
+  }
+  
+  div[style*="border: 1px solid #f9f9f9"]:hover {
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05) !important;
+  }
+  
+  h4:not(:first-child) {
+    margin-top: 2rem !important;
+    margin-bottom: 1rem !important;
+    color: #243c6c !important;
+    font-weight: 600 !important;
+    padding-bottom: 0.5rem !important;
+    border-bottom: 1px solid #e9ecef !important;
+  }
+  
+  .modal-dialog-centered .modal-content {
+    border: none !important;
+    border-radius: 8px !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15) !important;
+  }
+  
+  .modal-dialog-centered .modal-header {
+    background-color: #f8f9fa !important;
+    border-bottom: 1px solid #e9ecef !important;
+  }
+  
+  .modal-dialog-centered .modal-footer {
+    background-color: #f8f9fa !important;
+    border-top: 1px solid #e9ecef !important;
+  }
+  
+  .modal-footer .btn {
+    padding: 8px 16px !important;
+    font-weight: 500 !important;
+  }
+  
+  .btn:not(:disabled):hover {
+    transform: translateY(-1px);
+    transition: transform 0.2s;
+  }
+  
+  .card p-4 {
+    padding: 1.5rem !important;
+  }
+  
+  datalist {
+    background-color: white;
+    border-radius: 0 0 4px 4px;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+  }
+  
+  input[list]:focus {
+    border-color: #243c6c !important;
+    box-shadow: 0 0 0 0.25rem rgba(36, 60, 108, 0.25) !important;
+  }
+  
+  .input-group .form-button-outline {
+    border-top-left-radius: 0 !important;
+    border-bottom-left-radius: 0 !important;
+  }
+  
+  button.btn-danger {
+    margin-top: 0.5rem !important;
+  }
+  
+  button.btn-secondary.mb-4 {
+    background-color: #ffffff !important;
+    border: 2px solid #243c6c !important;
+    color: #243c6c !important;
+    padding: 8px 16px !important;
+    font-weight: 500 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  
+  button.btn-secondary.mb-4:hover {
+    background-color: #f8f9fa !important;
+  }
+  
+  button.btn-secondary.mb-4:before {
+    content: "+" !important;
+    margin-right: 8px !important;
+    font-weight: bold !important;
+  }

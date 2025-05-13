@@ -10,6 +10,7 @@ import {
   crearDetalleConTransporte,
 } from '../services/solicitudService';
 import '../styles/Form.css';
+import '../styles/SolicitudesStyle.css';
 
 interface SolicitudCompletionFormProps {
   solicitudId: number;
@@ -206,10 +207,11 @@ const SolicitudCompletionForm: React.FC<SolicitudCompletionFormProps> = ({
 
   return (
     <div className="container mt-5">
+      <h3 className="card-title text-center">Completar Solicitud - ID de la solicitud: {solicitudId} </h3>
       <div className="row justify-content-center">
         <div className="col-md-8">
           <div className="card p-4">
-            <h3 className="card-title text-center">Completar Solicitud (ID: {solicitudId})</h3>
+
             
             {/* Mensaje de error */}
             {errorMessage && (

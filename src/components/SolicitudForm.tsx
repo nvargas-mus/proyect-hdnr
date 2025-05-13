@@ -19,6 +19,7 @@ import {
 } from '../interfaces/solicitud';
 import SolicitudCompletionForm from './SolicitudCompletionForm';
 import '../styles/Form.css';
+import '../styles/SolicitudesStyle.css'
 
 const LOCAL_STORAGE_KEY = 'solicitudFormData';
 
@@ -360,12 +361,15 @@ const SolicitudForm = () => {
   };
 
   return (
+
+    
     <div className="container mt-5">
+      <h3 className="card-title text-center">Crear Solicitud de Servicio</h3>
       {step === 1 && (
         <div className="row justify-content-center">
           <div className="col-md-8">
             <div className="card p-4">
-              <h3 className="card-title text-center">Crear Solicitud de Servicio</h3>
+              
               <form onSubmit={handleSubmit}>
                 {/* Selección de cliente con autocompletado */}
                 <div className="mb-3">

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { getSolicitudesPorUsuario } from '../services/solicitudService';
 import '../styles/Home.css'; 
 
+
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
 
