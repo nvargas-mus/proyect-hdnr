@@ -419,19 +419,19 @@ const AdminLayout = (): JSX.Element => {
         )}
 
         <div className={`d-none d-md-block ${menuCollapsed ? 'col-md-1' : 'col-md-2'}`}></div>
+          <main 
+            role="main" 
+            className={`px-4 py-4 main-content ${menuCollapsed ? 'collapsed-menu' : ''}`}
+            style={{
+              marginLeft: menuCollapsed ? '60px' : '16.666%',
+              width: menuCollapsed ? 'calc(100% - 60px)' : 'calc(100% - 16.666%)',
+              marginTop: '60px',
+              transition: 'all 0.3s ease'
+            }}
+          >
+            <Outlet />
+          </main>
 
-        <main 
-          role="main" 
-          className={`px-4 py-4 main-content`}
-          style={{
-            marginLeft: menuCollapsed ? '60px' : '16.666%',
-            width: menuCollapsed ? 'calc(100% - 60px)' : 'calc(100% - 16.666%)',
-            marginTop: '60px',
-            transition: 'all 0.3s ease'
-          }}
-        >
-          <Outlet />
-        </main>
       </div>
     </div>
   );

@@ -1052,3 +1052,28 @@ table.custom-table thead th {
 .d-flex.justify-content-end .btn:first-child {
   margin-left: 0;
 }
+
+.main-container {
+  display: block;
+}
+
+.main-content {
+  margin-top: 60px;   
+  margin-left: 16.666%;  
+  width: calc(100% - 16.666%);
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+  padding: 16px;
+}
+
+.main-content.collapsed-menu {
+  margin-left: 60px;           
+  width: calc(100% - 60px);
+}
+
+@media (max-width: 1200px) {
+  .main-content {
+    margin-left: 60px;
+    width: calc(100% - 60px);
+  }
+}
