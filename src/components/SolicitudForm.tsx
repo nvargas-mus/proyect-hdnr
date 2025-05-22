@@ -227,61 +227,67 @@ const SolicitudForm = () => {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-  
-    const fechaServicio = new Date(formData.fecha_servicio_solicitada);
-    const hoy = new Date();
-    hoy.setHours(0, 0, 0, 0);
-    
-    if (fechaServicio < hoy) {
-      alert("Error: La fecha de servicio no puede estar en el pasado.");
-      return;
-    }
-  
-    const [horaStr, minutoStr] = formData.hora_servicio_solicitada.split(':');
-    const hora = parseInt(horaStr, 10);
-    const minuto = parseInt(minutoStr, 10);
-    
-    if (
-      hora < 8 || 
-      hora > 18 || 
-      ![0, 15, 30, 45].includes(minuto) || 
-      formData.hora_servicio_solicitada === ""
-    ) {
-      alert("Error: Hora inválida. Debe ser entre 08:00 y 18:00 con minutos exactos (00, 15, 30, 45).");
-      return;
+  e.preventDefault();
+
+  const [year, month, day] = formData.fecha_servicio_solicitada
+    .split('-')
+    .map(Number);
+  const fechaServicio = new Date(year, month - 1, day);
+  fechaServicio.setHours(0, 0, 0, 0);
+
+  const hoy = new Date();
+  hoy.setHours(0, 0, 0, 0);
+
+  if (fechaServicio < hoy) {
+    alert("Error: La fecha de servicio no puede estar en el pasado.");
+    return;
+  }
+
+  const [horaStr, minutoStr] = formData.hora_servicio_solicitada.split(':');
+  const hora = parseInt(horaStr, 10);
+  const minuto = parseInt(minutoStr, 10);
+
+  if (
+    hora < 8 ||
+    hora > 18 ||
+    ![0, 15, 30, 45].includes(minuto) ||
+    formData.hora_servicio_solicitada === ""
+  ) {
+    alert("Error: Hora inválida. Debe ser entre 08:00 y 18:00 con minutos exactos (00, 15, 30, 45).");
+    return;
+  }
+
+  if (formData.requiere_transporte && !formData.direccion_id) {
+    alert("Error: Debe seleccionar una dirección cuando requiere transporte.");
+    return;
+  }
+
+  try {
+    const { clienteDisplay, ...payload } = formData;
+
+    if (payload.hora_servicio_solicitada.length === 5) {
+      payload.hora_servicio_solicitada += ":00";
     }
 
-    if (formData.requiere_transporte && !formData.direccion_id) {
-      alert("Error: Debe seleccionar una dirección cuando requiere transporte.");
-      return;
-    }
-  
-    try {
-      const { clienteDisplay, ...payload } = formData;
-  
-      if (payload.hora_servicio_solicitada.length === 5) {
-        payload.hora_servicio_solicitada += ":00";
-      }
-  
-      payload.generador_id = payload.generador_igual_cliente 
-        ? 0
-        : payload.generador_id;
-  
-      const data = await crearSolicitud(payload);
-      
-      setMessage('Solicitud creada exitosamente. Complete la información adicional.');
-      setError('');
-      setSolicitudId(data.solicitud_id);
-      setStep(2);
-      localStorage.removeItem(LOCAL_STORAGE_KEY);
-      
-    } catch (err) {
-      console.error('Error al crear la solicitud:', err);
-      setError('Error al crear la solicitud. Verifique los datos e intente nuevamente.');
-      setMessage('');
-    }
-  };
+    payload.generador_id = payload.generador_igual_cliente
+      ? 0
+      : payload.generador_id;
+
+    const data = await crearSolicitud(payload);
+
+    setMessage('Solicitud creada exitosamente. Complete la información adicional.');
+    setError('');
+    setSolicitudId(data.solicitud_id);
+    setStep(2);
+    localStorage.removeItem(LOCAL_STORAGE_KEY);
+
+  } catch (err) {
+    console.error('Error al crear la solicitud:', err);
+    setError('Error al crear la solicitud. Verifique los datos e intente nuevamente.');
+    setMessage('');
+  }
+};
+
   
 
   const handleDireccionChange = (
