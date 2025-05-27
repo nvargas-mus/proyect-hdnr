@@ -1,5 +1,4 @@
 
-// src/pages/CoordinadorPage.tsx
 import React, { useEffect, useState } from 'react';
 import {
   Container,
@@ -41,7 +40,6 @@ import '../styles/CoordinadorPage.css';
 const CoordinadorPage: React.FC = () => {
   const navigate = useNavigate();
 
-  /* ───── Estados generales ───── */
   const [solicitudes, setSolicitudes] = useState<Solicitud[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -50,13 +48,11 @@ const CoordinadorPage: React.FC = () => {
   const [totalSolicitudes, setTotalSolicitudes] = useState(0);
   const [activeFilters, setActiveFilters] = useState<Record<string, any>>({});
 
-  /* ───── Modales ───── */
   const [showDetalleModal, setShowDetalleModal] = useState(false);
   const [showAgendamientoModal, setShowAgendamientoModal] = useState(false);
   const [loadingDetalle, setLoadingDetalle] = useState(false);
   const [loadingAgendamiento, setLoadingAgendamiento] = useState(false);
 
-  /* ───── Selección y catálogos ───── */
   const [selectedSolicitudId, setSelectedSolicitudId] = useState<number | null>(
     null
   );
@@ -66,13 +62,12 @@ const CoordinadorPage: React.FC = () => {
   const [transportistas, setTransportistas] = useState<Transportista[]>([]);
   const [asignaciones, setAsignaciones] = useState<AsignacionTarifa[]>([]);
 
-  /* ───── Feedback ───── */
+
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [agendamientoError, setAgendamientoError] = useState<string | null>(
     null
   );
 
-  /* ───── Formulario ───── */
   const [formAgendamiento, setFormAgendamiento] = useState<AgendamientoData>({
     fecha_servicio_programada: '',
     hora_servicio_programada: '',
@@ -87,7 +82,6 @@ const CoordinadorPage: React.FC = () => {
     vehiculo_id: null
   });
 
-  /* ═════════ 1. Carga de solicitudes ═════════ */
   useEffect(() => {
     const fetch = async () => {
       try {
@@ -112,7 +106,6 @@ const CoordinadorPage: React.FC = () => {
     fetch();
   }, [paginaActual, activeFilters]);
 
-  /* ═════════ 2. Ver detalle ═════════ */
   const handleVerDetalle = (id: number) => {
     setSelectedSolicitudId(id);
     setShowDetalleModal(true);
@@ -122,7 +115,6 @@ const CoordinadorPage: React.FC = () => {
       .finally(() => setLoadingDetalle(false));
   };
 
-  /* ═════════ 3. Abrir modal agendamiento ═════════ */
   const handleVerFecha = async (id: number) => {
     setSelectedSolicitudId(id);
     setAgendamientoError(null);
@@ -133,10 +125,8 @@ const CoordinadorPage: React.FC = () => {
       const sol = await getSolicitudById(id);
       setSolicitudDetalle(sol);
 
-      /* transportistas */
       setTransportistas(await getTransportistas());
 
-      /* asignaciones */
       if (sol.requiere_transporte && sol.detalles_con_transporte?.length) {
         const mat = sol.detalles_con_transporte[0].codigo_material_matnr;
         try {
@@ -152,7 +142,6 @@ const CoordinadorPage: React.FC = () => {
         }
       } else setAsignaciones([]);
 
-      /* init form */
       const fechaSolicitada = new Date(sol.fecha_servicio_solicitada)
         .toISOString()
         .split('T')[0];
@@ -180,7 +169,6 @@ const CoordinadorPage: React.FC = () => {
     }
   };
 
-  /* ═════════ 4. Handle change ═════════ */
   const handleFormChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
@@ -202,7 +190,6 @@ const CoordinadorPage: React.FC = () => {
     }
   };
 
-  /* ═════════ 5. Submit agendamiento ═════════ */
   const handleSubmitAgendamiento = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedSolicitudId) return;
@@ -249,7 +236,6 @@ const CoordinadorPage: React.FC = () => {
     }
   };
 
-  /* ═════════ Helpers ═════════ */
   const handlePageChange = (p: number) => setPaginaActual(p);
 
   const handleApplyFilters = (f: any) => {
@@ -293,7 +279,6 @@ const CoordinadorPage: React.FC = () => {
     }
   };
 
-  /* ═════════ Dashboard stats ═════════ */
   const pendientes = solicitudes.filter(
     (s) => s.nombre_estado.toLowerCase() === 'incompleta'
   ).length;
@@ -302,7 +287,6 @@ const CoordinadorPage: React.FC = () => {
   ).length;
   const conTransporte = solicitudes.filter((s) => s.requiere_transporte).length;
 
-  /* ═════════ Render principal ═════════ */
   if (error && !solicitudes.length) {
     return (
       <Container fluid className="main-content">
@@ -316,14 +300,12 @@ const CoordinadorPage: React.FC = () => {
 
   return (
     <Container fluid className="main-content">
-      {/* ---------- encabezado ---------- */}
       <Row className="mb-4">
         <Col>
           <h2 className="mb-4">Panel de Coordinador</h2>
         </Col>
       </Row>
 
-      {/* ---------- tarjetas resumen ---------- */}
       <Row className="mb-4">
         <Col lg={3} md={6} className="mb-4">
           <Card className="h-100 p-4">
@@ -359,14 +341,12 @@ const CoordinadorPage: React.FC = () => {
         </Col>
       </Row>
 
-      {/* ---------- filtros ---------- */}
       <Row>
         <Col>
           <FiltrosSolicitudes onApplyFilters={handleApplyFilters} />
         </Col>
       </Row>
 
-      {/* ---------- tabla ---------- */}
       <Row>
         <Col>
           <div className="table-panel">
@@ -491,7 +471,6 @@ const CoordinadorPage: React.FC = () => {
         </Col>
       </Row>
 
-      {/* ---------- Modal Detalle ---------- */}
       <Modal
         show={showDetalleModal}
         onHide={handleCloseDetalleModal}
@@ -510,7 +489,6 @@ const CoordinadorPage: React.FC = () => {
             </div>
           ) : (
             <>
-              {/* ─── Información general ─── */}
               <Row className="mb-4">
                 <Col md={6}>
                   <h5>Información General</h5>
@@ -688,7 +666,6 @@ const CoordinadorPage: React.FC = () => {
                   <Alert variant="danger">{agendamientoError}</Alert>
                 )}
 
-                {/* —— Fecha / hora —— */}
                 <Row className="mb-3">
                   <Col md={6}>
                     <Form.Group controlId="fecha_servicio_programada">
@@ -716,7 +693,6 @@ const CoordinadorPage: React.FC = () => {
                   </Col>
                 </Row>
 
-                {/* —— Línea / NV —— */}
                 <Row className="mb-3">
                   <Col md={6}>
                     <Form.Group controlId="id_linea_descarga">
