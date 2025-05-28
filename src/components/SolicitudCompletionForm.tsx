@@ -206,7 +206,7 @@ const SolicitudCompletionForm: React.FC<SolicitudCompletionFormProps> = ({
   };
 
   return (
-    <div className="container mt-5">
+    <div className="container mt-0">
       <h3 className="card-title text-center">Completar Solicitud - ID de la solicitud: {solicitudId} </h3>
       <div className="row justify-content-center">
         <div className="col-md-8">
@@ -298,7 +298,7 @@ const SolicitudCompletionForm: React.FC<SolicitudCompletionFormProps> = ({
               ))}
 
               <button type="button" className="btn btn-secondary mb-4" onClick={handleAddResiduosRow}>
-                + Agregar otro residuo
+                 Agregar otro residuo
               </button>
 
               {requiereTransporte ? (

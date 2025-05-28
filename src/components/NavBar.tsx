@@ -48,8 +48,8 @@ const Navbar: React.FC = () => {
         boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
       }}
     >
-      <div className="container">
-        <a className="navbar-brand" href="#">
+      <div className="container-fluid">
+        <a className="navbar-brand" href="#" style={{ marginLeft: '0' }}>
           <img src={Logo} alt="Hidronor" style={{ height: '50px' }} />
         </a>
         {isLoggedIn && !isAdminPage && (

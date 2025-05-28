@@ -56,9 +56,7 @@ export const getClientesAsociados = async (q: string = '') => {
 };
 
 export const getDirecciones = async (codigo_cliente_kunnr: number) => {
-  const response = await api.get('/direcciones_cliente', {
-    params: { codigo_cliente_kunnr },
-  });
+  const response = await api.get(`/direcciones_cliente/cliente/${codigo_cliente_kunnr}`);
   return response.data;
 };
 
