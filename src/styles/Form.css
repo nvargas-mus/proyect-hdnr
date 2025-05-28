@@ -1,13 +1,10 @@
-/* Estilos base para formularios y elementos de UI */
 
-/* Contenedor de contenido principal */
 .content-container {
   padding: 1.5rem;
   max-width: 1400px;
   margin: 0 auto;
 }
 
-/* Estilos para tarjetas/cards */
 .card {
   border-radius: 8px !important;
   overflow: hidden;
@@ -328,7 +325,6 @@ input[type="radio"]:checked {
   }
 }
 
-/* botón volver vista de admin */
 body.admin-page .btn-volver {
   display: none !important;
 }
@@ -345,14 +341,12 @@ body.admin-page .main-content {
   padding-top: 20px !important;
 }
 
-/* Quitar la línea bajo el título en TODAS las vistas (admin y cliente) */
 .card-title.text-center {
   border-bottom: none !important;
   padding-bottom: 0 !important;
   margin-bottom: 1rem !important;
 }
 
-/* Reducir el margen superior del formulario solo en vista admin */
 body.admin-page .container.mt-5 {
   margin-top: 20px !important;
 }
@@ -361,7 +355,6 @@ body.admin-page .container.mt-5 {
   margin-bottom: 2.5rem !important;
 }
 
-/* Corregir el desplazamiento hacia la derecha en vista admin */
 body.admin-page .container.mt-5 {
   padding-left: 0 !important;
   padding-right: 0 !important;

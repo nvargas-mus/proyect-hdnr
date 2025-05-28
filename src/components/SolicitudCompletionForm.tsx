@@ -11,6 +11,8 @@ import {
 } from '../services/solicitudService';
 import '../styles/Form.css';
 import '../styles/SolicitudesStyle.css';
+import ReactDOM from 'react-dom';
+
 
 interface SolicitudCompletionFormProps {
   solicitudId: number;
@@ -428,27 +430,33 @@ const SolicitudCompletionForm: React.FC<SolicitudCompletionFormProps> = ({
       {/* Modal de Éxito */}
       {showSuccessModal && (
         <>
-          <div className="modal show d-block" tabIndex={-1}>
-            <div className="modal-dialog modal-dialog-centered">
-              <div className="modal-content border-0">
-                <div className="modal-header border-0">
-                  <h5 className="modal-title">Solicitud Creada con Éxito</h5>
-                  <button type="button" className="btn-close" onClick={handleSuccessOK}></button>
-                </div>
-                <div className="modal-body border-0">
-                  <p>La solicitud ha sido completada exitosamente.</p>
-                </div>
-                <div className="modal-footer border-0">
-                  <button type="button" className="btn btn-primary modal-save-button" onClick={handleSuccessOK}>
-                    Aceptar
-                  </button>
+          {ReactDOM.createPortal(
+            <>
+              <div className="modal show d-block" tabIndex={-1}>
+                <div className="modal-dialog modal-dialog-centered" style={{ maxWidth: '500px', width: '90%' }}>
+                  <div className="modal-content border-0">
+                    <div className="modal-header border-0">
+                      <h5 className="modal-title">Solicitud Creada con Éxito</h5>
+                      <button type="button" className="btn-close" onClick={handleSuccessOK}></button>
+                    </div>
+                    <div className="modal-body border-0">
+                      <p>La solicitud ha sido completada exitosamente.</p>
+                    </div>
+                    <div className="modal-footer border-0">
+                      <button type="button" className="btn btn-primary modal-save-button" onClick={handleSuccessOK}>
+                        Aceptar
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
-          <div className="modal-backdrop fade show"></div>
+              <div className="modal-backdrop fade show"></div>
+            </>,
+            document.body
+          )}
         </>
       )}
+
     </div>
   );
 };

@@ -269,13 +269,14 @@ const SolicitudForm = () => {
       payload.hora_servicio_solicitada += ":00";
     }
 
+    payload.fecha_servicio_solicitada = formData.fecha_servicio_solicitada;
+
     payload.generador_id = payload.generador_igual_cliente
       ? 0
       : payload.generador_id;
 
     const data = await crearSolicitud(payload);
 
-    setMessage('Solicitud creada exitosamente. Complete la información adicional.');
     setError('');
     setSolicitudId(data.solicitud_id);
     setStep(2);
@@ -287,8 +288,6 @@ const SolicitudForm = () => {
     setMessage('');
   }
 };
-
-  
 
   const handleDireccionChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
