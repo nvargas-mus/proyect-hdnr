@@ -273,7 +273,7 @@ const CoordinadorPage: React.FC = () => {
       case 'rechazada':
         return <Badge bg="danger">Rechazada</Badge>;
       case 'en proceso':
-        return <Badge bg="info">En Proceso</Badge>;
+        return <Badge bg="info">En Proceso</Badge>;
       default:
         return <Badge bg="secondary">{e}</Badge>;
     }

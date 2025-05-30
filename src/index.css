@@ -49,3 +49,21 @@ body {
     padding-right: 15px !important;
   }
 }
+
+.modal.show .modal-dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) !important;
+  margin: 0;
+  max-height: 95vh;
+  overflow-y: auto;
+}
+
+body.modal-open {
+  overflow: hidden;
+}
+
+body.modal-open .main-content {
+  padding-top: 0 !important;
+}

@@ -6,7 +6,8 @@ import {
   createAsignacionTarifa,
   ClienteAsociado,
   DireccionCliente,
-  AsignacionTarifaData
+  AsignacionTarifaData,
+  getMaterialesCliente
 } from '../services/adminService';
 import '../styles/AdminStyle.css';
 
@@ -14,13 +15,6 @@ interface Material {
   codigo_material_matnr: number;
   nombre_material_maktg: string;
 }
-
-const MATERIALES_PRUEBA: Material[] = [
-  { codigo_material_matnr: 5004223, nombre_material_maktg: 'Material 1 - Transporte A' },
-  { codigo_material_matnr: 5004224, nombre_material_maktg: 'Material 2 - Transporte B' },
-  { codigo_material_matnr: 5004225, nombre_material_maktg: 'Material 3 - Transporte C' },
-  { codigo_material_matnr: 5004226, nombre_material_maktg: 'Material 4 - Transporte D' }
-];
 
 const AsignacionTarifaPage = () => {
   const { tarifaId } = useParams<{ tarifaId: string }>();
@@ -81,22 +75,22 @@ const AsignacionTarifaPage = () => {
   }, [formData.codigo_cliente_kunnr]);
 
   useEffect(() => {
-    const fetchMateriales = async () => {
-      if (formData.codigo_cliente_kunnr) {
-        try {
-          console.log('Usando datos de prueba para materiales');
-          setMateriales(MATERIALES_PRUEBA);
-        } catch (error) {
-          console.error('Error al cargar materiales:', error);
-          setMateriales(MATERIALES_PRUEBA);
-        }
-      } else {
-        setMateriales([]);
+  const fetchMateriales = async () => {
+    if (formData.codigo_cliente_kunnr) {
+      try {
+        const materialesData = await getMaterialesCliente(formData.codigo_cliente_kunnr);
+        setMateriales(materialesData);
+      } catch (error) {
+        console.error('Error al cargar materiales:', error);
+        setMateriales([]);  // 👈 Vacío si falla
       }
-    };
+    } else {
+      setMateriales([]);
+    }
+  };
 
-    fetchMateriales();
-  }, [formData.codigo_cliente_kunnr]);
+  fetchMateriales();
+}, [formData.codigo_cliente_kunnr]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;

@@ -67,26 +67,6 @@
     border-bottom: 1px solid #e9ecef !important;
   }
   
-  .modal-dialog-centered .modal-content {
-    border: none !important;
-    border-radius: 8px !important;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15) !important;
-  }
-  
-  .modal-dialog-centered .modal-header {
-    background-color: #f8f9fa !important;
-    border-bottom: 1px solid #e9ecef !important;
-  }
-  
-  .modal-dialog-centered .modal-footer {
-    background-color: #f8f9fa !important;
-    border-top: 1px solid #e9ecef !important;
-  }
-  
-  .modal-footer .btn {
-    padding: 8px 16px !important;
-    font-weight: 500 !important;
-  }
   
   .btn:not(:disabled):hover {
     transform: translateY(-1px);
@@ -137,26 +117,6 @@
     margin-right: 8px !important;
     font-weight: bold !important;
   }
-
-.modal-backdrop.show {
-  position: fixed !important;
-  top: 0;
-  left: 0;
-  width: 100vw !important;
-  height: 100vh !important;
-  background-color: rgba(0, 0, 0, 0.5) !important;
-  z-index: 2000 !important;
-}
-
-.modal.show.d-block {
-  position: fixed !important;
-  top: 50% !important;
-  left: 50% !important;
-  transform: translate(-50%, -50%) !important;
-  z-index: 2100 !important;
-  max-width: 500px;
-  width: 90%;
-}
 
 .sidebar-header,
 div[style*="z-index: 1002"] {

@@ -180,25 +180,6 @@
   color: #243c6c !important;
 }
 
-.modal-header {
-  background-color: #f8f9fa;
-  border-bottom: 1px solid #dee2e6;
-}
-
-.modal-header .modal-title {
-  color: #243c6c !important;
-  font-weight: 600;
-}
-
-.modal-body h5 {
-  color: #243c6c !important;
-  font-weight: 600;
-  margin-bottom: 15px;
-}
-
-.modal-body table {
-  margin-bottom: 20px;
-}
 
 /* Estilos para badges */
 .badge {
@@ -256,3 +237,4 @@ table.custom-table thead th {
   color: #243c6c !important;
   font-weight: bold;
 }
+
