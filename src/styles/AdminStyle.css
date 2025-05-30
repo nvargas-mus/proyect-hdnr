@@ -17,8 +17,6 @@ body {
   overflow-x: hidden;
 }
 
-/* --ESTILOS PARA EL SIDEBAR ----- */
-
 /* Sidebar wrapper */
 .sidebar-wrapper {
   background-color: #ffffff;
@@ -214,62 +212,6 @@ body {
   background-color: #f1f5fa;
   color: #243c6c;
   font-weight: 500;
-}
-
-/* Contenedor de cerrar sesión */
-
-.logout-container {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  padding: 15px;
-  border-top: 1px solid #e9ecef;
-  background: white;
-  margin-top: auto;
-}
-
-.sidebar-wrapper.collapsed .logout-container {
-  width: 60px;
-}
-
-@media (max-width: 767.98px) {
-  .logout-container {
-    width: 250px; 
-    transform: translateX(-100%); 
-  }
-  
-  .sidebar-wrapper.mobile-open .logout-container {
-    transform: translateX(0); 
-  }
-}
-
-.logout-btn {
-  width: 100%;
-  background: transparent;
-  border: none;
-  color: #243c6c;
-  text-align: left;
-  padding: 12px 15px;
-  font-size: 0.95rem;
-  transition: all 0.3s;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-}
-
-.logout-btn i {
-  margin-right: 10px;
-  width: 16px;
-  text-align: center;
-  color: #dc3545;
-  font-size: 1.1rem;
-}
-
-.logout-btn:hover {
-  color: #dc3545;
-  background-color: #f8d7da; 
-  border-color: #f5c2c7;
 }
 
 /* Contenido principal */
@@ -729,29 +671,25 @@ input[type="radio"]:checked {
   }
   
   .sidebar-wrapper.mobile-open {
-    transform: translateX(0);
+    transform: translateX(0); 
     box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
   }
-  
+
   .menu-toggle-btn {
     display: block;
   }
-  
+
   .main-content {
     margin-left: 0 !important;
     width: 100% !important;
     padding-top: 70px !important;
   }
-  
+
   .navbar {
     padding-left: 60px;
   }
-  
-  .action-buttons {
-    flex-wrap: wrap;
-    justify-content: center;
-  }
 }
+
 
 @media (min-width: 768px) and (max-width: 991.98px) {
   .sidebar-wrapper {
@@ -994,4 +932,14 @@ body.admin-page .navbar .btn-outline-danger {
 .custom-table tbody tr:hover {
   background-color: #e9ecef;
   transition: background-color 0.2s ease;
+}
+
+.menu-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1060;
 }

@@ -108,17 +108,6 @@ const AdminLayout = (): JSX.Element => {
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('usuario_id');
-    localStorage.removeItem('user_email');
-    
-    const event = new Event('localStorageUpdated');
-    window.dispatchEvent(event);
-    
-    navigate('/');
-  };
-
   return (
     <div className="container-fluid px-0">
       <button 
@@ -143,226 +132,218 @@ const AdminLayout = (): JSX.Element => {
       <div className="row g-0">
         {/* Menú lateral con clases responsivas */}
         <nav 
-  className={`sidebar-wrapper ${mobileMenuOpen ? 'mobile-open' : ''} ${menuCollapsed ? 'collapsed' : ''}`} 
-  style={{ 
-    position: 'fixed', 
-    top: 0, 
-    bottom: 0, 
-    left: 0, 
-    zIndex: 1030,
-    padding: '60px 0 0',
-    boxShadow: '0 0 10px rgba(0,0,0,0.1)',
-    overflow: 'hidden',
-    width: '16.666%', 
-    transition: 'all 0.3s ease',
-    backgroundColor: '#ffffff'
-  }}
->
-  <div className="sidebar-header d-flex justify-content-between align-items-center px-3 py-2" 
-    style={{ paddingTop: '50px' }}>
-    <h2 className="sidebar-title">Gestión Logística</h2>
-
-    <button 
-      className="collapse-toggle d-none d-md-block"
-      onClick={() => setMenuCollapsed(!menuCollapsed)}
-      style={{
-        background: 'transparent',
-        border: 'none',
-        color: 'white',
-        fontSize: '1rem'
-      }}
-    >
-      <i className={`fa ${menuCollapsed ? 'fa-chevron-right' : 'fa-chevron-left'}`}></i>
-    </button>
-  </div>
-
-  {/* Contenedor del menú con scroll */}
-  <div className="sidebar-menu" style={{ overflowY: 'auto', height: 'calc(100% - 120px)' }}>
-    <ul className="nav-list">
-      {/* Dashboard */}
-      <li>
-        <button
-          className={`menu-item ${activeTab === 'dashboard' ? 'active' : ''}`}
-          onClick={() => handleNavigation('/admin', 'dashboard')}
+          className={`sidebar-wrapper ${mobileMenuOpen ? 'mobile-open' : ''} ${menuCollapsed ? 'collapsed' : ''}`} 
+          style={{ 
+            position: 'fixed', 
+            top: 0, 
+            bottom: 0, 
+            left: 0, 
+            zIndex: 1030,
+            padding: '60px 0 0',
+            boxShadow: '0 0 10px rgba(0,0,0,0.1)',
+            overflow: 'hidden',
+            width: '16.666%', 
+            transition: 'all 0.3s ease',
+            backgroundColor: '#ffffff'
+          }}
         >
-          <i className="fa fa-chart-bar"></i>
-          <span className={menuCollapsed ? 'd-none d-md-inline collapse-text' : ''}>Dashboard</span>
-        </button>
-      </li>
+          <div className="sidebar-header d-flex justify-content-between align-items-center px-3 py-2" 
+            style={{ paddingTop: '50px' }}>
+            <h2 className="sidebar-title">Gestión Logística</h2>
 
-      {/* Crear Solicitud */}
-      <li>
-        <button
-          className={`menu-item ${activeTab === 'crearSolicitud' ? 'active' : ''}`}
-          onClick={() => handleNavigation('/admin/crear-solicitud', 'crearSolicitud')}
-        >
-          <i className="fa fa-plus-circle"></i>
-          <span className={menuCollapsed ? 'd-none d-md-inline collapse-text' : ''}>Crear Nueva Solicitud</span>
-        </button>
-      </li>
+            <button 
+              className="collapse-toggle d-none d-md-block"
+              onClick={() => setMenuCollapsed(!menuCollapsed)}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: 'white',
+                fontSize: '1rem'
+              }}
+            >
+              <i className={`fa ${menuCollapsed ? 'fa-chevron-right' : 'fa-chevron-left'}`}></i>
+            </button>
+          </div>
 
-      <li>
-        <button
-          className={`menu-item ${activeTab === 'ultimasSolicitudes' ? 'active' : ''}`}
-          onClick={() => handleNavigation('/admin/solicitudes', 'ultimasSolicitudes')}
-        >
-          <i className="fa fa-file-alt"></i>
-          <span className={menuCollapsed ? 'd-none d-md-inline collapse-text' : ''}>Solicitudes</span>
-        </button>
-      </li>
+          {/* Contenedor del menú con scroll */}
+          <div className="sidebar-menu" style={{ overflowY: 'auto', height: 'calc(100% - 120px)' }}>
+            <ul className="nav-list">
+              {/* Dashboard */}
+              <li>
+                <button
+                  className={`menu-item ${activeTab === 'dashboard' ? 'active' : ''}`}
+                  onClick={() => handleNavigation('/admin', 'dashboard')}
+                >
+                  <i className="fa fa-chart-bar"></i>
+                  <span className={menuCollapsed ? 'd-none d-md-inline collapse-text' : ''}>Dashboard</span>
+                </button>
+              </li>
 
-      <li>
-        <button
-          className={`menu-item ${activeTab === 'contratos' ? 'active' : ''}`}
-          onClick={() => handleNavigation('/admin/contratos', 'contratos')}
-        >
-          <i className="fa fa-file-contract"></i>
-          <span className={menuCollapsed ? 'd-none d-md-inline collapse-text' : ''}>Contratos</span>
-        </button>
-      </li>
+              {/* Crear Solicitud */}
+              <li>
+                <button
+                  className={`menu-item ${activeTab === 'crearSolicitud' ? 'active' : ''}`}
+                  onClick={() => handleNavigation('/admin/crear-solicitud', 'crearSolicitud')}
+                >
+                  <i className="fa fa-plus-circle"></i>
+                  <span className={menuCollapsed ? 'd-none d-md-inline collapse-text' : ''}>Crear Nueva Solicitud</span>
+                </button>
+              </li>
 
-      <li>
-        <button
-          className={`menu-item ${activeTab === 'gestionClientes' ? 'active' : ''}`}
-          onClick={() => handleNavigation('/admin/clientes', 'gestionClientes')}
-        >
-          <i className="fa fa-users"></i>
-          <span className={menuCollapsed ? 'd-none d-md-inline collapse-text' : ''}>Clientes</span>
-        </button>
-      </li>
+              <li>
+                <button
+                  className={`menu-item ${activeTab === 'ultimasSolicitudes' ? 'active' : ''}`}
+                  onClick={() => handleNavigation('/admin/solicitudes', 'ultimasSolicitudes')}
+                >
+                  <i className="fa fa-file-alt"></i>
+                  <span className={menuCollapsed ? 'd-none d-md-inline collapse-text' : ''}>Solicitudes</span>
+                </button>
+              </li>
 
-      <li>
-        <button
-          className={`menu-item ${activeTab === 'transportistas' ? 'active' : ''}`}
-          onClick={() => handleNavigation('/admin/transportistas', 'transportistas')}
-        >
-          <i className="fa fa-truck"></i>
-          <span className={menuCollapsed ? 'd-none d-md-inline collapse-text' : ''}>Transportistas</span>
-        </button>
-      </li>
+              <li>
+                <button
+                  className={`menu-item ${activeTab === 'contratos' ? 'active' : ''}`}
+                  onClick={() => handleNavigation('/admin/contratos', 'contratos')}
+                >
+                  <i className="fa fa-file-contract"></i>
+                  <span className={menuCollapsed ? 'd-none d-md-inline collapse-text' : ''}>Contratos</span>
+                </button>
+              </li>
 
-      {/* Submenú Maestros */}
-      <li className="submenu-container">
-        <button
-          className={`menu-item ${openSubmenu === 'maestros' ? 'expanded' : ''} ${
-            ['centros', 'declaraciones', 'unidadesReferenciales', 'lineasDescarga', 'tiposTransporte', 'referencias', 'capacidadesTransporte', 'generadores'].includes(activeTab) ? 'active' : ''
-          }`}
-          onClick={() => toggleSubmenu('maestros')}
-        >
-          <i className="fa fa-cog"></i>
-          <span className={menuCollapsed ? 'd-none d-md-inline collapse-text' : ''}>Maestros</span>
-          <i className={`fa fa-chevron-right chevron-icon ${menuCollapsed ? 'd-none d-md-inline collapse-text' : ''}`}></i>
-        </button>
+              <li>
+                <button
+                  className={`menu-item ${activeTab === 'gestionClientes' ? 'active' : ''}`}
+                  onClick={() => handleNavigation('/admin/clientes', 'gestionClientes')}
+                >
+                  <i className="fa fa-users"></i>
+                  <span className={menuCollapsed ? 'd-none d-md-inline collapse-text' : ''}>Clientes</span>
+                </button>
+              </li>
 
-        <ul className={`submenu ${openSubmenu === 'maestros' ? 'open' : ''}`}>
-          <li>
-            <button className={`submenu-item ${activeTab === 'centros' ? 'active' : ''}`} onClick={() => handleNavigation('/admin/centros', 'centros', 'maestros')}>
-              <i className="fa fa-building"></i><span>Centros</span>
-            </button>
-          </li>
-          <li>
-            <button className={`submenu-item ${activeTab === 'declaraciones' ? 'active' : ''}`} onClick={() => handleNavigation('/admin/declaraciones', 'declaraciones', 'maestros')}>
-              <i className="fa fa-file-signature"></i><span>Declaraciones</span>
-            </button>
-          </li>
-          <li>
-            <button className={`submenu-item ${activeTab === 'unidadesReferenciales' ? 'active' : ''}`} onClick={() => handleNavigation('/admin/unidades-referenciales', 'unidadesReferenciales', 'maestros')}>
-              <i className="fa fa-ruler"></i><span>Unidades Referenciales</span>
-            </button>
-          </li>
-          <li>
-            <button className={`submenu-item ${activeTab === 'lineasDescarga' ? 'active' : ''}`} onClick={() => handleNavigation('/admin/lineas-descarga', 'lineasDescarga', 'maestros')}>
-              <i className="fa fa-download"></i><span>Líneas de Descarga</span>
-            </button>
-          </li>
-          <li>
-            <button className={`submenu-item ${activeTab === 'tiposTransporte' ? 'active' : ''}`} onClick={() => handleNavigation('/admin/tipos-transporte', 'tiposTransporte', 'maestros')}>
-              <i className="fa fa-shipping-fast"></i><span>Tipos de Transporte</span>
-            </button>
-          </li>
-          <li>
-            <button className={`submenu-item ${activeTab === 'referencias' ? 'active' : ''}`} onClick={() => handleNavigation('/admin/referencias', 'referencias', 'maestros')}>
-              <i className="fa fa-bookmark"></i><span>Referencias</span>
-            </button>
-          </li>
-          <li>
-            <button className={`submenu-item ${activeTab === 'capacidadesTransporte' ? 'active' : ''}`} onClick={() => handleNavigation('/admin/capacidades-transporte', 'capacidadesTransporte', 'maestros')}>
-              <i className="fa fa-weight"></i><span>Capacidades de Transporte</span>
-            </button>
-          </li>
-          <li>
-            <button className={`submenu-item ${activeTab === 'generadores' ? 'active' : ''}`} onClick={() => handleNavigation('/admin/generadores', 'generadores', 'maestros')}>
-              <i className="fa fa-industry"></i><span>Generadores</span>
-            </button>
-          </li>
-        </ul>
-      </li>
+              <li>
+                <button
+                  className={`menu-item ${activeTab === 'transportistas' ? 'active' : ''}`}
+                  onClick={() => handleNavigation('/admin/transportistas', 'transportistas')}
+                >
+                  <i className="fa fa-truck"></i>
+                  <span className={menuCollapsed ? 'd-none d-md-inline collapse-text' : ''}>Transportistas</span>
+                </button>
+              </li>
 
-      {/* Submenú Administración */}
-      <li className="submenu-container">
-        <button
-          className={`menu-item admin-item ${openSubmenu === 'administracion' ? 'expanded' : ''} ${
-            ['gestionUsuarios', 'gestionRoles', 'gestionPermisos', 'asignaciones'].includes(activeTab) ? 'active' : ''
-          }`}
-          onClick={() => toggleSubmenu('administracion')}
-        >
-          <i className="fa fa-wrench"></i>
-          <span className={menuCollapsed ? 'd-none d-md-inline collapse-text' : ''}>Administración</span>
-          <i className={`fa fa-chevron-right chevron-icon ${menuCollapsed ? 'd-none d-md-inline collapse-text' : ''}`}></i>
-        </button>
+              {/* Submenú Maestros */}
+              <li className="submenu-container">
+                <button
+                  className={`menu-item ${openSubmenu === 'maestros' ? 'expanded' : ''} ${
+                    ['centros', 'declaraciones', 'unidadesReferenciales', 'lineasDescarga', 'tiposTransporte', 'referencias', 'capacidadesTransporte', 'generadores'].includes(activeTab) ? 'active' : ''
+                  }`}
+                  onClick={() => toggleSubmenu('maestros')}
+                >
+                  <i className="fa fa-cog"></i>
+                  <span className={menuCollapsed ? 'd-none d-md-inline collapse-text' : ''}>Maestros</span>
+                  <i className={`fa fa-chevron-right chevron-icon ${menuCollapsed ? 'd-none d-md-inline collapse-text' : ''}`}></i>
+                </button>
 
-        <ul className={`submenu ${openSubmenu === 'administracion' ? 'open' : ''}`}>
-          <li>
-            <button className={`submenu-item ${activeTab === 'gestionUsuarios' ? 'active' : ''}`} onClick={() => handleNavigation('/admin/usuarios', 'gestionUsuarios', 'administracion')}>
-              <i className="fa fa-user-cog"></i><span>Gestión Usuarios</span>
-            </button>
-          </li>
-          <li>
-            <button className={`submenu-item ${activeTab === 'gestionRoles' ? 'active' : ''}`} onClick={() => handleNavigation('/admin/roles', 'gestionRoles', 'administracion')}>
-              <i className="fa fa-user-tag"></i><span>Gestión de Roles</span>
-            </button>
-          </li>
-          <li>
-            <button className={`submenu-item ${activeTab === 'gestionPermisos' ? 'active' : ''}`} onClick={() => handleNavigation('/admin/permisos', 'gestionPermisos', 'administracion')}>
-              <i className="fa fa-lock"></i><span>Gestión de Permisos</span>
-            </button>
-          </li>
-          <li>
-            <button className={`submenu-item ${activeTab === 'asignaciones' ? 'active' : ''}`} onClick={() => handleNavigation('/admin/asignaciones', 'asignaciones', 'administracion')}>
-              <i className="fa fa-tasks"></i><span>Asignaciones</span>
-            </button>
-          </li>
-        </ul>
-      </li>
-    </ul>
-  </div>
+                <ul className={`submenu ${openSubmenu === 'maestros' ? 'open' : ''}`}>
+                  <li>
+                    <button className={`submenu-item ${activeTab === 'centros' ? 'active' : ''}`} onClick={() => handleNavigation('/admin/centros', 'centros', 'maestros')}>
+                      <i className="fa fa-building"></i><span>Centros</span>
+                    </button>
+                  </li>
+                  <li>
+                    <button className={`submenu-item ${activeTab === 'declaraciones' ? 'active' : ''}`} onClick={() => handleNavigation('/admin/declaraciones', 'declaraciones', 'maestros')}>
+                      <i className="fa fa-file-signature"></i><span>Declaraciones</span>
+                    </button>
+                  </li>
+                  <li>
+                    <button className={`submenu-item ${activeTab === 'unidadesReferenciales' ? 'active' : ''}`} onClick={() => handleNavigation('/admin/unidades-referenciales', 'unidadesReferenciales', 'maestros')}>
+                      <i className="fa fa-ruler"></i><span>Unidades Referenciales</span>
+                    </button>
+                  </li>
+                  <li>
+                    <button className={`submenu-item ${activeTab === 'lineasDescarga' ? 'active' : ''}`} onClick={() => handleNavigation('/admin/lineas-descarga', 'lineasDescarga', 'maestros')}>
+                      <i className="fa fa-download"></i><span>Líneas de Descarga</span>
+                    </button>
+                  </li>
+                  <li>
+                    <button className={`submenu-item ${activeTab === 'tiposTransporte' ? 'active' : ''}`} onClick={() => handleNavigation('/admin/tipos-transporte', 'tiposTransporte', 'maestros')}>
+                      <i className="fa fa-shipping-fast"></i><span>Tipos de Transporte</span>
+                    </button>
+                  </li>
+                  <li>
+                    <button className={`submenu-item ${activeTab === 'referencias' ? 'active' : ''}`} onClick={() => handleNavigation('/admin/referencias', 'referencias', 'maestros')}>
+                      <i className="fa fa-bookmark"></i><span>Referencias</span>
+                    </button>
+                  </li>
+                  <li>
+                    <button className={`submenu-item ${activeTab === 'capacidadesTransporte' ? 'active' : ''}`} onClick={() => handleNavigation('/admin/capacidades-transporte', 'capacidadesTransporte', 'maestros')}>
+                      <i className="fa fa-weight"></i><span>Capacidades de Transporte</span>
+                    </button>
+                  </li>
+                  <li>
+                    <button className={`submenu-item ${activeTab === 'generadores' ? 'active' : ''}`} onClick={() => handleNavigation('/admin/generadores', 'generadores', 'maestros')}>
+                      <i className="fa fa-industry"></i><span>Generadores</span>
+                    </button>
+                  </li>
+                </ul>
+              </li>
 
-  {/* Botón de logout fijo */}
-  <div className="logout-container">
-    <button className="logout-btn" onClick={handleLogout}>
-      <i className="fa fa-sign-out-alt"></i> 
-      <span className={menuCollapsed ? 'd-none d-md-inline collapse-text' : ''}>Cerrar Sesión</span>
-    </button>
-  </div>
-</nav>
+              {/* Submenú Administración */}
+              <li className="submenu-container">
+                <button
+                  className={`menu-item admin-item ${openSubmenu === 'administracion' ? 'expanded' : ''} ${
+                    ['gestionUsuarios', 'gestionRoles', 'gestionPermisos', 'asignaciones'].includes(activeTab) ? 'active' : ''
+                  }`}
+                  onClick={() => toggleSubmenu('administracion')}
+                >
+                  <i className="fa fa-wrench"></i>
+                  <span className={menuCollapsed ? 'd-none d-md-inline collapse-text' : ''}>Administración</span>
+                  <i className={`fa fa-chevron-right chevron-icon ${menuCollapsed ? 'd-none d-md-inline collapse-text' : ''}`}></i>
+                </button>
+
+                <ul className={`submenu ${openSubmenu === 'administracion' ? 'open' : ''}`}>
+                  <li>
+                    <button className={`submenu-item ${activeTab === 'gestionUsuarios' ? 'active' : ''}`} onClick={() => handleNavigation('/admin/usuarios', 'gestionUsuarios', 'administracion')}>
+                      <i className="fa fa-user-cog"></i><span>Gestión Usuarios</span>
+                    </button>
+                  </li>
+                  <li>
+                    <button className={`submenu-item ${activeTab === 'gestionRoles' ? 'active' : ''}`} onClick={() => handleNavigation('/admin/roles', 'gestionRoles', 'administracion')}>
+                      <i className="fa fa-user-tag"></i><span>Gestión de Roles</span>
+                    </button>
+                  </li>
+                  <li>
+                    <button className={`submenu-item ${activeTab === 'gestionPermisos' ? 'active' : ''}`} onClick={() => handleNavigation('/admin/permisos', 'gestionPermisos', 'administracion')}>
+                      <i className="fa fa-lock"></i><span>Gestión de Permisos</span>
+                    </button>
+                  </li>
+                  <li>
+                    <button className={`submenu-item ${activeTab === 'asignaciones' ? 'active' : ''}`} onClick={() => handleNavigation('/admin/asignaciones', 'asignaciones', 'administracion')}>
+                      <i className="fa fa-tasks"></i><span>Asignaciones</span>
+                    </button>
+                  </li>
+                </ul>
+              </li>
+            </ul>
+          </div>
+        </nav>
 
 
-        {/* Overlay para cerrar menú móvil */}
-        {mobileMenuOpen && (
-          <div 
-            className="menu-overlay d-md-none" 
-            onClick={() => setMobileMenuOpen(false)}
-            style={{
-              position: 'fixed',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundColor: 'rgba(0, 0, 0, 0.5)',
-              zIndex: 1025
-            }}
-          ></div>
-        )}
+                {/* Overlay para cerrar menú móvil */}
+                {mobileMenuOpen && (
+                  <div 
+                    className="menu-overlay d-md-none" 
+                    onClick={() => setMobileMenuOpen(false)}
+                    style={{
+                      position: 'fixed',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                      zIndex: 1025
+                    }}
+                  ></div>
+                )}
 
         <div className={`d-none d-md-block ${menuCollapsed ? 'col-md-1' : 'col-md-2'}`}></div>
           <main 
