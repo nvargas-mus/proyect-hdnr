@@ -1,6 +1,5 @@
-// ContratoViewModal.tsx
 import { useState, useEffect } from 'react';
-import { Modal, Button, Table, Spinner, Alert } from 'react-bootstrap';
+import { Modal, Button, Spinner, Alert } from 'react-bootstrap';
 import { getContratoById } from '../services/adminService';
 
 interface ContratoViewModalProps {
@@ -52,45 +51,38 @@ const ContratoViewModal = ({ contratoId, show, onClose }: ContratoViewModalProps
             <Spinner animation="border" />
           </div>
         ) : contrato ? (
-          <Table bordered hover>
-            <tbody>
-              <tr>
-                <th>ID del Contrato</th>
-                <td>{contrato.contrato_id}</td>
-              </tr>
-              <tr>
-                <th>¿Es Spot?</th>
-                <td>{contrato.es_spot ? 'Sí' : 'No'}</td>
-              </tr>
-              <tr>
-                <th>Transportista</th>
-                <td>
-                  {contrato.nombre_transportista || 'N/A'}
-                  {contrato.rut_transportista ? ` (RUT: ${contrato.rut_transportista})` : ''}
-                </td>
-              </tr>
-              <tr>
-                <th>Documento</th>
-                <td>{contrato.documento_respaldo ? contrato.documento_respaldo.split('/').pop() : 'No disponible'}</td>
-              </tr>
-              <tr>
-                <th>Fecha Fin</th>
-                <td>{formatDate(contrato.fecha_fin)}</td>
-              </tr>
-              <tr>
-                <th>Tipo Reajuste</th>
-                <td>{contrato.tipo_reajuste || 'N/A'}</td>
-              </tr>
-              <tr>
-                <th>Frecuencia Reajuste</th>
-                <td>{contrato.frecuencia_reajuste || 'N/A'}</td>
-              </tr>
-              <tr>
-                <th>Próximo Reajuste</th>
-                <td>{formatDate(contrato.fecha_proximo_reajuste)}</td>
-              </tr>
-            </tbody>
-          </Table>
+          <dl className="row">
+            <dt className="col-sm-4">ID del Contrato</dt>
+            <dd className="col-sm-8">{contrato.contrato_id}</dd>
+
+            <dt className="col-sm-4">¿Es Spot?</dt>
+            <dd className="col-sm-8">{contrato.es_spot ? 'Sí' : 'No'}</dd>
+
+            <dt className="col-sm-4">Transportista</dt>
+            <dd className="col-sm-8">
+              {contrato.nombre_transportista || 'N/A'}
+              {contrato.rut_transportista ? ` (RUT: ${contrato.rut_transportista})` : ''}
+            </dd>
+
+            <dt className="col-sm-4">Documento</dt>
+            <dd className="col-sm-8">
+              {contrato.documento_respaldo
+                ? contrato.documento_respaldo.split('/').pop()
+                : 'No disponible'}
+            </dd>
+
+            <dt className="col-sm-4">Fecha Fin</dt>
+            <dd className="col-sm-8">{formatDate(contrato.fecha_fin)}</dd>
+
+            <dt className="col-sm-4">Tipo Reajuste</dt>
+            <dd className="col-sm-8">{contrato.tipo_reajuste || 'N/A'}</dd>
+
+            <dt className="col-sm-4">Frecuencia Reajuste</dt>
+            <dd className="col-sm-8">{contrato.frecuencia_reajuste || 'N/A'}</dd>
+
+            <dt className="col-sm-4">Próximo Reajuste</dt>
+            <dd className="col-sm-8">{formatDate(contrato.fecha_proximo_reajuste)}</dd>
+          </dl>
         ) : (
           <p>No hay datos disponibles.</p>
         )}
@@ -105,3 +97,4 @@ const ContratoViewModal = ({ contratoId, show, onClose }: ContratoViewModalProps
 };
 
 export default ContratoViewModal;
+

@@ -2,15 +2,20 @@ html {
   font-size: 14px;
 }
 
-h1, h2, h3, h4, h5, h6, p, label, table, input, ul, li, span, th {
-  color: #243c6c !important;
+body {
+  color: #243c6c;
+}
+
+body h1, body h2, body h3, body h4, body h5, body h6, 
+body p, body label, body table, body input, body ul, body li, body span, body th {
+  color: #243c6c;
 }
 
 #contratoModalTitle {
-  color: #ffffff !important;
-  font-weight: 600 !important;
-  font-size: 18px !important;
-  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2) !important;
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 18px;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
 }
 
 .navbar {
@@ -23,15 +28,12 @@ h1, h2, h3, h4, h5, h6, p, label, table, input, ul, li, span, th {
   box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
 
-body {
-  padding-top: 56px; 
-}
-
 .main-content {
   margin-top: 15px;
   transition: all 0.3s ease;
 }
 
+/* Responsive ajustes */
 @media (max-width: 767.98px) {
   .sidebar-wrapper {
     width: 100% !important;
@@ -50,20 +52,47 @@ body {
   }
 }
 
-.modal.show .modal-dialog {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%) !important;
-  margin: 0;
-  max-height: 95vh;
-  overflow-y: auto;
+.modal-content {
+  border-radius: 12px; 
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); 
 }
 
-body.modal-open {
-  overflow: hidden;
+.modal-header {
+  background: rgba(27, 47, 86, 0.05); 
+  border: none;
+  box-shadow: 0 2px 8px rgba(36, 60, 108, 0.15);
 }
 
-body.modal-open .main-content {
-  padding-top: 0 !important;
+.modal-footer {
+  border: none;
+  box-shadow: none;
 }
+
+.modal-title {
+  font-weight: 600;
+  font-size: 1.25rem;
+  color: #243c6c;
+}
+
+.modal-backdrop.show {
+  opacity: 0.5; 
+}
+
+.modal {
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal-dialog {
+  margin: 5rem auto;
+}
+
+.table td, .table th {
+  border-top: none;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.table tr:last-child td {
+  border-bottom: none;
+}
+
+

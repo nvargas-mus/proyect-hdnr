@@ -140,11 +140,10 @@ export const getSolicitudesPorUsuario = async (usuario_id: number, include?: str
   return response.data;
 };
 
+
 export const crearDetalleConTransporte = async (data: {
   solicitud_id: number;
   codigo_material_matnr: number;
-  unidad_venta_kmein: string;
-  cantidad: number;
 }) => {
   const token = getAuthToken();
 
@@ -152,23 +151,14 @@ export const crearDetalleConTransporte = async (data: {
     throw new Error('No se encontró token de autenticación. Por favor inicie sesión.');
   }
 
+  if (!data.solicitud_id || !data.codigo_material_matnr) {
+    throw new Error('Datos incompletos para crear detalle con transporte');
+  }
+
   try {
-    if (!data.solicitud_id || !data.codigo_material_matnr || !data.unidad_venta_kmein || data.cantidad <= 0) {
-      throw new Error('Datos incompletos para crear detalle con transporte');
-    }
-
-    const datosFormateados = {
-      solicitud_id: Number(data.solicitud_id),
-      codigo_material_matnr: Number(data.codigo_material_matnr),
-      unidad_venta_kmein: data.unidad_venta_kmein,
-      cantidad: Number(data.cantidad)
-    };
-
-    console.log('Enviando datos de transporte:', datosFormateados);
-
     const response = await api.post(
-      '/detalle_con_transporte',
-      datosFormateados,
+      '/detalle_con_transporte/detalle_con_transporte_new',
+      data,
       {
         headers: {
           'accept': '*/*',
@@ -201,3 +191,4 @@ export const crearDetalleConTransporte = async (data: {
     }
   }
 };
+

@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { getSolicitudesPorUsuario } from '../services/solicitudService';
 import '../styles/Home.css'; 
 
-
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
 
@@ -16,7 +15,7 @@ const HomePage: React.FC = () => {
   const [loading, setLoading] = useState(false);
 
   const [page, setPage] = useState(1);
-  const itemsPerPage = 10;
+  const itemsPerPage = 8;
   const usuario_id = Number(localStorage.getItem('usuario_id'));
 
   useEffect(() => {
@@ -103,9 +102,9 @@ const HomePage: React.FC = () => {
                     className="list-group-item d-flex justify-content-between align-items-center"
                   >
                     <div>
-                      <strong>ID:</strong> {solicitud.solicitud_id}
+                      <strong>ID:</strong> <span style={{ color: '#243c6c' }}>{solicitud.solicitud_id}</span>
                       <br />
-                      <strong>Descripción:</strong> {solicitud.descripcion}
+                      <strong>Descripción:</strong> <span style={{ color: '#243c6c' }}>{solicitud.descripcion}</span>
                     </div>
                     <div>
                       <button
@@ -164,7 +163,7 @@ const HomePage: React.FC = () => {
       {showDetallesModal && selectedSolicitud && (
         <>
           <div className="modal show d-block" tabIndex={-1}>
-            <div className="modal-dialog">
+            <div className="modal-dialog modal-dialog-centered">
               <div className="modal-content">
                 <div className="modal-header">
                   <h5 className="modal-title">
@@ -178,21 +177,23 @@ const HomePage: React.FC = () => {
                 </div>
                 <div className="modal-body">
                   <p>
-                    <strong>Descripción:</strong> {selectedSolicitud.descripcion}
+                    <strong>Descripción:</strong> <span style={{ color: '#243c6c' }}>{selectedSolicitud.descripcion}</span>
                   </p>
                   <p>
                     <strong>Fecha de Servicio Solicitada:</strong>{" "}
-                    {new Date(
-                      selectedSolicitud.fecha_servicio_solicitada
-                    ).toLocaleDateString()}
+                    <span style={{ color: '#243c6c' }}>
+                      {new Date(selectedSolicitud.fecha_servicio_solicitada).toLocaleDateString()}
+                    </span>
                   </p>
                   <p>
                     <strong>Hora de Servicio Solicitada:</strong>{" "}
-                    {selectedSolicitud.hora_servicio_solicitada}
+                    <span style={{ color: '#243c6c' }}>{selectedSolicitud.hora_servicio_solicitada}</span>
                   </p>
                   <p>
                     <strong>Requiere Transporte:</strong>{" "}
-                    {selectedSolicitud.requiere_transporte ? "Sí" : "No"}
+                    <span style={{ color: '#243c6c' }}>
+                      {selectedSolicitud.requiere_transporte ? "Sí" : "No"}
+                    </span>
                   </p>
                 </div>
                 <div className="modal-footer">
@@ -215,7 +216,7 @@ const HomePage: React.FC = () => {
       {showEstadoModal && selectedSolicitud && (
         <>
           <div className="modal show d-block" tabIndex={-1}>
-            <div className="modal-dialog">
+            <div className="modal-dialog modal-dialog-centered">
               <div className="modal-content">
                 <div className="modal-header">
                   <h5 className="modal-title">
@@ -230,9 +231,11 @@ const HomePage: React.FC = () => {
                 <div className="modal-body">
                   <p>
                     <strong>Estado de la Solicitud:</strong>{" "}
-                    {selectedSolicitud.estado_id
-                      ? `ID de estado: ${selectedSolicitud.estado_id}`
-                      : "Sin estado definido"}
+                    <span style={{ color: '#243c6c' }}>
+                      {selectedSolicitud.estado_id
+                        ? `ID de estado: ${selectedSolicitud.estado_id}`
+                        : "Sin estado definido"}
+                    </span>
                   </p>
                 </div>
                 <div className="modal-footer">
@@ -255,3 +258,5 @@ const HomePage: React.FC = () => {
 };
 
 export default HomePage;
+
+

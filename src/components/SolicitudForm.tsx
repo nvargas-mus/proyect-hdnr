@@ -695,7 +695,7 @@ const SolicitudForm = () => {
         <>
           <div className="modal-backdrop fade show"></div>
           <div className="modal show d-block" tabIndex={-1}>
-            <div className="modal-dialog">
+            <div className="modal-dialog modal-dialog-centered">
               <div className="modal-content">
                 <form onSubmit={handleSubmitDireccion}>
                   <div className="modal-header">
@@ -823,7 +823,7 @@ const SolicitudForm = () => {
         <>
           <div className="modal-backdrop fade show"></div>
           <div className="modal show d-block" tabIndex={-1}>
-            <div className="modal-dialog">
+            <div className="modal-dialog modal-dialog-centered">
               <div className="modal-content">
                 <form onSubmit={handleSubmitContacto}>
                   <div className="modal-header">
