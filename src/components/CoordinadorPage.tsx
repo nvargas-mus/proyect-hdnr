@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import {
   Container,
@@ -52,6 +51,10 @@ const CoordinadorPage: React.FC = () => {
   const [showAgendamientoModal, setShowAgendamientoModal] = useState(false);
   const [loadingDetalle, setLoadingDetalle] = useState(false);
   const [loadingAgendamiento, setLoadingAgendamiento] = useState(false);
+
+  const [mensajeErrorAsignaciones, setMensajeErrorAsignaciones] = useState<string | null>(null);
+  const [hayAsignacionesDisponibles, setHayAsignacionesDisponibles] = useState(true);
+
 
   const [selectedSolicitudId, setSelectedSolicitudId] = useState<number | null>(
     null
@@ -116,58 +119,64 @@ const CoordinadorPage: React.FC = () => {
   };
 
   const handleVerFecha = async (id: number) => {
-    setSelectedSolicitudId(id);
-    setAgendamientoError(null);
-    setSuccessMessage(null);
+  setSelectedSolicitudId(id);
+  setAgendamientoError(null);
+  setSuccessMessage(null);
 
-    try {
-      setLoadingDetalle(true);
-      const sol = await getSolicitudById(id);
-      setSolicitudDetalle(sol);
+  try {
+    setLoadingDetalle(true);
+    const sol = await getSolicitudById(id);
+    setSolicitudDetalle(sol);
 
-      setTransportistas(await getTransportistas());
+    setTransportistas(await getTransportistas());
 
-      if (sol.requiere_transporte && sol.detalles_con_transporte?.length) {
-        const mat = sol.detalles_con_transporte[0].codigo_material_matnr;
-        try {
-          setAsignaciones(
-            await getAsignacionesTarifa(
-              sol.codigo_cliente_kunnr,
-              sol.direccion_id,
-              mat
-            )
-          );
-        } catch {
-          setAsignaciones([]);
-        }
-      } else setAsignaciones([]);
-
-      const fechaSolicitada = new Date(sol.fecha_servicio_solicitada)
-        .toISOString()
-        .split('T')[0];
-
-      setFormAgendamiento({
-        fecha_servicio_programada: fechaSolicitada,
-        hora_servicio_programada: sol.hora_servicio_solicitada,
-        id_linea_descarga: 1,
-        numero_nota_venta: '',
-        descripcion: `Agendamiento para solicitud #${id}`,
-        clase_peligrosidad: '',
-        declaracion_numero: '',
-        transportista_id:
-          sol.detalles_con_transporte?.[0]?.transportista_id ?? undefined,
-        asignacion_id: undefined,
-        conductor_id: null,
-        vehiculo_id: null
-      });
-
-      setShowAgendamientoModal(true);
-    } catch {
-      setAgendamientoError('Error al cargar datos de agendamiento');
-    } finally {
-      setLoadingDetalle(false);
+    if (sol.requiere_transporte && sol.detalles_con_transporte?.length) {
+      const mat = sol.detalles_con_transporte[0].codigo_material_matnr;
+      try {
+        const asignacionesObtenidas = await getAsignacionesTarifa(
+          sol.codigo_cliente_kunnr,
+          sol.direccion_id,
+          mat
+        );
+        setAsignaciones(asignacionesObtenidas);
+        setMensajeErrorAsignaciones(null);
+        setHayAsignacionesDisponibles(asignacionesObtenidas.length > 0); // 👈 Habilitamos solo si hay asignaciones
+      } catch (error: any) {
+        setAsignaciones([]);
+        setMensajeErrorAsignaciones(error.message || 'No se encontraron asignaciones.');
+        setHayAsignacionesDisponibles(false); // 👈 Bloqueamos si falla o no hay asignaciones
+      }
+    } else {
+      setAsignaciones([]);
+      setHayAsignacionesDisponibles(false);
     }
-  };
+
+    const fechaSolicitada = new Date(sol.fecha_servicio_solicitada)
+      .toISOString()
+      .split('T')[0];
+
+    setFormAgendamiento({
+      fecha_servicio_programada: fechaSolicitada,
+      hora_servicio_programada: sol.hora_servicio_solicitada,
+      id_linea_descarga: 1,
+      numero_nota_venta: '',
+      descripcion: `Agendamiento para solicitud #${id}`,
+      clase_peligrosidad: '',
+      declaracion_numero: '',
+      transportista_id:
+        sol.detalles_con_transporte?.[0]?.transportista_id ?? undefined,
+      asignacion_id: undefined,
+      conductor_id: null,
+      vehiculo_id: null
+    });
+
+    setShowAgendamientoModal(true);
+  } catch {
+    setAgendamientoError('Error al cargar datos de agendamiento');
+  } finally {
+    setLoadingDetalle(false);
+  }
+};
 
   const handleFormChange = (
     e: React.ChangeEvent<
@@ -299,7 +308,7 @@ const CoordinadorPage: React.FC = () => {
   }
 
   return (
-    <Container fluid className="main-content">
+    <Container className="main-content">
       <Row className="mb-4">
         <Col>
           <h2 className="mb-4">Panel de Coordinador</h2>
@@ -646,6 +655,7 @@ const CoordinadorPage: React.FC = () => {
         centered
         backdrop="static"
       >
+        
         <Form onSubmit={handleSubmitAgendamiento}>
           <Modal.Header closeButton>
             <Modal.Title>
@@ -665,6 +675,9 @@ const CoordinadorPage: React.FC = () => {
                 {agendamientoError && (
                   <Alert variant="danger">{agendamientoError}</Alert>
                 )}
+                {mensajeErrorAsignaciones && (
+                  <Alert variant="warning">{mensajeErrorAsignaciones}</Alert>
+                )}
 
                 <Row className="mb-3">
                   <Col md={6}>
@@ -676,6 +689,7 @@ const CoordinadorPage: React.FC = () => {
                         required
                         value={formAgendamiento.fecha_servicio_programada}
                         onChange={handleFormChange}
+                        disabled={!hayAsignacionesDisponibles}
                       />
                     </Form.Group>
                   </Col>
@@ -688,6 +702,7 @@ const CoordinadorPage: React.FC = () => {
                         required
                         value={formAgendamiento.hora_servicio_programada}
                         onChange={handleFormChange}
+                        disabled={!hayAsignacionesDisponibles}
                       />
                     </Form.Group>
                   </Col>
@@ -702,6 +717,7 @@ const CoordinadorPage: React.FC = () => {
                         required
                         value={formAgendamiento.id_linea_descarga}
                         onChange={handleFormChange}
+                        disabled={!hayAsignacionesDisponibles}
                       >
                         <option value={1}>Línea 1</option>
                         <option value={2}>Línea 2</option>
@@ -718,6 +734,7 @@ const CoordinadorPage: React.FC = () => {
                         required
                         value={formAgendamiento.numero_nota_venta}
                         onChange={handleFormChange}
+                        disabled={!hayAsignacionesDisponibles}
                       />
                     </Form.Group>
                   </Col>
@@ -732,6 +749,7 @@ const CoordinadorPage: React.FC = () => {
                     rows={2}
                     value={formAgendamiento.descripcion}
                     onChange={handleFormChange}
+                    disabled={!hayAsignacionesDisponibles}
                   />
                 </Form.Group>
 
@@ -745,6 +763,7 @@ const CoordinadorPage: React.FC = () => {
                         name="clase_peligrosidad"
                         value={formAgendamiento.clase_peligrosidad}
                         onChange={handleFormChange}
+                        disabled={!hayAsignacionesDisponibles}
                       />
                     </Form.Group>
                   </Col>
@@ -755,6 +774,7 @@ const CoordinadorPage: React.FC = () => {
                         name="declaracion_numero"
                         value={formAgendamiento.declaracion_numero}
                         onChange={handleFormChange}
+                        disabled={!hayAsignacionesDisponibles}
                       />
                     </Form.Group>
                   </Col>
@@ -773,6 +793,7 @@ const CoordinadorPage: React.FC = () => {
                             value={formAgendamiento.transportista_id ?? ''}
                             onChange={handleFormChange}
                             required
+                            disabled={!hayAsignacionesDisponibles}
                           >
                             <option value="">Seleccionar…</option>
                             {transportistas.map((t) => (
@@ -794,6 +815,7 @@ const CoordinadorPage: React.FC = () => {
                             value={formAgendamiento.asignacion_id ?? ''}
                             onChange={handleFormChange}
                             required
+                            disabled={!hayAsignacionesDisponibles}
                           >
                             <option value="">Seleccionar…</option>
                             {asignaciones.map((a) => (
@@ -819,6 +841,7 @@ const CoordinadorPage: React.FC = () => {
                             name="conductor_id"
                             value={formAgendamiento.conductor_id ?? ''}
                             onChange={handleFormChange}
+                            disabled={!hayAsignacionesDisponibles}
                           />
                         </Form.Group>
                       </Col>
@@ -830,6 +853,7 @@ const CoordinadorPage: React.FC = () => {
                             name="vehiculo_id"
                             value={formAgendamiento.vehiculo_id ?? ''}
                             onChange={handleFormChange}
+                            disabled={!hayAsignacionesDisponibles}
                           />
                         </Form.Group>
                       </Col>
@@ -843,14 +867,13 @@ const CoordinadorPage: React.FC = () => {
             <Button
               variant="secondary"
               onClick={handleCloseAgendamientoModal}
-              disabled={loadingAgendamiento}
             >
               Cancelar
             </Button>
             <Button
               type="submit"
               className="modal-save-button"
-              disabled={loadingAgendamiento}
+              disabled={loadingAgendamiento || !hayAsignacionesDisponibles}
             >
               {loadingAgendamiento ? (
                 <>
@@ -868,6 +891,7 @@ const CoordinadorPage: React.FC = () => {
                 </>
               )}
             </Button>
+
           </Modal.Footer>
         </Form>
       </Modal>

@@ -154,7 +154,6 @@ export const getTransportistas = async (): Promise<Transportista[]> => {
   return data;
 };
 
-/* asignaciones por cliente, dirección y material */
 export const getAsignacionesTarifa = async (
   codigoCliente: number,
   direccionId: number,
@@ -163,12 +162,21 @@ export const getAsignacionesTarifa = async (
   const token = getAuthToken();
   if (!token) throw new Error('No token');
 
-  const { data } = await axios.get<AsignacionTarifa[]>(
+  const { data, status } = await axios.get<AsignacionTarifa[]>(
     `${API_URL}/asignaciones_manuales_tarifas/buscar/${codigoCliente}/${direccionId}/${codigoMaterial}`,
-    { headers: { accept: 'application/json', Authorization: `Bearer ${token}` } }
+    {
+      headers: { accept: 'application/json', Authorization: `Bearer ${token}` },
+      validateStatus: (status) => status >= 200 && status < 500,
+    }
   );
+
+  if (status === 404) {
+    throw new Error('No se encontraron asignaciones.');
+  }
+
   return data;
 };
+
 
 /* agendar */
 export const agendarSolicitud = async (
