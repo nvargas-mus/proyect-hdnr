@@ -332,13 +332,20 @@ const SolicitudCompletionForm: React.FC<SolicitudCompletionFormProps> = ({
                     <input
                       type="number"
                       step="0.01"
-                      name="cantidad_servicio"
+                      name="cantidad_servicio_disabled"
                       className="form-control"
-                      value={formData.cantidad_servicio}
-                      onChange={handleChange}
-                      required
+                      value={1}
+                      disabled
+                    />
+
+                    <input
+                      type="hidden"
+                      name="cantidad_servicio"
+                      value={1}
                     />
                   </div>
+
+
                   <div className="mb-3">
                     <label htmlFor="unidad_venta_kmein" className="form-label">
                       Unidad de Venta (automático):

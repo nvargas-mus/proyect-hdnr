@@ -1,0 +1,55 @@
+.user-profile-settings {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.user-profile-img {
+  width: 150px;
+  height: 150px;
+  object-fit: cover;
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.user-profile-placeholder {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  background-color: #f8f9fa;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #adb5bd;
+  font-size: 14px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.save-button {
+  background-color: #243c6c;
+  border-color: #243c6c;
+  color: #fff;
+  padding: 10px 20px;
+  font-weight: 600;
+  transition: background-color 0.3s ease;
+  border-radius: 8px;
+}
+
+.save-button:hover {
+  background-color: #1a2f5a;
+  border-color: #1a2f5a;
+}
+
+.btn-primary {
+  background-color: #243c6c !important;
+  border-color: #243c6c !important;
+  color: white !important;
+}
+
+.btn-primary:hover {
+  background-color: #3a4e8c !important; 
+  border-color: #3a4e8c !important;
+}
+
+.buttons-wrapper {
+  margin-top: 3rem;
+}

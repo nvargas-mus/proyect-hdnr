@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { Modal, Button, Spinner } from 'react-bootstrap';
 import { 
   getTarifasByContrato, 
   getContratoById,
@@ -494,161 +495,168 @@ const TarifasContrato = () => {
         </>
       )}
       
-      {showModal && (
-        <div className="modal-overlay" onClick={closeModal}>
-          <div className="modal-container" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3 className="modal-header-title">Agregar Nueva Tarifa</h3>
-              <button className="modal-close-button" onClick={closeModal}>×</button>
+     <Modal show={showModal} onHide={closeModal} centered backdrop="static">
+        <Modal.Header closeButton>
+          <Modal.Title>Agregar Nueva Tarifa</Modal.Title>
+        </Modal.Header>
+
+        <Modal.Body>
+          {successMessage && (
+            <div className="alert alert-success">
+              {successMessage}
             </div>
-            <div className="modal-body">
-              {successMessage && (
-                <div className="alert alert-success">
-                  {successMessage}
+          )}
+          
+          {error && (
+            <div className="alert alert-danger">
+              {error}
+            </div>
+          )}
+          
+          <form>
+            {/* Descripción */}
+            <div className="form-group">
+              <label className="form-label" htmlFor="descripcion_tarifa">
+                Descripción <span className="text-danger">*</span>
+              </label>
+              <textarea
+                id="descripcion_tarifa"
+                name="descripcion_tarifa"
+                className={`form-control ${formErrors.descripcion_tarifa ? 'error' : ''}`}
+                value={formData.descripcion_tarifa}
+                onChange={handleInputChange}
+                rows={2}
+                placeholder="Ej: Rampla Santiago Centro -> Planta Pudahuel"
+              />
+              {formErrors.descripcion_tarifa && (
+                <div className="invalid-feedback" style={{display: 'block'}}>
+                  {formErrors.descripcion_tarifa}
                 </div>
               )}
-              
-              {error && (
-                <div className="alert alert-danger">
-                  {error}
+            </div>
+
+            {/* Tipo Transporte */}
+            <div className="form-group">
+              <label className="form-label" htmlFor="tipo_transporte_id">
+                Tipo de Transporte <span className="text-danger">*</span>
+              </label>
+              <select
+                id="tipo_transporte_id"
+                name="tipo_transporte_id"
+                className={`form-control ${formErrors.tipo_transporte_id ? 'error' : ''}`}
+                value={formData.tipo_transporte_id}
+                onChange={handleInputChange}
+              >
+                <option value="">Seleccione un tipo de transporte</option>
+                {tiposTransporte.map(tipo => (
+                  <option key={tipo.tipo_transporte_id} value={tipo.tipo_transporte_id}>
+                    {tipo.nombre_tipo_transporte}
+                  </option>
+                ))}
+              </select>
+              {formErrors.tipo_transporte_id && (
+                <div className="invalid-feedback" style={{display: 'block'}}>
+                  {formErrors.tipo_transporte_id}
                 </div>
               )}
-              
-              <form>
-                <div className="form-group">
-                  <label className="form-label" htmlFor="descripcion_tarifa">
-                    Descripción <span className="text-danger">*</span>
-                  </label>
-                  <textarea
-                    id="descripcion_tarifa"
-                    name="descripcion_tarifa"
-                    className={`form-control ${formErrors.descripcion_tarifa ? 'error' : ''}`}
-                    value={formData.descripcion_tarifa}
-                    onChange={handleInputChange}
-                    rows={2}
-                    placeholder="Ej: Rampla Santiago Centro -> Planta Pudahuel"
-                  />
-                  {formErrors.descripcion_tarifa && (
-                    <div className="invalid-feedback" style={{display: 'block'}}>
-                      {formErrors.descripcion_tarifa}
-                    </div>
-                  )}
-                </div>
-                
-                <div className="form-group">
-                  <label className="form-label" htmlFor="tipo_transporte_id">
-                    Tipo de Transporte <span className="text-danger">*</span>
-                  </label>
-                  <select
-                    id="tipo_transporte_id"
-                    name="tipo_transporte_id"
-                    className={`form-control ${formErrors.tipo_transporte_id ? 'error' : ''}`}
-                    value={formData.tipo_transporte_id}
-                    onChange={handleInputChange}
-                  >
-                    <option value="">Seleccione un tipo de transporte</option>
-                    {tiposTransporte.map(tipo => (
-                      <option key={tipo.tipo_transporte_id} value={tipo.tipo_transporte_id}>
-                        {tipo.nombre_tipo_transporte}
-                      </option>
-                    ))}
-                  </select>
-                  {formErrors.tipo_transporte_id && (
-                    <div className="invalid-feedback" style={{display: 'block'}}>
-                      {formErrors.tipo_transporte_id}
-                    </div>
-                  )}
-                </div>
-                
-                <div className="form-group">
-                  <label className="form-label" htmlFor="tarifa_inicial">
-                    Tarifa Inicial (CLP) <span className="text-danger">*</span>
-                  </label>
-                  <input
-                    type="number"
-                    id="tarifa_inicial"
-                    name="tarifa_inicial"
-                    className={`form-control ${formErrors.tarifa_inicial ? 'error' : ''}`}
-                    value={formData.tarifa_inicial || ''}
-                    onChange={handleInputChange}
-                    min="0"
-                    step="1"
-                    placeholder="Ej: 15000"
-                  />
-                  {formErrors.tarifa_inicial && (
-                    <div className="invalid-feedback" style={{display: 'block'}}>
-                      {formErrors.tarifa_inicial}
-                    </div>
-                  )}
-                </div>
-                
-                <div className="form-row">
-                  <div className="form-column form-group">
-                    <label className="form-label" htmlFor="fecha_inicio_vigencia">
-                      Fecha Inicio Vigencia <span className="text-danger">*</span>
-                    </label>
-                    <input
-                      type="date"
-                      id="fecha_inicio_vigencia"
-                      name="fecha_inicio_vigencia"
-                      className={`form-control ${formErrors.fecha_inicio_vigencia ? 'error' : ''}`}
-                      value={formData.fecha_inicio_vigencia}
-                      onChange={handleInputChange}
-                    />
-                    {formErrors.fecha_inicio_vigencia && (
-                      <div className="invalid-feedback" style={{display: 'block'}}>
-                        {formErrors.fecha_inicio_vigencia}
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div className="form-column form-group">
-                    <label className="form-label" htmlFor="fecha_fin_vigencia">
-                      Fecha Fin Vigencia <small>(Opcional)</small>
-                    </label>
-                    <input
-                      type="date"
-                      id="fecha_fin_vigencia"
-                      name="fecha_fin_vigencia"
-                      className={`form-control ${formErrors.fecha_fin_vigencia ? 'error' : ''}`}
-                      value={formData.fecha_fin_vigencia || ''}
-                      onChange={handleInputChange}
-                    />
-                    {formErrors.fecha_fin_vigencia && (
-                      <div className="invalid-feedback" style={{display: 'block'}}>
-                        {formErrors.fecha_fin_vigencia}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </form>
             </div>
-            <div className="modal-footer">
-              <button
-                type="button"
-                className="btn form-button-outline form-button"
-                onClick={closeModal}
-                disabled={submitting}
-              >
-                Cancelar
-              </button>
-              <button
-                type="button"
-                className="btn form-button-primary form-button"
-                onClick={handleSubmit}
-                disabled={submitting}
-              >
-                {submitting ? (
-                  <>
-                    <span className="spinner-border spinner-border-sm mr-2" role="status" aria-hidden="true"></span>
-                    Guardando...
-                  </>
-                ) : 'Guardar Tarifa'}
-              </button>
+
+            {/* Tarifa inicial */}
+            <div className="form-group">
+              <label className="form-label" htmlFor="tarifa_inicial">
+                Tarifa Inicial (CLP) <span className="text-danger">*</span>
+              </label>
+              <input
+                type="number"
+                id="tarifa_inicial"
+                name="tarifa_inicial"
+                className={`form-control ${formErrors.tarifa_inicial ? 'error' : ''}`}
+                value={formData.tarifa_inicial || ''}
+                onChange={handleInputChange}
+                min="0"
+                step="1"
+                placeholder="Ej: 15000"
+              />
+              {formErrors.tarifa_inicial && (
+                <div className="invalid-feedback" style={{display: 'block'}}>
+                  {formErrors.tarifa_inicial}
+                </div>
+              )}
             </div>
-          </div>
-        </div>
-      )}
+
+            {/* Fechas */}
+            <div className="row">
+              <div className="col-md-6 form-group">
+                <label className="form-label" htmlFor="fecha_inicio_vigencia">
+                  Fecha Inicio Vigencia <span className="text-danger">*</span>
+                </label>
+                <input
+                  type="date"
+                  id="fecha_inicio_vigencia"
+                  name="fecha_inicio_vigencia"
+                  className={`form-control ${formErrors.fecha_inicio_vigencia ? 'error' : ''}`}
+                  value={formData.fecha_inicio_vigencia}
+                  onChange={handleInputChange}
+                />
+                {formErrors.fecha_inicio_vigencia && (
+                  <div className="invalid-feedback" style={{display: 'block'}}>
+                    {formErrors.fecha_inicio_vigencia}
+                  </div>
+                )}
+              </div>
+
+              <div className="col-md-6 form-group">
+                <label className="form-label" htmlFor="fecha_fin_vigencia">
+                  Fecha Fin Vigencia <small>(Opcional)</small>
+                </label>
+                <input
+                  type="date"
+                  id="fecha_fin_vigencia"
+                  name="fecha_fin_vigencia"
+                  className={`form-control ${formErrors.fecha_fin_vigencia ? 'error' : ''}`}
+                  value={formData.fecha_fin_vigencia || ''}
+                  onChange={handleInputChange}
+                />
+                {formErrors.fecha_fin_vigencia && (
+                  <div className="invalid-feedback" style={{display: 'block'}}>
+                    {formErrors.fecha_fin_vigencia}
+                  </div>
+                )}
+              </div>
+            </div>
+          </form>
+        </Modal.Body>
+
+        <Modal.Footer>
+          <Button
+            variant="secondary"
+            onClick={closeModal}
+            disabled={submitting}
+          >
+            Cancelar
+          </Button>
+          <Button
+            variant="primary"
+            onClick={handleSubmit}
+            disabled={submitting}
+          >
+            {submitting ? (
+              <>
+                <Spinner
+                  as="span"
+                  animation="border"
+                  size="sm"
+                  role="status"
+                  aria-hidden="true"
+                  className="me-2"
+                />
+                Guardando...
+              </>
+            ) : 'Guardar Tarifa'}
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
     </div>
   );
 };

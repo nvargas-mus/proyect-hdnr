@@ -2,7 +2,11 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Outlet, useLocation } from 'react-router-dom';
 import "../styles/AdminStyle.css";
 
-const AdminLayout = (): JSX.Element => {
+interface AdminLayoutProps {
+  children?: React.ReactNode;
+}
+
+const AdminLayout = ({ children }: AdminLayoutProps): JSX.Element => {
   const navigate = useNavigate();
   const location = useLocation();
   const [activeTab, setActiveTab] = useState('');
@@ -356,7 +360,8 @@ const AdminLayout = (): JSX.Element => {
               transition: 'all 0.3s ease'
             }}
           >
-            <Outlet />
+            {children ? children : <Outlet />}
+
           </main>
 
       </div>

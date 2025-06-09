@@ -298,7 +298,7 @@ const CoordinadorPage: React.FC = () => {
 
   if (error && !solicitudes.length) {
     return (
-      <Container fluid className="main-content">
+      <Container className="main-content">
         <div className="alert alert-danger my-5">
           <h4>Error</h4>
           <p>{error}</p>

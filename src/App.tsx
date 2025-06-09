@@ -13,8 +13,13 @@ import CoordinadorPage from './components/CoordinadorPage';
 import AsignacionTarifaPage from './components/AsignacionTarifaPage';
 import NotFoundPage from './components/NotFoundPage';
 import Navbar from './components/NavBar';
+import UserProfileSettings from './components/UserProfileSettings';
 import { SolicitudProvider } from './context/SolicitudContext';
 import 'bootstrap/dist/css/bootstrap.min.css';
+
+const getUserRole = () => {
+  return localStorage.getItem('user_role');
+};
 
 const App = () => {
   return (
@@ -27,8 +32,16 @@ const App = () => {
           <Route path="/home" element={<HomePage />} />
           <Route path="/crear-solicitud" element={<SolicitudForm />} />
           <Route path="/coordinador" element={<CoordinadorPage />} />
+
+          <Route 
+            path="/configuracion" 
+            element={
+              getUserRole() === 'admin' 
+                ? <AdminLayout><UserProfileSettings /></AdminLayout>
+                : <UserProfileSettings />
+            } 
+          />
           
-          {/* Rutas de administrador con el layout compartido */}
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<AdminPage />} />
             <Route path="contratos" element={<ContratosTable />} />
@@ -62,6 +75,7 @@ const App = () => {
 };
 
 export default App;
+
 
 
 

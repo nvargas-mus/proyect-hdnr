@@ -12,55 +12,66 @@ const LoginForm = () => {
   const navigate = useNavigate()
 
   const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    try {
-      const response = await loginUser({ email, contrasena })
+  e.preventDefault()
+  try {
+    const response = await loginUser({ email, contrasena })
 
-      const usuarioId = response.usuario_id || response.userId
-      const token = response.token
+    const usuarioId = response.usuario_id || response.userId
+    const token = response.token
 
-      if (!usuarioId) {
-        throw new Error('No se recibió el ID del usuario en la respuesta')
-      }
-
-      localStorage.setItem('authToken', token)
-      localStorage.setItem('usuario_id', usuarioId.toString())
-      localStorage.setItem('user_email', email)
-
-      window.dispatchEvent(new Event('localStorageUpdated'))
-
-      const roles = await getUserRoles(usuarioId)
-      if (roles && roles.length > 0) {
-        setMessage('Login exitoso.')
-        const userRole = roles[0]
-        if (userRole.rol_id === 1) navigate('/admin')
-        else if (userRole.rol_id === 2) navigate('/home')
-        else if (userRole.rol_id === 4) navigate('/coordinador')
-        else navigate('/home')
-      } else {
-        setError('No se encontraron roles para el usuario.')
-      }
-    } catch (err: unknown) {
-      console.error('Error al iniciar sesión:', err)
-
-      if (axios.isAxiosError(err) && err.response) {
-        const status = err.response.status
-        if (status === 404) {
-          setError('Usuario no encontrado')
-        } else if (status === 401) {
-          setError('Contraseña incorrecta')
-        } else {
-          setError('Error al iniciar sesión. Intenta nuevamente.')
-        }
-      } else if (err instanceof Error) {
-        setError(err.message)
-      } else {
-        setError('Error desconocido al iniciar sesión.')
-      }
-
-      setMessage('')
+    if (!usuarioId) {
+      throw new Error('No se recibió el ID del usuario en la respuesta')
     }
+
+    localStorage.setItem('authToken', token)
+    localStorage.setItem('usuario_id', usuarioId.toString())
+    localStorage.setItem('user_email', email)
+
+    window.dispatchEvent(new Event('localStorageUpdated'))
+
+    const roles = await getUserRoles(usuarioId)
+    if (roles && roles.length > 0) {
+      setMessage('Login exitoso.')
+
+      const userRole = roles[0]
+      
+      const roleName = 
+        userRole.rol_id === 1 ? 'admin' :
+        userRole.rol_id === 2 ? 'cliente' :
+        userRole.rol_id === 4 ? 'coordinador' : 
+        'cliente';
+
+      localStorage.setItem('user_role', roleName);
+
+      if (userRole.rol_id === 1) navigate('/admin')
+      else if (userRole.rol_id === 2) navigate('/home')
+      else if (userRole.rol_id === 4) navigate('/coordinador')
+      else navigate('/home')
+    } else {
+      setError('No se encontraron roles para el usuario.')
+    }
+  } catch (err: unknown) {
+    console.error('Error al iniciar sesión:', err)
+
+    if (axios.isAxiosError(err) && err.response) {
+      const status = err.response.status
+      if (status === 404) {
+        setError('Usuario no encontrado')
+      } else if (status === 401) {
+        setError('Contraseña incorrecta')
+      } else {
+        setError('Error al iniciar sesión. Intenta nuevamente.')
+      }
+    } else if (err instanceof Error) {
+      setError(err.message)
+    } else {
+      setError('Error desconocido al iniciar sesión.')
+    }
+
+    setMessage('')
   }
+}
+
 
   return (
     <div className="container mt-5">

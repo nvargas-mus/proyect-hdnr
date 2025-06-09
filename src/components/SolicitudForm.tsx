@@ -1,3 +1,4 @@
+import ReactDOM from 'react-dom';
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
@@ -691,7 +692,7 @@ const SolicitudForm = () => {
 
 
       {/* Modal para Agregar Dirección */}
-      {showAddDireccionModal && (
+      {showAddDireccionModal && ReactDOM.createPortal(
         <>
           <div className="modal-backdrop fade show"></div>
           <div className="modal show d-block" tabIndex={-1}>
@@ -815,11 +816,12 @@ const SolicitudForm = () => {
               </div>
             </div>
           </div>
-        </>
+        </>,
+        document.body
       )}
 
       {/* Modal para Agregar Contacto */}
-      {showAddContactoModal && (
+      {showAddContactoModal && ReactDOM.createPortal(
         <>
           <div className="modal-backdrop fade show"></div>
           <div className="modal show d-block" tabIndex={-1}>
@@ -904,7 +906,8 @@ const SolicitudForm = () => {
               </div>
             </div>
           </div>
-        </>
+        </>,
+        document.body
       )}
     </div>
   );
