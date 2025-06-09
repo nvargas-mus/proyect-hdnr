@@ -30,6 +30,8 @@ const SolicitudForm = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const isAdminContext = location.pathname.startsWith('/admin');
+  const [completed] = useState(false); //setComplete --------------------------------------------
+
 
   const [formData, setFormData] = useState<{
     usuario_id: number;
@@ -366,10 +368,30 @@ const SolicitudForm = () => {
     }
   };
 
+  const progressPercent =
+  step === 1
+    ? 15
+    : completed
+      ? 100
+      : 66;
+
+
   return (
 
     
     <div className="container mt-5">
+      <div className="progress mb-4 position-relative" style={{ height: '4px' }}>
+        <div
+          className="progress-bar progress-bar-custom"
+          role="progressbar"
+          style={{ width: `${progressPercent}%` }}
+          aria-valuenow={progressPercent}
+          aria-valuemin={0}
+          aria-valuemax={100}
+        />
+        <i className="bi bi-check-circle-fill check-icon"></i>
+      </div>
+
       <h3 className="card-title text-center">Crear Solicitud de Servicio</h3>
       {step === 1 && (
         <div className="row justify-content-center">

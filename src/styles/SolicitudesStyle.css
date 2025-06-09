@@ -122,3 +122,26 @@
 div[style*="z-index: 1002"] {
   z-index: 900 !important;
 }
+
+.progress-bar { 
+  transition: width 0.4s ease; 
+}
+
+.progress-bar-custom {
+  background-color: #009b3a !important;
+  transition: width 0.4s ease;
+}
+
+.progress {
+  overflow: visible !important;
+}
+
+.check-icon {
+  position: absolute;
+  right: -14px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1.35rem;
+  color: #009b3a;
+  z-index: 1;
+}
