@@ -125,9 +125,11 @@ export const postContacto = async (contactoData: Contacto) => {
 
 export const crearSolicitudMateriales = async (data: {
   solicitud_id: number;
-  codigo_material_matnr: number;
-  cantidad_declarada: number;
-  unidad_medida_id: number;
+  materiales: {
+    codigo_material_matnr: number;
+    cantidad_declarada: number;
+    unidad_medida_id: number;
+  }[];
 }) => {
   const response = await api.post('/solicitud_materiales', data);
   return response.data;

@@ -18,13 +18,16 @@ interface SolicitudCompletionFormProps {
   solicitudId: number;
   requiereTransporte: boolean;
   onBack: () => void;
+  onCompleted: () => void; 
 }
 
 const SolicitudCompletionForm: React.FC<SolicitudCompletionFormProps> = ({
   solicitudId,
   requiereTransporte,
   onBack,
+  onCompleted,
 }) => {
+
   const navigate = useNavigate();
 
   const [residuos, setResiduos] = useState<any[]>([]);
@@ -122,81 +125,98 @@ const SolicitudCompletionForm: React.FC<SolicitudCompletionFormProps> = ({
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setErrorMessage(null);
-    
-    try {
-      const atLeastOne = residuosSeleccionados.some(
-        (row) => row.codigo_material_matnr_residuo.trim() !== ''
-      );
-      if (!atLeastOne) {
-        setErrorMessage('Debes seleccionar al menos un residuo.');
+  e.preventDefault();
+  setLoading(true);
+  setErrorMessage(null);
+
+  try {
+    const materiales: {
+      codigo_material_matnr: number;
+      cantidad_declarada: number;
+      unidad_medida_id: number;
+    }[] = [];
+
+    for (const row of residuosSeleccionados) {
+      if (!row.codigo_material_matnr_residuo.trim()) continue;
+
+      let codeString = row.codigo_material_matnr_residuo;
+      if (codeString.includes(' - ')) {
+        codeString = codeString.split(' - ')[0].trim();
+      }
+
+      const codigo = Number(codeString);
+      const cantidad = Number(row.cantidad_declarada);
+      const unidad = Number(row.unidad_medida_id_residuo);
+
+      if (isNaN(codigo) || isNaN(cantidad) || isNaN(unidad)) {
+        setErrorMessage('Verifica que todos los campos de residuos sean válidos.');
         setLoading(false);
         return;
       }
-      
-      for (const row of residuosSeleccionados) {
-        if (!row.codigo_material_matnr_residuo.trim()) continue;
-        
-        let codeString = row.codigo_material_matnr_residuo;
-        if (codeString.includes(' - ')) {
-          codeString = codeString.split(' - ')[0].trim();
-        }
-        
-        const codigo = Number(codeString);
-        const cantidad = Number(row.cantidad_declarada);
-        const unidad = Number(row.unidad_medida_id_residuo);
-        
-        if (isNaN(codigo) || isNaN(cantidad) || isNaN(unidad)) {
-          setErrorMessage('Verifica que todos los campos de residuos sean válidos.');
-          setLoading(false);
-          return;
-        }
-        
-        const dataToSend = {
-          solicitud_id: solicitudId,
-          codigo_material_matnr: codigo,
-          cantidad_declarada: cantidad,
-          unidad_medida_id: unidad,
-        };
-        
-        await crearSolicitudMateriales(dataToSend);
-      }
-      
-      if (requiereTransporte && formData.codigo_material_matnr_servicio) {
-        let codigoServicio = formData.codigo_material_matnr_servicio;
-        if (codigoServicio.includes(' - ')) {
-          codigoServicio = codigoServicio.split(' - ')[0].trim();
-        }
-        
-        const cantidadServicio = Number(formData.cantidad_servicio);
-        
-        if (isNaN(Number(codigoServicio)) || isNaN(cantidadServicio) || !formData.unidad_venta_kmein) {
-          setErrorMessage('Verifica que todos los campos de servicio sean válidos.');
-          setLoading(false);
-          return;
-        }
-        
-        const detalleTransporte = {
-          solicitud_id: solicitudId,
-          codigo_material_matnr: Number(codigoServicio),
-          unidad_venta_kmein: formData.unidad_venta_kmein,
-          cantidad: cantidadServicio
-        };
-        
-        console.log('Enviando detalle con transporte:', detalleTransporte);
-        await crearDetalleConTransporte(detalleTransporte);
-      }
-      
-      setShowSuccessModal(true);
-    } catch (err: any) {
-      console.error('Error al completar la solicitud:', err);
-      setErrorMessage(`Error al completar la solicitud: ${err.message || 'Verifica los datos e intente nuevamente.'}`);
-    } finally {
-      setLoading(false);
+
+      materiales.push({
+        codigo_material_matnr: codigo,
+        cantidad_declarada: cantidad,
+        unidad_medida_id: unidad,
+      });
     }
-  };
+
+    if (materiales.length === 0) {
+      setErrorMessage('Debes seleccionar al menos un residuo.');
+      setLoading(false);
+      return;
+    }
+
+    await crearSolicitudMateriales({
+      solicitud_id: solicitudId,
+      materiales,
+    });
+
+    if (requiereTransporte && formData.codigo_material_matnr_servicio) {
+      let codigoServicio = formData.codigo_material_matnr_servicio;
+      if (codigoServicio.includes(' - ')) {
+        codigoServicio = codigoServicio.split(' - ')[0].trim();
+      }
+
+      const cantidadServicio = Number(formData.cantidad_servicio);
+
+      if (
+        isNaN(Number(codigoServicio)) ||
+        isNaN(cantidadServicio) ||
+        !formData.unidad_venta_kmein
+      ) {
+        setErrorMessage('Verifica que todos los campos de servicio sean válidos.');
+        setLoading(false);
+        return;
+      }
+
+      const detalleTransporte = {
+        solicitud_id: solicitudId,
+        codigo_material_matnr: Number(codigoServicio),
+        unidad_venta_kmein: formData.unidad_venta_kmein,
+        cantidad: cantidadServicio,
+      };
+
+      await crearDetalleConTransporte(detalleTransporte);
+    }
+
+    onCompleted();
+
+    setTimeout(() => {
+      setShowSuccessModal(true);
+    }, 700);
+
+  } catch (err: any) {
+    console.error('Error al completar la solicitud:', err);
+    setErrorMessage(
+      `Error al completar la solicitud: ${err.message || 'Verifica los datos e intente nuevamente.'}`
+    );
+  } finally {
+    setLoading(false);
+  }
+};
+
+
 
   const handleSuccessOK = () => {
     setShowSuccessModal(false);

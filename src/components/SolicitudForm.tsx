@@ -30,7 +30,8 @@ const SolicitudForm = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const isAdminContext = location.pathname.startsWith('/admin');
-  const [completed] = useState(false); //setComplete --------------------------------------------
+  const [completed, setCompleted] = useState(false);
+ //setComplete --------------------------------------------
 
 
   const [formData, setFormData] = useState<{
@@ -377,19 +378,28 @@ const SolicitudForm = () => {
 
 
   return (
+     <>
+      <div className="container mt-5">
+        <div className="progress mb-4 position-relative" style={{ height: '12px' }}>
+          <div
+            className="progress-bar progress-bar-custom"
+            role="progressbar"
+            style={{
+              width: `${progressPercent + (progressPercent === 100 ? 1.5 : 0)}%`
+            }}
+            aria-valuenow={progressPercent}
+            aria-valuemin={0}
+            aria-valuemax={100}
+          />
+          <i
+            className="bi bi-check-circle-fill check-icon"
+            style={{
+              left: `calc(${progressPercent}% - 1px)`,
+              fontSize: progressPercent === 100 ? '1.9rem' : '1.5rem',
+            }}
+          />
 
-    
-    <div className="container mt-5">
-      <div className="progress mb-4 position-relative" style={{ height: '4px' }}>
-        <div
-          className="progress-bar progress-bar-custom"
-          role="progressbar"
-          style={{ width: `${progressPercent}%` }}
-          aria-valuenow={progressPercent}
-          aria-valuemin={0}
-          aria-valuemax={100}
-        />
-        <i className="bi bi-check-circle-fill check-icon"></i>
+        </div>
       </div>
 
       <h3 className="card-title text-center">Crear Solicitud de Servicio</h3>
@@ -688,29 +698,31 @@ const SolicitudForm = () => {
         </div>
       )}
 
-        {step === 2 && solicitudId && (
-          <SolicitudCompletionForm
-            solicitudId={solicitudId}
-            requiereTransporte={formData.requiere_transporte}
-            onBack={() => {
-              setFormData({
-                usuario_id: Number(localStorage.getItem('usuario_id')),
-                codigo_cliente_kunnr: 0,
-                clienteDisplay: '',
-                fecha_servicio_solicitada: '',
-                hora_servicio_solicitada: '',
-                descripcion: '',
-                requiere_transporte: false,
-                direccion_id: null,
-                contacto_cliente_id: 0,
-                declaracion_id: 0,
-                generador_igual_cliente: true,
-                generador_id: null,
-              });
-              setStep(1);
-            }}
-          />
-        )}
+      {step === 2 && solicitudId && (
+        <SolicitudCompletionForm
+          solicitudId={solicitudId}
+          requiereTransporte={formData.requiere_transporte}
+          onBack={() => {
+            setFormData({
+              usuario_id: Number(localStorage.getItem('usuario_id')),
+              codigo_cliente_kunnr: 0,
+              clienteDisplay: '',
+              fecha_servicio_solicitada: '',
+              hora_servicio_solicitada: '',
+              descripcion: '',
+              requiere_transporte: false,
+              direccion_id: null,
+              contacto_cliente_id: 0,
+              declaracion_id: 0,
+              generador_igual_cliente: true,
+              generador_id: null,
+            });
+            setStep(1);
+          }}
+          onCompleted={() => setCompleted(true)} // ✅ ¡esto es lo nuevo!
+        />
+      )}
+
 
 
       {/* Modal para Agregar Dirección */}
@@ -931,8 +943,9 @@ const SolicitudForm = () => {
         </>,
         document.body
       )}
-    </div>
+    </>
   );
 };
+
 
 export default SolicitudForm;
