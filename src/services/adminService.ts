@@ -390,12 +390,12 @@ export const getDireccionesCliente = async (codigo_cliente_kunnr: number): Promi
 
 export const getMaterialesCliente = async (codigo_cliente_kunnr: number): Promise<MaterialServicio[]> => {
   const token = getToken();
-  const response = await axios.get(`${API_URL}/materiales_cotizados/servicios/${codigo_cliente_kunnr}`, {
+  const response = await axios.get(`${API_URL}/materiales_cotizados/servicios/cliente/${codigo_cliente_kunnr}`, {
     headers: {
       'Authorization': `Bearer ${token}`,
       'Accept': 'application/json'
     }
   });
-  
+
   return response.data;
 };

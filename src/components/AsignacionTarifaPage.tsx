@@ -82,7 +82,7 @@ const AsignacionTarifaPage = () => {
         setMateriales(materialesData);
       } catch (error) {
         console.error('Error al cargar materiales:', error);
-        setMateriales([]);  // 👈 Vacío si falla
+        setMateriales([]);
       }
     } else {
       setMateriales([]);
