@@ -1,6 +1,7 @@
-import { useState, useEffect, FormEvent, ChangeEvent } from 'react';
+// NuevoContratoModal.tsx
+import { useState, useEffect, FormEvent } from 'react';
+import { Modal, Button, Form, Alert, Spinner } from 'react-bootstrap';
 import { createContrato, getTransportistas } from '../services/adminService';
-import '../styles/AdminStyle.css';
 
 interface NuevoContratoModalProps {
   show: boolean;
@@ -17,11 +18,7 @@ interface TransportistaAPI {
   ultima_actualizacion: string;
 }
 
-const NuevoContratoModal: React.FC<NuevoContratoModalProps> = ({ 
-  show, 
-  onClose,
-  onSave
-}) => {
+const NuevoContratoModal: React.FC<NuevoContratoModalProps> = ({ show, onClose, onSave }) => {
   const [transportistas, setTransportistas] = useState<TransportistaAPI[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -58,20 +55,14 @@ const NuevoContratoModal: React.FC<NuevoContratoModalProps> = ({
     }
   };
 
-  const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<any>) => {
     const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value
-    });
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      setFormData({
-        ...formData,
-        documento: e.target.files[0]
-      });
+      setFormData(prev => ({ ...prev, documento: e.target.files![0] }));
     }
   };
 
@@ -89,7 +80,7 @@ const NuevoContratoModal: React.FC<NuevoContratoModalProps> = ({
       formDataToSend.append('tipo_reajuste', formData.tipo_reajuste);
       formDataToSend.append('frecuencia_reajuste', formData.frecuencia_reajuste);
       formDataToSend.append('fecha_proximo_reajuste', formData.fecha_proximo_reajuste);
-      
+
       if (formData.documento) {
         formDataToSend.append('documento', formData.documento);
       }
@@ -106,7 +97,7 @@ const NuevoContratoModal: React.FC<NuevoContratoModalProps> = ({
         fecha_proximo_reajuste: '',
         documento: null
       });
-      
+
       setTimeout(() => {
         onSave();
       }, 1500);
@@ -118,163 +109,126 @@ const NuevoContratoModal: React.FC<NuevoContratoModalProps> = ({
     }
   };
 
-  if (!show) return null;
-
   return (
-    <div className="modal-overlay">
-      <div className="modal-container" style={{ width: '600px', maxWidth: '90%' }}>
-        <div className="modal-header" style={{ 
-          backgroundColor: '#243c6c', 
-          color: '#ffffff',
-          padding: '15px 30px'
-        }}>
-          <h3 id="contratoModalTitle" style={{ color: '#ffffff', margin: 0 }}>Crear Nuevo Contrato</h3>
-          <button 
-            className="close-button" 
-            onClick={onClose}
-            style={{ color: '#ffffff', fontSize: '24px' }}
-          >
-            &times;
-          </button>
-        </div>
-        <div className="modal-body" style={{ padding: '20px 30px' }}>
-          {error && <div className="alert alert-danger">{error}</div>}
-          {success && <div className="alert alert-success">{success}</div>}
-          
-          <form onSubmit={handleSubmit}>
-            <div className="form-group mb-3">
-              <label className="form-label" htmlFor="transportista_id">Transportista:</label>
-              <select
-                id="transportista_id"
-                name="transportista_id"
-                className="form-control"
-                value={formData.transportista_id}
-                onChange={handleInputChange}
-                required
-              >
-                <option value="">Seleccione un transportista</option>
-                {transportistas.map(t => (
-                  <option key={t.transportista_id} value={t.transportista_id}>
-                    {`${t.transportista_id} - ${t.nombre_transportista}`}
-                  </option>
-                ))}
-              </select>
-            </div>
-            
-            <div className="form-group mb-3">
-              <label className="form-label" htmlFor="es_spot">¿Es Spot?</label>
-              <select
-                id="es_spot"
-                name="es_spot"
-                className="form-control"
-                value={formData.es_spot}
-                onChange={handleInputChange}
-                required
-              >
-                <option value="false">No</option>
-                <option value="true">Sí</option>
-              </select>
-            </div>
-            
-            <div className="form-group mb-3">
-              <label className="form-label" htmlFor="fecha_fin">Fecha Fin:</label>
-              <input
-                type="date"
-                id="fecha_fin"
-                name="fecha_fin"
-                className="form-control"
-                value={formData.fecha_fin}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
-            
-            <div className="form-group mb-3">
-              <label className="form-label" htmlFor="tipo_reajuste">Tipo de Reajuste:</label>
-              <select
-                id="tipo_reajuste"
-                name="tipo_reajuste"
-                className="form-control"
-                value={formData.tipo_reajuste}
-                onChange={handleInputChange}
-                required
-              >
-                <option value="Sin reajuste">Sin reajuste</option>
-                <option value="Por polinomio">Por polinomio</option>
-              </select>
-            </div>
-            
-            <div className="form-group mb-3">
-              <label className="form-label" htmlFor="frecuencia_reajuste">Frecuencia de Reajuste:</label>
-              <select
-                id="frecuencia_reajuste"
-                name="frecuencia_reajuste"
-                className="form-control"
-                value={formData.frecuencia_reajuste}
-                onChange={handleInputChange}
-                required
-              >
-                <option value="Sin reajuste">Sin reajuste</option>
-                <option value="Mensual">Mensual</option>
-                <option value="Trimestral">Trimestral</option>
-                <option value="Semestral">Semestral</option>
-                <option value="Anual">Anual</option>
-              </select>
-            </div>
-            
-            <div className="form-group mb-3">
-              <label className="form-label" htmlFor="fecha_proximo_reajuste">Fecha Próximo Reajuste:</label>
-              <input
-                type="date"
-                id="fecha_proximo_reajuste"
-                name="fecha_proximo_reajuste"
-                className="form-control"
-                value={formData.fecha_proximo_reajuste}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
-            
-            <div className="form-group mb-3">
-              <label className="form-label" htmlFor="documento">Documento Respaldo:</label>
-              <input
-                type="file"
-                id="documento"
-                name="documento"
-                className="form-control"
-                onChange={handleFileChange}
-              />
-            </div>
-          </form>
-        </div>
-        <div className="modal-footer" style={{ padding: '15px 30px' }}>
-          <button 
-            type="button" 
-            className="btn btn-secondary" 
-            onClick={onClose}
-            disabled={loading}
-          >
-            Cancelar
-          </button>
-          <button 
-            type="button" 
-            className="btn form-button-primary modal-save-button" 
-            onClick={handleSubmit}
-            disabled={loading}
-            style={{
-              backgroundColor: '#243c6c',
-              color: '#ffffff',
-              fontWeight: '500',
-              minWidth: '160px',
-              padding: '8px 16px'
-            }}
-          >
-            {loading ? 'Guardando...' : 'Guardar Contrato'}
-          </button>
-        </div>
-      </div>
-    </div>
+    <Modal show={show} onHide={onClose} centered size="lg">
+      <Modal.Header closeButton>
+        <Modal.Title>Crear Nuevo Contrato</Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        {error && <Alert variant="danger">{error}</Alert>}
+        {success && <Alert variant="success">{success}</Alert>}
+
+        <Form onSubmit={handleSubmit}>
+          <Form.Group className="mb-3">
+            <Form.Label>Transportista</Form.Label>
+            <Form.Select
+              name="transportista_id"
+              value={formData.transportista_id}
+              onChange={handleInputChange}
+              required
+            >
+              <option value="">Seleccione un transportista</option>
+              {transportistas.map(t => (
+                <option key={t.transportista_id} value={t.transportista_id}>
+                  {`${t.transportista_id} - ${t.nombre_transportista}`}
+                </option>
+              ))}
+            </Form.Select>
+          </Form.Group>
+
+          <Form.Group className="mb-3">
+            <Form.Label>¿Es Spot?</Form.Label>
+            <Form.Select
+              name="es_spot"
+              value={formData.es_spot}
+              onChange={handleInputChange}
+              required
+            >
+              <option value="false">No</option>
+              <option value="true">Sí</option>
+            </Form.Select>
+          </Form.Group>
+
+          <Form.Group className="mb-3">
+            <Form.Label>Fecha Fin</Form.Label>
+            <Form.Control
+              type="date"
+              name="fecha_fin"
+              value={formData.fecha_fin}
+              onChange={handleInputChange}
+              required
+            />
+          </Form.Group>
+
+          <Form.Group className="mb-3">
+            <Form.Label>Tipo de Reajuste</Form.Label>
+            <Form.Select
+              name="tipo_reajuste"
+              value={formData.tipo_reajuste}
+              onChange={handleInputChange}
+              required
+            >
+              <option value="Sin reajuste">Sin reajuste</option>
+              <option value="Por polinomio">Por polinomio</option>
+            </Form.Select>
+          </Form.Group>
+
+          <Form.Group className="mb-3">
+            <Form.Label>Frecuencia de Reajuste</Form.Label>
+            <Form.Select
+              name="frecuencia_reajuste"
+              value={formData.frecuencia_reajuste}
+              onChange={handleInputChange}
+              required
+            >
+              <option value="Sin reajuste">Sin reajuste</option>
+              <option value="Mensual">Mensual</option>
+              <option value="Trimestral">Trimestral</option>
+              <option value="Semestral">Semestral</option>
+              <option value="Anual">Anual</option>
+            </Form.Select>
+          </Form.Group>
+
+          <Form.Group className="mb-3">
+            <Form.Label>Fecha Próximo Reajuste</Form.Label>
+            <Form.Control
+              type="date"
+              name="fecha_proximo_reajuste"
+              value={formData.fecha_proximo_reajuste}
+              onChange={handleInputChange}
+              required
+            />
+          </Form.Group>
+
+          <Form.Group className="mb-3">
+            <Form.Label>Documento Respaldo</Form.Label>
+            <Form.Control
+              type="file"
+              name="documento"
+              onChange={handleFileChange}
+            />
+          </Form.Group>
+
+          <div className="d-flex justify-content-end">
+            <Button variant="secondary" onClick={onClose} className="me-2" disabled={loading}>
+              Cancelar
+            </Button>
+            <Button type="submit" variant="primary" disabled={loading}>
+              {loading ? (
+                <>
+                  <Spinner animation="border" size="sm" className="me-2" />
+                  Guardando...
+                </>
+              ) : (
+                'Guardar Contrato'
+              )}
+            </Button>
+          </div>
+        </Form>
+      </Modal.Body>
+    </Modal>
   );
 };
 
 export default NuevoContratoModal;
+
