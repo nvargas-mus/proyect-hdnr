@@ -719,11 +719,9 @@ const SolicitudForm = () => {
             });
             setStep(1);
           }}
-          onCompleted={() => setCompleted(true)} // ✅ ¡esto es lo nuevo!
+          onCompleted={() => setCompleted(true)}
         />
       )}
-
-
 
       {/* Modal para Agregar Dirección */}
       {showAddDireccionModal && ReactDOM.createPortal(
