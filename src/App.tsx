@@ -17,10 +17,6 @@ import UserProfileSettings from './components/UserProfileSettings';
 import { SolicitudProvider } from './context/SolicitudContext';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
-const getUserRole = () => {
-  return localStorage.getItem('user_role');
-};
-
 const App = () => {
   return (
     <SolicitudProvider>
@@ -33,15 +29,10 @@ const App = () => {
           <Route path="/crear-solicitud" element={<SolicitudForm />} />
           <Route path="/coordinador" element={<CoordinadorPage />} />
 
-          <Route 
-            path="/configuracion" 
-            element={
-              getUserRole() === 'admin' 
-                ? <AdminLayout><UserProfileSettings /></AdminLayout>
-                : <UserProfileSettings />
-            } 
-          />
-          
+          {/* Ruta de configuración para clientes o coordinadores */}
+          <Route path="/configuracion" element={<UserProfileSettings />} />
+
+          {/* Sección de rutas con layout de administrador */}
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<AdminPage />} />
             <Route path="contratos" element={<ContratosTable />} />
@@ -51,9 +42,13 @@ const App = () => {
             <Route path="asignaciones-tarifa/:tarifaId" element={<AsignacionesTarifa />} />
             <Route path="solicitudes" element={<CoordinadorPage />} />
             <Route path="asignar-tarifa/:tarifaId" element={<AsignacionTarifaPage />} />
+                      <Route path="*" element={<NotFoundPage />} />
+
+            {/* Ruta de configuración para el admin */}
+            <Route path="configuracion" element={<UserProfileSettings />} />
           </Route>
-          
-          {/* Rutas de redirección */}
+
+          {/* Redirecciones */}
           <Route 
             path="/tarifas-contrato/:contratoId" 
             element={<Navigate to="/admin/tarifas-contrato/:contratoId" replace />} 
@@ -66,9 +61,8 @@ const App = () => {
             path="/asignar-tarifa/:tarifaId" 
             element={<Navigate to="/admin/asignar-tarifa/:tarifaId" replace />} 
           />
-          
-          <Route path="*" element={<NotFoundPage />} />
         </Routes>
+
       </div>
     </SolicitudProvider>
   );

@@ -425,10 +425,11 @@ const TarifasContrato = () => {
                           <button
                             title="Editar tarifa"
                             className="btn-action btn-edit"
-                            onClick={() => navigate(`/editar-tarifa/${tarifa.tarifario_contrato_id}`)}
+                            disabled
                           >
                             <i className="fa fa-edit"></i>
                           </button>
+
                           
                           {/* Botón Ver Asignaciones */}
                           <button

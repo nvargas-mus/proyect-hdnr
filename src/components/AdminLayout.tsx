@@ -356,7 +356,6 @@ const AdminLayout = ({ children }: AdminLayoutProps): JSX.Element => {
             style={{
               marginLeft: menuCollapsed ? '60px' : '16.666%',
               width: menuCollapsed ? 'calc(100% - 60px)' : 'calc(100% - 16.666%)',
-              marginTop: '60px',
               transition: 'all 0.3s ease'
             }}
           >

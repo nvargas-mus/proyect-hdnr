@@ -11,10 +11,11 @@ import {
 } from '../services/adminService';
 import '../styles/AdminStyle.css';
 
-interface Material {
-  codigo_material_matnr: number;
+export interface Material {
+  material_matnr: number;
   nombre_material_maktg: string;
 }
+
 
 const AsignacionTarifaPage = () => {
   const { tarifaId } = useParams<{ tarifaId: string }>();
@@ -94,26 +95,22 @@ const AsignacionTarifaPage = () => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    
+
     let parsedValue: string | number = value;
-    
-    if (
-      name === 'codigo_cliente_kunnr' || 
-      name === 'direccion_id' || 
-      name === 'codigo_material_matnr'
-    ) {
-      parsedValue = value === '' ? 0 : parseInt(value);
+    if (['codigo_cliente_kunnr', 'direccion_id', 'codigo_material_matnr'].includes(name)) {
+      parsedValue = value === '' ? 0 : Number(value);
+      if (isNaN(parsedValue)) parsedValue = 0;
     }
-    
-    setFormData(prev => ({
+
+    setFormData((prev) => ({
       ...prev,
-      [name]: parsedValue
+      [name]: parsedValue,
     }));
-    
+
     if (formErrors[name as keyof AsignacionTarifaData]) {
-      setFormErrors(prev => ({
+      setFormErrors((prev) => ({
         ...prev,
-        [name]: undefined
+        [name]: undefined,
       }));
     }
   };
@@ -282,24 +279,33 @@ const AsignacionTarifaPage = () => {
                 id="codigo_material_matnr"
                 name="codigo_material_matnr"
                 className={`form-control ${formErrors.codigo_material_matnr ? 'error' : ''}`}
-                value={formData.codigo_material_matnr || ''}
+                value={
+                  formData.codigo_material_matnr === 0
+                    ? ''
+                    : formData.codigo_material_matnr.toString()
+                }
                 onChange={handleInputChange}
                 disabled={!formData.codigo_cliente_kunnr}
                 required
               >
                 <option value="">Seleccione un material</option>
-                {materiales.map(material => (
-                  <option key={material.codigo_material_matnr} value={material.codigo_material_matnr}>
-                    {material.codigo_material_matnr} - {material.nombre_material_maktg}
+                {materiales.map((material) => (
+                  <option
+                    key={material.material_matnr}
+                    value={material.material_matnr.toString()}
+                  >
+                    {material.material_matnr} - {material.nombre_material_maktg}
                   </option>
                 ))}
               </select>
               {formErrors.codigo_material_matnr && (
-                <div className="invalid-feedback" style={{display: 'block'}}>
+                <div className="invalid-feedback" style={{ display: 'block' }}>
                   {formErrors.codigo_material_matnr}
                 </div>
               )}
             </div>
+
+
             
             {/* Campo oculto para el ID de la tarifa */}
             <input

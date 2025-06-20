@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Modal, Button } from 'react-bootstrap';
 import { 
   getContratos, 
   deleteContrato, 
@@ -29,39 +30,27 @@ const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
   if (!show) return null;
 
   return (
-    <div className="delete-confirm-modal-overlay">
-      <div className="delete-confirm-modal">
-        <div className="delete-confirm-header">
-          <h5>Confirmar eliminación</h5>
-        </div>
-        <div className="delete-confirm-body">
-          <div className="delete-icon">
-            <i className="fa fa-exclamation-triangle"></i>
-          </div>
-          <p className="delete-message">
-            ¿Está seguro que desea eliminar el contrato con ID <strong>{contratoId}</strong>?
-          </p>
-          <p className="delete-warning">
-            Esta acción no se puede deshacer.
-          </p>
-        </div>
-        <div className="delete-confirm-footer">
-          <button 
-            className="btn-cancel" 
-            onClick={onClose}
-          >
-            Cancelar
-          </button>
-          <button 
-            className="btn-delete" 
-            onClick={onConfirm}
-          >
-            Eliminar
-          </button>
-        </div>
+  <Modal show={show} onHide={onClose} centered backdrop="static">
+    <Modal.Header closeButton>
+      <Modal.Title>Confirmar eliminación</Modal.Title>
+    </Modal.Header>
+    <Modal.Body className="text-center">
+      <div className="mb-3">
+        <i className="fa fa-exclamation-triangle fa-2x text-danger"></i>
       </div>
-    </div>
-  );
+      <p>¿Está seguro que desea eliminar el contrato con ID <strong>{contratoId}</strong>?</p>
+      <p className="text-danger">Esta acción no se puede deshacer.</p>
+    </Modal.Body>
+    <Modal.Footer>
+      <Button variant="secondary" onClick={onClose}>
+        Cancelar
+      </Button>
+      <Button variant="danger" onClick={onConfirm}>
+        Eliminar
+      </Button>
+    </Modal.Footer>
+  </Modal>
+);
 };
 
 const ContratosTable = () => {

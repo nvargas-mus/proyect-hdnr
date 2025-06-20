@@ -214,6 +214,16 @@ const SolicitudForm = () => {
     }
   }, [formData.generador_igual_cliente]);
 
+  useEffect(() => {
+  const input = document.getElementById('fecha_servicio_solicitada') as HTMLInputElement | null;
+  if (input && input.showPicker) {
+    const handleClick = () => input.showPicker();
+    input.addEventListener('focus', handleClick);
+    return () => input.removeEventListener('focus', handleClick);
+  }
+}, []);
+
+
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
@@ -284,6 +294,7 @@ const SolicitudForm = () => {
     setError('');
     setSolicitudId(data.solicitud_id);
     setStep(2);
+    window.scrollTo({ top: 0, behavior: 'smooth' }); 
     localStorage.removeItem(LOCAL_STORAGE_KEY);
 
   } catch (err) {
@@ -379,26 +390,27 @@ const SolicitudForm = () => {
 
   return (
      <>
-      <div className="container mt-5">
-        <div className="progress mb-4 position-relative" style={{ height: '12px' }}>
-          <div
-            className="progress-bar progress-bar-custom"
-            role="progressbar"
-            style={{
-              width: `${progressPercent + (progressPercent === 100 ? 1.5 : 0)}%`
-            }}
-            aria-valuenow={progressPercent}
-            aria-valuemin={0}
-            aria-valuemax={100}
-          />
-          <i
-            className="bi bi-check-circle-fill check-icon"
-            style={{
-              left: `calc(${progressPercent}% - 1px)`,
-              fontSize: progressPercent === 100 ? '1.9rem' : '1.5rem',
-            }}
-          />
-
+      <div className="barra-progreso-wrapper">
+        <div className="container mt-5">
+          <div className="progress mb-4 position-relative" style={{ height: '12px' }}>
+            <div
+              className="progress-bar progress-bar-custom"
+              role="progressbar"
+              style={{
+                width: `${progressPercent + (progressPercent === 100 ? 1.5 : 0)}%`
+              }}
+              aria-valuenow={progressPercent}
+              aria-valuemin={0}
+              aria-valuemax={100}
+            />
+            <i
+              className="bi bi-check-circle-fill check-icon"
+              style={{
+                left: `calc(${progressPercent}% - 1px)`,
+                fontSize: progressPercent === 100 ? '1.9rem' : '1.5rem',
+              }}
+            />
+          </div>
         </div>
       </div>
 
@@ -718,9 +730,11 @@ const SolicitudForm = () => {
               generador_id: null,
             });
             setStep(1);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
           }}
           onCompleted={() => setCompleted(true)}
         />
+
       )}
 
       {/* Modal para Agregar Dirección */}

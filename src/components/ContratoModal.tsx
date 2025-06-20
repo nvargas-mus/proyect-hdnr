@@ -1,4 +1,3 @@
-// ContratoModal.tsx
 import { useState, useEffect, FormEvent } from 'react';
 import { Modal, Button, Form, Spinner, Alert } from 'react-bootstrap';
 import { getContratoById, updateContrato } from '../services/adminService';

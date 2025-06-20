@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Form, Button, Card, Container } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
-import AdminLayout from './AdminLayout';
 import '../styles/UserProfileSettings.css';
 
 const UserProfileSettings = () => {
@@ -40,7 +39,7 @@ const UserProfileSettings = () => {
   };
 
   const ProfileForm = (
-    <Container className="user-profile-settings my-5">
+    <Container className="user-profile-settings">
       <Card className="p-4 shadow">
         <Card.Body>
           <h2 className="mb-4">Configuración de Usuario</h2>
@@ -149,11 +148,8 @@ const UserProfileSettings = () => {
     </Container>
   );
 
-  return (
-    <>
-      {isAdmin ? <AdminLayout>{ProfileForm}</AdminLayout> : ProfileForm}
-    </>
-  );
+  return ProfileForm;
+
 };
 
 export default UserProfileSettings;

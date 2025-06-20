@@ -243,3 +243,26 @@ table.custom-table thead th {
   margin: 0 auto; 
   padding: 20px;
 }
+
+.card.stat-card {
+  padding: 1rem !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  background-color: #ffffff;
+  border: none;
+  border-radius: 0.5rem;
+  text-align: center;
+}
+
+.card.stat-card .card-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #243c6c !important;
+  margin-bottom: 0.25rem;
+}
+
+.card.stat-card .stat-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #243c6c !important;
+  margin: 0;
+}

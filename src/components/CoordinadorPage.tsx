@@ -30,7 +30,9 @@ import {
   Solicitud,
   AgendamientoData,
   Transportista,
-  AsignacionTarifa
+  AsignacionTarifa,
+  getLineasDescarga,
+  LineaDescarga
 } from '../services/coordinadorServices';
 import { useNavigate } from 'react-router-dom';
 import FiltrosSolicitudes from '../components/FiltrosSolicitudes';
@@ -71,10 +73,12 @@ const CoordinadorPage: React.FC = () => {
     null
   );
 
+  const [lineasDescarga, setLineasDescarga] = useState<LineaDescarga[]>([]);
+
   const [formAgendamiento, setFormAgendamiento] = useState<AgendamientoData>({
     fecha_servicio_programada: '',
     hora_servicio_programada: '',
-    id_linea_descarga: 1,
+    id_linea_descarga: 0,
     numero_nota_venta: '',
     descripcion: '',
     clase_peligrosidad: '',
@@ -130,6 +134,14 @@ const CoordinadorPage: React.FC = () => {
 
     setTransportistas(await getTransportistas());
 
+    try {
+      const lineas = await getLineasDescarga();
+      setLineasDescarga(lineas);
+    } catch (error) {
+      console.error("Error al cargar líneas de descarga:", error);
+      setLineasDescarga([]);
+    }
+
     if (sol.requiere_transporte && sol.detalles_con_transporte?.length) {
       const mat = sol.detalles_con_transporte[0].codigo_material_matnr;
       try {
@@ -140,11 +152,11 @@ const CoordinadorPage: React.FC = () => {
         );
         setAsignaciones(asignacionesObtenidas);
         setMensajeErrorAsignaciones(null);
-        setHayAsignacionesDisponibles(asignacionesObtenidas.length > 0); // 👈 Habilitamos solo si hay asignaciones
+        setHayAsignacionesDisponibles(asignacionesObtenidas.length > 0);
       } catch (error: any) {
         setAsignaciones([]);
         setMensajeErrorAsignaciones(error.message || 'No se encontraron asignaciones.');
-        setHayAsignacionesDisponibles(false); // 👈 Bloqueamos si falla o no hay asignaciones
+        setHayAsignacionesDisponibles(false);
       }
     } else {
       setAsignaciones([]);
@@ -158,7 +170,7 @@ const CoordinadorPage: React.FC = () => {
     setFormAgendamiento({
       fecha_servicio_programada: fechaSolicitada,
       hora_servicio_programada: sol.hora_servicio_solicitada,
-      id_linea_descarga: 1,
+      id_linea_descarga: 0,
       numero_nota_venta: '',
       descripcion: `Agendamiento para solicitud #${id}`,
       clase_peligrosidad: '',
@@ -317,38 +329,39 @@ const CoordinadorPage: React.FC = () => {
 
       <Row className="mb-4">
         <Col lg={3} md={6} className="mb-4">
-          <Card className="h-100 p-4">
+          <Card className="stat-card">
             <Card.Body>
-              <Card.Title>Total de Solicitudes</Card.Title>
-              <h2 className="display-4">{totalSolicitudes}</h2>
+              <Card.Title className="card-title">Total Solicitudes</Card.Title>
+              <p className="stat-value">{totalSolicitudes}</p>
             </Card.Body>
           </Card>
         </Col>
         <Col lg={3} md={6} className="mb-4">
-          <Card className="h-100 p-4">
+          <Card className="stat-card">
             <Card.Body>
-              <Card.Title>Pendientes</Card.Title>
-              <h2 className="display-4">{pendientes}</h2>
+              <Card.Title className="card-title">Pendientes</Card.Title>
+              <p className="stat-value">{pendientes}</p>
             </Card.Body>
           </Card>
         </Col>
         <Col lg={3} md={6} className="mb-4">
-          <Card className="h-100 p-4">
+          <Card className="stat-card">
             <Card.Body>
-              <Card.Title>Completadas</Card.Title>
-              <h2 className="display-4">{completadas}</h2>
+              <Card.Title className="card-title">Completadas</Card.Title>
+              <p className="stat-value">{completadas}</p>
             </Card.Body>
           </Card>
         </Col>
         <Col lg={3} md={6} className="mb-4">
-          <Card className="h-100 p-4">
+          <Card className="stat-card">
             <Card.Body>
-              <Card.Title>Con Transporte</Card.Title>
-              <h2 className="display-4">{conTransporte}</h2>
+              <Card.Title className="card-title">Con Transporte</Card.Title>
+              <p className="stat-value">{conTransporte}</p>
             </Card.Body>
           </Card>
         </Col>
       </Row>
+
 
       <Row>
         <Col>
@@ -689,7 +702,8 @@ const CoordinadorPage: React.FC = () => {
                         required
                         value={formAgendamiento.fecha_servicio_programada}
                         onChange={handleFormChange}
-                        disabled={!hayAsignacionesDisponibles}
+                        disabled={solicitudDetalle?.requiere_transporte && !hayAsignacionesDisponibles}
+
                       />
                     </Form.Group>
                   </Col>
@@ -702,7 +716,7 @@ const CoordinadorPage: React.FC = () => {
                         required
                         value={formAgendamiento.hora_servicio_programada}
                         onChange={handleFormChange}
-                        disabled={!hayAsignacionesDisponibles}
+                        disabled={solicitudDetalle?.requiere_transporte && !hayAsignacionesDisponibles}
                       />
                     </Form.Group>
                   </Col>
@@ -717,14 +731,18 @@ const CoordinadorPage: React.FC = () => {
                         required
                         value={formAgendamiento.id_linea_descarga}
                         onChange={handleFormChange}
-                        disabled={!hayAsignacionesDisponibles}
+                        disabled={solicitudDetalle?.requiere_transporte && !hayAsignacionesDisponibles}
                       >
-                        <option value={1}>Línea 1</option>
-                        <option value={2}>Línea 2</option>
-                        <option value={3}>Línea 3</option>
+                        <option value="">Seleccionar línea…</option>
+                        {lineasDescarga.map((linea) => (
+                          <option key={linea.id_linea_descarga} value={linea.id_linea_descarga}>
+                            {linea.nombre_linea}
+                          </option>
+                        ))}
                       </Form.Select>
                     </Form.Group>
                   </Col>
+
                   <Col md={6}>
                     <Form.Group controlId="numero_nota_venta">
                       <Form.Label>Número de nota de venta*</Form.Label>
@@ -734,7 +752,7 @@ const CoordinadorPage: React.FC = () => {
                         required
                         value={formAgendamiento.numero_nota_venta}
                         onChange={handleFormChange}
-                        disabled={!hayAsignacionesDisponibles}
+                        disabled={solicitudDetalle?.requiere_transporte && !hayAsignacionesDisponibles}
                       />
                     </Form.Group>
                   </Col>
@@ -749,7 +767,7 @@ const CoordinadorPage: React.FC = () => {
                     rows={2}
                     value={formAgendamiento.descripcion}
                     onChange={handleFormChange}
-                    disabled={!hayAsignacionesDisponibles}
+                    disabled={solicitudDetalle?.requiere_transporte && !hayAsignacionesDisponibles}
                   />
                 </Form.Group>
 
@@ -763,7 +781,7 @@ const CoordinadorPage: React.FC = () => {
                         name="clase_peligrosidad"
                         value={formAgendamiento.clase_peligrosidad}
                         onChange={handleFormChange}
-                        disabled={!hayAsignacionesDisponibles}
+                        disabled={solicitudDetalle?.requiere_transporte && !hayAsignacionesDisponibles}
                       />
                     </Form.Group>
                   </Col>
@@ -774,7 +792,7 @@ const CoordinadorPage: React.FC = () => {
                         name="declaracion_numero"
                         value={formAgendamiento.declaracion_numero}
                         onChange={handleFormChange}
-                        disabled={!hayAsignacionesDisponibles}
+                        disabled={solicitudDetalle?.requiere_transporte && !hayAsignacionesDisponibles}
                       />
                     </Form.Group>
                   </Col>
@@ -793,7 +811,7 @@ const CoordinadorPage: React.FC = () => {
                             value={formAgendamiento.transportista_id ?? ''}
                             onChange={handleFormChange}
                             required
-                            disabled={!hayAsignacionesDisponibles}
+                            disabled={solicitudDetalle?.requiere_transporte && !hayAsignacionesDisponibles}
                           >
                             <option value="">Seleccionar…</option>
                             {transportistas.map((t) => (
@@ -815,7 +833,7 @@ const CoordinadorPage: React.FC = () => {
                             value={formAgendamiento.asignacion_id ?? ''}
                             onChange={handleFormChange}
                             required
-                            disabled={!hayAsignacionesDisponibles}
+                            disabled={solicitudDetalle?.requiere_transporte && !hayAsignacionesDisponibles}
                           >
                             <option value="">Seleccionar…</option>
                             {asignaciones.map((a) => (
@@ -823,8 +841,9 @@ const CoordinadorPage: React.FC = () => {
                                 key={a.asignacion_id}
                                 value={a.asignacion_id}
                               >
-                                {a.asignacion_id} – {a.descripcion_tarifa}
+                                {a.nombre_transportista} – {a.descripcion_tarifa}
                               </option>
+
                             ))}
                           </Form.Select>
                         </Form.Group>
@@ -841,7 +860,7 @@ const CoordinadorPage: React.FC = () => {
                             name="conductor_id"
                             value={formAgendamiento.conductor_id ?? ''}
                             onChange={handleFormChange}
-                            disabled={!hayAsignacionesDisponibles}
+                            disabled={solicitudDetalle?.requiere_transporte && !hayAsignacionesDisponibles}
                           />
                         </Form.Group>
                       </Col>
@@ -853,7 +872,7 @@ const CoordinadorPage: React.FC = () => {
                             name="vehiculo_id"
                             value={formAgendamiento.vehiculo_id ?? ''}
                             onChange={handleFormChange}
-                            disabled={!hayAsignacionesDisponibles}
+                            disabled={solicitudDetalle?.requiere_transporte && !hayAsignacionesDisponibles}
                           />
                         </Form.Group>
                       </Col>
@@ -873,8 +892,9 @@ const CoordinadorPage: React.FC = () => {
             <Button
               type="submit"
               className="modal-save-button"
-              disabled={loadingAgendamiento || !hayAsignacionesDisponibles}
+              disabled={loadingAgendamiento || (solicitudDetalle?.requiere_transporte && !hayAsignacionesDisponibles)}
             >
+
               {loadingAgendamiento ? (
                 <>
                   <Spinner

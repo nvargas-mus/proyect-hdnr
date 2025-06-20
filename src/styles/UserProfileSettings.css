@@ -1,7 +1,9 @@
 .user-profile-settings {
   max-width: 1000px;
-  margin: 0 auto;
+  margin: 100px auto 0 auto;
+  padding-bottom: 3rem;
 }
+
 
 .user-profile-img {
   width: 150px;

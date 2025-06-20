@@ -1,7 +1,3 @@
-.main-content {
-  padding-top: 80px; 
-}
-
 .navbar {
   position: fixed;
   top: 0;
@@ -13,7 +9,6 @@
 }
 
 body {
-  padding-top: 56px;
   overflow-x: hidden;
 }
 
@@ -220,7 +215,6 @@ body {
   transition: all 0.3s ease;
   margin-left: 16.666%;
   width: 83.334%;
-  padding-top: 20px;
 }
 
 /* Ajuste cuando el menú está colapsado */
@@ -659,7 +653,6 @@ input[type="radio"]:checked {
   .main-content {
     margin-left: 0 !important;
     width: 100% !important;
-    padding-top: 70px !important;
   }
 
   .navbar {

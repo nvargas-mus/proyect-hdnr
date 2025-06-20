@@ -151,5 +151,11 @@ div[style*="z-index: 1002"] {
   transition: left 0.3s ease, font-size 0.3s ease;
 }
 
-
+.barra-progreso-wrapper {
+  position: sticky;
+  top: 70px;
+  z-index: 1050;
+  background-color: #fff;
+  padding-top: 10px;
+}
 

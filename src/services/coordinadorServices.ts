@@ -102,6 +102,11 @@ interface FilterOptions {
   requiereTransporte?: string;
 }
 
+export interface LineaDescarga {
+  id_linea_descarga: number;
+  nombre_linea: string;
+}
+
 export const getAuthToken = () => localStorage.getItem('authToken');
 
 export const getSolicitudesCoordinador = async (
@@ -220,4 +225,20 @@ export const agendarSolicitud = async (
   }
 };
 
+export const getLineasDescarga = async (): Promise<LineaDescarga[]> => {
+  const token = getAuthToken();
+  if (!token) throw new Error("No token");
+
+  const { data } = await axios.get<LineaDescarga[]>(
+    `${API_URL}/lineaDescarga`,
+    {
+      headers: {
+        Accept: '*/*',
+        Authorization: `Bearer ${token}`
+      }
+    }
+  );
+
+  return data;
+};
 

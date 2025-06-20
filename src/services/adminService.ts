@@ -103,8 +103,9 @@ export interface DireccionCliente {
 }
 
 export interface MaterialServicio {
-  codigo_material_matnr: number;
+  material_matnr: number; 
   nombre_material_maktg: string;
+  unidad_venta_kmein: string; 
 }
 
 export interface AsignacionTarifaData {

@@ -1,5 +1,5 @@
 html {
-  font-size: 14px;
+  font-size: 1rem;
 }
 
 body {
@@ -37,7 +37,6 @@ body p, body label, body table, body input, body ul, body li, body span, body th
   margin-right: auto;
 }
 
-/* Responsive para móviles pequeños */
 @media (max-width: 767.98px) {
   .sidebar-wrapper {
     width: 100% !important;
@@ -108,3 +107,13 @@ body p, body label, body table, body input, body ul, body li, body span, body th
 .table tr:last-child td {
   border-bottom: none;
 }
+
+body.admin-page .main-content,
+body.coordinador-page .main-content {
+  margin-top: 80px;
+}
+
+body:not(.admin-page):not(.coordinador-page) .main-content {
+  margin-top: 80px;
+}
+

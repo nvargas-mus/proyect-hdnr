@@ -40,7 +40,13 @@ const ContratoViewModal = ({ contratoId, show, onClose }: ContratoViewModalProps
   };
 
   return (
-    <Modal show={show} onHide={onClose} centered size="lg">
+    <Modal
+      show={show}
+      onHide={onClose}
+      centered
+      size="lg"
+      dialogClassName="custom-modal-style"
+    >
       <Modal.Header closeButton>
         <Modal.Title>Detalles del Contrato - ID {contratoId}</Modal.Title>
       </Modal.Header>
@@ -88,7 +94,7 @@ const ContratoViewModal = ({ contratoId, show, onClose }: ContratoViewModalProps
         )}
       </Modal.Body>
       <Modal.Footer>
-        <Button variant="secondary" onClick={onClose}>
+        <Button className="form-button-outline" onClick={onClose}>
           Cerrar
         </Button>
       </Modal.Footer>
@@ -97,4 +103,5 @@ const ContratoViewModal = ({ contratoId, show, onClose }: ContratoViewModalProps
 };
 
 export default ContratoViewModal;
+
 
