@@ -583,6 +583,62 @@ const CoordinadorPage: React.FC = () => {
                 </Col>
               </Row>
 
+              {/* ─── Contacto ─── */}
+                <Row className="mb-4">
+                  <Col>
+                    <h5>Contacto del Cliente</h5>
+                    <Table striped borderless size="sm" className="custom-table">
+                      <tbody>
+                        <tr>
+                          <td><strong>Nombre:</strong></td>
+                          <td>{solicitudDetalle.nombre || 'No especificado'}</td>
+                        </tr>
+                        <tr>
+                          <td><strong>Teléfono:</strong></td>
+                          <td>{solicitudDetalle.telefono || 'No especificado'}</td>
+                        </tr>
+                        <tr>
+                          <td><strong>Email:</strong></td>
+                          <td>{solicitudDetalle.email_contacto || 'No especificado'}</td>
+                        </tr>
+                      </tbody>
+                    </Table>
+                  </Col>
+                </Row>
+
+                {/* ─── Declaración y Generador ─── */}
+                  <Row className="mb-4">
+                    <Col>
+                      <h5>Declaración y Generador</h5>
+                      <Table striped borderless size="sm" className="custom-table">
+                        <tbody>
+                          <tr>
+                            <td><strong>Declaración:</strong></td>
+                            <td>{solicitudDetalle.declaracion_nombre || 'No especificada'}</td>
+                          </tr>
+                          <tr>
+                            <td><strong>Número Declaración:</strong></td>
+                            <td>{solicitudDetalle.declaracion_numero || 'No informado'}</td>
+                          </tr>
+                          <tr>
+                            <td><strong>Clase de Peligrosidad:</strong></td>
+                            <td>{solicitudDetalle.clase_peligrosidad || 'No indicada'}</td>
+                          </tr>
+                          <tr>
+                            <td><strong>Generador igual al Cliente:</strong></td>
+                            <td>{solicitudDetalle.generador_igual_cliente ? 'Sí' : 'No'}</td>
+                          </tr>
+                          {!solicitudDetalle.generador_igual_cliente && (
+                            <tr>
+                              <td><strong>Nombre del Generador:</strong></td>
+                              <td>{solicitudDetalle.nombre_generador || 'No informado'}</td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </Table>
+                    </Col>
+                  </Row>
+
               {/* ─── Transporte (si hay) ─── */}
               {solicitudDetalle.detalles_con_transporte &&
                 solicitudDetalle.detalles_con_transporte.length > 0 && (
@@ -618,6 +674,36 @@ const CoordinadorPage: React.FC = () => {
                     </Col>
                   </Row>
                 )}
+
+                {/* ─── Detalles sin Transporte ─── */}
+                  {solicitudDetalle.detalles_sin_transporte &&
+                    solicitudDetalle.detalles_sin_transporte.length > 0 && (
+                      <Row className="mb-4">
+                        <Col>
+                          <h5>Detalles sin Transporte</h5>
+                          <div className="modal-table-container">
+                            <Table striped hover size="sm" className="custom-table">
+                              <thead>
+                                <tr>
+                                  <th>Tipo Transporte</th>
+                                  <th>Capacidad</th>
+                                  <th>Unidad</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {solicitudDetalle.detalles_sin_transporte.map((d, i) => (
+                                  <tr key={i}>
+                                    <td>{d.nombre_tipo_transporte || 'No informado'}</td>
+                                    <td>{d.valor_capacidad ?? 'N/A'}</td>
+                                    <td>{d.nombre_unidad || 'N/A'}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </Table>
+                          </div>
+                        </Col>
+                      </Row>
+                  )}
 
               {/* ─── Residuos ─── */}
               <Row>

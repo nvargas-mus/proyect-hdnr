@@ -44,6 +44,14 @@ export interface Solicitud {
   residuos: Residuo[] | null;
   detalles_con_transporte?: DetalleConTransporte[] | null;
   detalles_sin_transporte?: DetalleSinTransporte[] | null;
+  nombre?: string;
+  telefono?: string;
+  email_contacto?: string;
+  declaracion_nombre?: string;
+  declaracion_numero?: string;
+  clase_peligrosidad?: string;
+  generador_igual_cliente?: boolean;
+  nombre_generador?: string | null;
 }
 
 export interface SolicitudesResponse {
@@ -106,6 +114,13 @@ export interface LineaDescarga {
   id_linea_descarga: number;
   nombre_linea: string;
 }
+
+export interface DetalleSinTransporte {
+  nombre_tipo_transporte: string | null;
+  valor_capacidad: number | null;
+  nombre_unidad: string | null;
+}
+
 
 export const getAuthToken = () => localStorage.getItem('authToken');
 
