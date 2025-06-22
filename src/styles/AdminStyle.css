@@ -270,8 +270,6 @@ body {
   border: none;
 }
 
-
-
 /* Estilos para botones */
 .form-button-primary {
   background-color: #243c6c !important; 
@@ -826,7 +824,7 @@ body.admin-page .navbar .btn-outline-danger {
 }
 
 .main-content {
-  margin-top: 60px;   
+  margin-top: 80px;   
   margin-left: 16.666%;  
   width: calc(100% - 16.666%);
   transition: all 0.3s ease;
@@ -908,4 +906,9 @@ body.admin-page .navbar .btn-outline-danger {
 
 body.admin-page .container.mt-5 {
   padding-top: 0 !important;
+}
+
+.coordinador-page-container {
+  padding-top: 0 !important;
+  margin-top: 0 !important;
 }

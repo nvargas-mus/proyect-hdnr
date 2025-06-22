@@ -97,6 +97,12 @@ const ContratosTable = () => {
     fetchContratos(pagination.limit, pagination.offset);
   }, []);
 
+  useEffect(() => {
+  document.body.classList.add('contratos-page');
+  return () => document.body.classList.remove('contratos-page');
+}, []);
+
+
   const handlePrevPage = () => {
     if (pagination.prevOffset !== null) {
       fetchContratos(pagination.limit, pagination.prevOffset);

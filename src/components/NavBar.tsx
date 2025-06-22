@@ -33,15 +33,6 @@ const Navbar: React.FC = () => {
   return (
     <nav 
       className="navbar navbar-light bg-light"
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        width: '100%',
-        zIndex: 1070,
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-      }}
     >
       <div className="container-fluid">
         <a className="navbar-brand" href="#" style={{ marginLeft: '0' }}>

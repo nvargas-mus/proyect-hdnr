@@ -1,5 +1,9 @@
 .main-content {
-  padding-top: 80px; 
+  padding-top: 80px;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding-left: 20px;
+  padding-right: 20px;
 }
 
 /* Estilos para botones */
@@ -238,12 +242,6 @@ table.custom-table thead th {
   font-weight: bold;
 }
 
-.main-content {
-  max-width: 1200px;
-  margin: 0 auto; 
-  padding: 20px;
-}
-
 .card.stat-card {
   padding: 1rem !important;
   box-shadow: 0 1px 3px rgba(0,0,0,0.2);
@@ -266,3 +264,4 @@ table.custom-table thead th {
   color: #243c6c !important;
   margin: 0;
 }
+

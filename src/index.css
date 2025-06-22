@@ -117,3 +117,7 @@ body:not(.admin-page):not(.coordinador-page) .main-content {
   margin-top: 80px;
 }
 
+body.contratos-page .main-content {
+  margin-top: 120px;
+}
+

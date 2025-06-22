@@ -320,7 +320,7 @@ const CoordinadorPage: React.FC = () => {
   }
 
   return (
-    <Container className="main-content">
+    <Container className="main-content coordinador-page-container py-4">
       <Row className="mb-4">
         <Col>
           <h2 className="mb-4">Panel de Coordinador</h2>

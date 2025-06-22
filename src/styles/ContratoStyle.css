@@ -227,3 +227,7 @@
   background-color: #c82333;
   border-color: #bd2130;
 }
+
+body.contratos-page .main-content {
+  margin-top: 120px;
+}
