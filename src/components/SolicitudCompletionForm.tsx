@@ -59,6 +59,7 @@ const SolicitudCompletionForm: React.FC<SolicitudCompletionFormProps> = ({
 
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -172,7 +173,6 @@ const SolicitudCompletionForm: React.FC<SolicitudCompletionFormProps> = ({
       materiales,
     });
 
-    // Nuevo bloque que maneja ambos casos
     if (requiereTransporte && formData.codigo_material_matnr_servicio) {
       let codigoServicio = formData.codigo_material_matnr_servicio;
       if (codigoServicio.includes(' - ')) {
@@ -222,7 +222,7 @@ const SolicitudCompletionForm: React.FC<SolicitudCompletionFormProps> = ({
 
     setTimeout(() => {
       setShowSuccessModal(true);
-    }, 700);
+    }, 1600);
   } catch (err: any) {
     console.error('Error al completar la solicitud:', err);
     setErrorMessage(
@@ -234,13 +234,17 @@ const SolicitudCompletionForm: React.FC<SolicitudCompletionFormProps> = ({
 };
 
   const handleSuccessOK = () => {
-    setShowSuccessModal(false);
-    if (window.location.pathname.startsWith('/admin')) {
-      onBack();
-    } else {
-      navigate('/home');
-    }
-  };
+  setShowSuccessModal(false);
+  
+  const rol = localStorage.getItem('user_role');
+  if (rol === 'admin') {
+    sessionStorage.setItem('scrollToTop', 'true');
+    window.location.reload();
+
+  } else {
+    navigate('/home');
+  }
+};
 
   return (
     <div className="container mt-0">

@@ -31,8 +31,6 @@ const SolicitudForm = () => {
   const location = useLocation();
   const isAdminContext = location.pathname.startsWith('/admin');
   const [completed, setCompleted] = useState(false);
- //setComplete --------------------------------------------
-
 
   const [formData, setFormData] = useState<{
     usuario_id: number;
@@ -105,6 +103,15 @@ const SolicitudForm = () => {
     }
     return times;
   };
+
+  useEffect(() => {
+    const shouldScrollTop = sessionStorage.getItem('scrollToTop');
+    if (shouldScrollTop === 'true') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      sessionStorage.removeItem('scrollToTop');
+    }
+  }, []);
+
 
   useEffect(() => {
     const savedData = localStorage.getItem(LOCAL_STORAGE_KEY);
@@ -404,12 +411,13 @@ const SolicitudForm = () => {
               aria-valuemax={100}
             />
             <i
-              className="bi bi-check-circle-fill check-icon"
+              className={`bi bi-check-circle-fill check-icon ${progressPercent === 100 ? 'complete' : ''}`}
               style={{
                 left: `calc(${progressPercent}% - 1px)`,
                 fontSize: progressPercent === 100 ? '1.9rem' : '1.5rem',
               }}
             />
+
           </div>
         </div>
       </div>
