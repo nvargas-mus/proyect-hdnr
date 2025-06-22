@@ -8,11 +8,11 @@ import {
   getCapacidadesTransporte,
   crearSolicitudMateriales,
   crearDetalleConTransporte,
+  crearDetalleSinTransporte
 } from '../services/solicitudService';
 import '../styles/Form.css';
 import '../styles/SolicitudesStyle.css';
 import ReactDOM from 'react-dom';
-
 
 interface SolicitudCompletionFormProps {
   solicitudId: number;
@@ -172,6 +172,7 @@ const SolicitudCompletionForm: React.FC<SolicitudCompletionFormProps> = ({
       materiales,
     });
 
+    // Nuevo bloque que maneja ambos casos
     if (requiereTransporte && formData.codigo_material_matnr_servicio) {
       let codigoServicio = formData.codigo_material_matnr_servicio;
       if (codigoServicio.includes(' - ')) {
@@ -198,6 +199,23 @@ const SolicitudCompletionForm: React.FC<SolicitudCompletionFormProps> = ({
       };
 
       await crearDetalleConTransporte(detalleTransporte);
+    } else {
+      const tipo = Number(formData.tipo_transporte_id);
+      const capacidad = Number(formData.capacidad_id);
+      const unidad = Number(formData.unidad_medida_id_transport);
+
+      if (isNaN(tipo) || isNaN(capacidad) || isNaN(unidad)) {
+        setErrorMessage('Faltan datos para el detalle sin transporte.');
+        setLoading(false);
+        return;
+      }
+
+      await crearDetalleSinTransporte({
+        solicitud_id: solicitudId,
+        tipo_transporte_id: tipo,
+        capacidad_id: capacidad,
+        unidad_medida_id: unidad,
+      });
     }
 
     onCompleted();
@@ -205,7 +223,6 @@ const SolicitudCompletionForm: React.FC<SolicitudCompletionFormProps> = ({
     setTimeout(() => {
       setShowSuccessModal(true);
     }, 700);
-
   } catch (err: any) {
     console.error('Error al completar la solicitud:', err);
     setErrorMessage(
@@ -215,8 +232,6 @@ const SolicitudCompletionForm: React.FC<SolicitudCompletionFormProps> = ({
     setLoading(false);
   }
 };
-
-
 
   const handleSuccessOK = () => {
     setShowSuccessModal(false);

@@ -194,3 +194,22 @@ export const crearDetalleConTransporte = async (data: {
   }
 };
 
+export const crearDetalleSinTransporte = async (payload: {
+  solicitud_id: number;
+  tipo_transporte_id: number;
+  capacidad_id: number;
+  unidad_medida_id: number;
+  }) => {
+    const response = await fetch('/detalle_sin_transporte', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      throw new Error('Error al registrar detalle sin transporte');
+    }
+
+    return await response.json();
+};
+
