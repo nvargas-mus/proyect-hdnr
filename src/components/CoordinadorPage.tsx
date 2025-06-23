@@ -294,11 +294,12 @@ const CoordinadorPage: React.FC = () => {
 
 
   const pendientes = solicitudes.filter(
-    (s) => s.nombre_estado.toLowerCase() === 'incompleta'
+    (s) => s.nombre_estado === 'Pendiente'
   ).length;
   const completadas = solicitudes.filter(
-    (s) => s.nombre_estado.toLowerCase() === 'completada'
+    (s) => s.nombre_estado === 'Completado'
   ).length;
+
   const conTransporte = solicitudes.filter((s) => s.requiere_transporte).length;
 
   if (error && !solicitudes.length) {

@@ -29,11 +29,12 @@ const FiltrosSolicitudes: React.FC<FiltrosSolicitudesProps> = ({ onApplyFilters 
   });
   
   const estadoOptions = [
-    { value: "incompleta", label: "Incompleta" },
-    { value: "completada", label: "Completada" },
-    { value: "rechazada", label: "Rechazada" },
-    { value: "en proceso", label: "En Proceso" }
-  ];
+  { value: "Incompleta", label: "Incompleta" },
+  { value: "Pendiente", label: "Pendiente" },
+  { value: "Agendado", label: "Agendado" },
+  { value: "Completado", label: "Completado" },
+  { value: "Cancelado", label: "Cancelado" }
+];
 
   const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
