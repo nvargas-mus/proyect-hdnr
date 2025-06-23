@@ -24,6 +24,13 @@ export interface Referencia {
   categoria_referencia: string;
 }
 
+export interface Capacidad {
+  capacidad_id: number;
+  valor_capacidad: string;
+  unidad_medida_id: number;
+  nombre_unidad: string;
+}
+
 
 export const crearSolicitud = async (solicitudData: {
   usuario_id: number;
@@ -102,7 +109,7 @@ export const getTiposTransporte = async () => {
   return response.data;
 };
 
-export const getCapacidadesTransporte = async () => {
+export const getCapacidadesTransporte = async (): Promise<Capacidad[]> => {
   const response = await api.get('/capacidadesTransporte');
   return response.data;
 };

@@ -233,6 +233,11 @@ const SolicitudCompletionForm: React.FC<SolicitudCompletionFormProps> = ({
   }
 };
 
+const unidadNombre = capacidades.find(
+    (c) => c.unidad_medida_id === formData.unidad_medida_id_transport
+  )?.nombre_unidad || formData.unidad_medida_id_transport;
+
+
   const handleSuccessOK = () => {
   setShowSuccessModal(false);
   
@@ -432,11 +437,12 @@ const SolicitudCompletionForm: React.FC<SolicitudCompletionFormProps> = ({
                       required
                     >
                       <option value="">Seleccione</option>
-                      {capacidades.map((cap) => (
-                        <option key={cap.capacidad_id} value={cap.capacidad_id}>
-                          {cap.valor_capacidad} (UM: {cap.unidad_medida_id})
+                      {capacidades.map((c) => (
+                        <option key={c.capacidad_id} value={c.capacidad_id}>
+                          {parseFloat(c.valor_capacidad)} {c.nombre_unidad}
                         </option>
                       ))}
+
                     </select>
                   </div>
                   <div className="mb-3">
@@ -447,7 +453,7 @@ const SolicitudCompletionForm: React.FC<SolicitudCompletionFormProps> = ({
                       type="text"
                       name="unidad_medida_id_transport"
                       className="form-control"
-                      value={formData.unidad_medida_id_transport}
+                      value={unidadNombre}
                       readOnly
                     />
                   </div>
