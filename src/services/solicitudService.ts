@@ -18,6 +18,13 @@ export interface CompletarSolicitudData {
   otros_campos?: unknown;
 }
 
+export interface Referencia {
+  referencia_id: number;
+  nombre_referencia: string;
+  categoria_referencia: string;
+}
+
+
 export const crearSolicitud = async (solicitudData: {
   usuario_id: number;
   codigo_cliente_kunnr: number;
@@ -204,3 +211,7 @@ export const crearDetalleSinTransporte = async (payload: {
   return response.data;
 };
 
+export const getReferencias = async () => {
+  const response = await api.get('/referencias');
+  return response.data;
+};

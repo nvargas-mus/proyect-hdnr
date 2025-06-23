@@ -10,6 +10,8 @@ import {
   getGeneradores,
   postDireccion,
   postContacto,
+  getReferencias,
+  Referencia,
 } from '../services/solicitudService';
 import {
   Cliente,
@@ -72,6 +74,8 @@ const SolicitudForm = () => {
 
   const [showAddDireccionModal, setShowAddDireccionModal] = useState(false);
   const [showAddContactoModal, setShowAddContactoModal] = useState(false);
+
+  const [referencias, setReferencias] = useState<Referencia[]>([]);
 
   const [newDireccion, setNewDireccion] = useState({
     codigo_cliente_kunnr: formData.codigo_cliente_kunnr,
@@ -230,6 +234,10 @@ const SolicitudForm = () => {
   }
 }, []);
 
+useEffect(() => {
+  fetchReferencias();
+}, []);
+
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
@@ -384,6 +392,15 @@ const SolicitudForm = () => {
     } catch (error) {
       console.error('Error al agregar contacto:', error);
       alert('Error al agregar contacto.');
+    }
+  };
+
+  const fetchReferencias = async () => {
+    try {
+      const data = await getReferencias();
+      setReferencias(data);
+    } catch (error) {
+      console.error('Error al obtener referencias:', error);
     }
   };
 
@@ -946,10 +963,14 @@ const SolicitudForm = () => {
                         required
                       >
                         <option value="">Seleccione una referencia</option>
-                        <option value={1}>Referencia 1</option>
-                        <option value={2}>Referencia 2</option>
+                        {referencias.map((ref) => (
+                          <option key={ref.referencia_id} value={ref.referencia_id}>
+                            {ref.nombre_referencia}
+                          </option>
+                        ))}
                       </select>
                     </div>
+
                   </div>
                   <div className="modal-footer">
                     <button type="submit" className="btn btn-primary modal-save-button">
