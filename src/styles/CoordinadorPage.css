@@ -265,3 +265,50 @@ table.custom-table thead th {
   margin: 0;
 }
 
+/*Colores para estados --------- */
+.badge-estado {
+  padding: 6px 10px !important;
+  border-radius: 0.3rem !important;
+  font-weight: 600 !important;
+  font-size: 0.75rem !important;
+  display: inline-block;
+  text-transform: capitalize;
+}
+
+
+/* Estados específicos */
+.badge-pendiente {
+  background-color: #ffc107 !important;
+  color: #212529 !important;
+}
+
+.badge-agendado {
+  background-color: #28a745 !important;
+  color: #fff !important;
+}
+
+.badge-incompleta {
+  background-color: #fd7e14 !important;
+  color: #fff !important;
+}
+
+.badge-rechazada {
+  background-color: #dc3545 !important;
+  color: #fff !important;
+}
+
+.badge-en-proceso {
+  background-color: #0d6efd !important;
+  color: #fff !important;
+}
+
+.badge-completada {
+  background-color: #20c997 !important;
+  color: #fff !important;
+}
+
+.badge-default {
+  background-color: #6c757d !important;
+  color: #fff !important;
+}
+

@@ -168,11 +168,7 @@ const AsignacionesTarifa = () => {
                         <button
                           title="Compartir enlace de tarifa"
                           className="btn-action btn-share"
-                          onClick={() => {
-                            const shareUrl = `${window.location.origin}/detalles-tarifa/${tarifa.tarifario_contrato_id}`;
-                            navigator.clipboard.writeText(shareUrl);
-                            alert('Enlace copiado al portapapeles');
-                          }}
+                          onClick={() => navigate(`/admin/asignar-tarifa/${tarifa?.tarifario_contrato_id}`)}
                         >
                           <i className="fa fa-link"></i>
                         </button>

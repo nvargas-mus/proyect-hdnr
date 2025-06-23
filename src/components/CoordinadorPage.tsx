@@ -7,7 +7,6 @@ import {
   Button,
   Modal,
   Table,
-  Badge,
   Pagination,
   Form,
   Spinner,
@@ -285,20 +284,14 @@ const CoordinadorPage: React.FC = () => {
       year: 'numeric'
     });
 
-  const getEstadoBadge = (e: string) => {
-    switch (e?.toLowerCase()) {
-      case 'incompleta':
-        return <Badge bg="warning">Incompleta</Badge>;
-      case 'completada':
-        return <Badge bg="success">Completada</Badge>;
-      case 'rechazada':
-        return <Badge bg="danger">Rechazada</Badge>;
-      case 'en proceso':
-        return <Badge bg="info">En Proceso</Badge>;
-      default:
-        return <Badge bg="secondary">{e}</Badge>;
-    }
+
+  const getEstadoBadge = (estado: string) => {
+    const key = estado?.toLowerCase().replace(/\s+/g, '-');
+    const clases = `badge badge-estado badge-${key}`;
+
+    return <span className={clases}>{estado}</span>;
   };
+
 
   const pendientes = solicitudes.filter(
     (s) => s.nombre_estado.toLowerCase() === 'incompleta'
