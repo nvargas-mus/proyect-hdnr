@@ -31,7 +31,9 @@ import {
   Transportista,
   AsignacionTarifa,
   getLineasDescarga,
-  LineaDescarga
+  LineaDescarga,
+  getConductoresPorTransportista,
+  getVehiculosPorTransportista
 } from '../services/coordinadorServices';
 import { useNavigate } from 'react-router-dom';
 import FiltrosSolicitudes from '../components/FiltrosSolicitudes';
@@ -72,6 +74,9 @@ const CoordinadorPage: React.FC = () => {
     null
   );
 
+  const [conductores, setConductores] = useState<{ conductor_id: number; nombre: string }[]>([]);
+  const [vehiculos, setVehiculos] = useState<{ vehiculo_id: number; patente: string; nombre_tipo_transporte: string }[]>([]);
+
   const [lineasDescarga, setLineasDescarga] = useState<LineaDescarga[]>([]);
 
   const [formAgendamiento, setFormAgendamiento] = useState<AgendamientoData>({
@@ -87,6 +92,7 @@ const CoordinadorPage: React.FC = () => {
     conductor_id: null,
     vehiculo_id: null
   });
+  
 
   useEffect(() => {
     const fetch = async () => {
@@ -111,6 +117,18 @@ const CoordinadorPage: React.FC = () => {
     };
     fetch();
   }, [paginaActual, activeFilters]);
+
+  useEffect(() => {
+    if (!formAgendamiento.transportista_id) return;
+
+    getConductoresPorTransportista(formAgendamiento.transportista_id)
+      .then(setConductores)
+      .catch(() => setConductores([]));
+
+    getVehiculosPorTransportista(formAgendamiento.transportista_id)
+      .then(setVehiculos)
+      .catch(() => setVehiculos([]));
+  }, [formAgendamiento.transportista_id]);
 
   const handleVerDetalle = (id: number) => {
     setSelectedSolicitudId(id);
@@ -810,251 +828,231 @@ const CoordinadorPage: React.FC = () => {
         backdrop="static"
       >
         
-        <Form onSubmit={handleSubmitAgendamiento}>
-          <Modal.Header closeButton>
-            <Modal.Title>
-              Agendar Solicitud #{selectedSolicitudId}
-            </Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-            {loadingDetalle ? (
-              <div className="text-center py-4">
-                <Spinner animation="border" />
-              </div>
-            ) : (
-              <>
-                {successMessage && (
-                  <Alert variant="success">{successMessage}</Alert>
-                )}
-                {agendamientoError && (
-                  <Alert variant="danger">{agendamientoError}</Alert>
-                )}
-                {mensajeErrorAsignaciones && (
-                  <Alert variant="warning">{mensajeErrorAsignaciones}</Alert>
-                )}
+        
+      <Form onSubmit={handleSubmitAgendamiento}>
+        <Modal.Header closeButton>
+          <Modal.Title>Agendar Solicitud #{selectedSolicitudId}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {loadingDetalle ? (
+            <div className="text-center py-4">
+              <Spinner animation="border" />
+            </div>
+          ) : (
+            <>
+              {successMessage && <Alert variant="success">{successMessage}</Alert>}
+              {agendamientoError && <Alert variant="danger">{agendamientoError}</Alert>}
+              {mensajeErrorAsignaciones && <Alert variant="warning">{mensajeErrorAsignaciones}</Alert>}
 
-                <Row className="mb-3">
-                  <Col md={6}>
-                    <Form.Group controlId="fecha_servicio_programada">
-                      <Form.Label>Fecha programada*</Form.Label>
-                      <Form.Control
-                        type="date"
-                        name="fecha_servicio_programada"
-                        required
-                        value={formAgendamiento.fecha_servicio_programada}
-                        onChange={handleFormChange}
-                        disabled={solicitudDetalle?.requiere_transporte && !hayAsignacionesDisponibles}
+              <Row className="mb-3">
+                <Col md={6}>
+                  <Form.Group controlId="fecha_servicio_programada">
+                    <Form.Label>Fecha programada*</Form.Label>
+                    <Form.Control
+                      type="date"
+                      name="fecha_servicio_programada"
+                      required
+                      value={formAgendamiento.fecha_servicio_programada}
+                      onChange={handleFormChange}
+                      disabled={solicitudDetalle?.requiere_transporte && !hayAsignacionesDisponibles}
+                    />
+                  </Form.Group>
+                </Col>
+                <Col md={6}>
+                  <Form.Group controlId="hora_servicio_programada">
+                    <Form.Label>Hora programada*</Form.Label>
+                    <Form.Control
+                      type="time"
+                      name="hora_servicio_programada"
+                      required
+                      value={formAgendamiento.hora_servicio_programada}
+                      onChange={handleFormChange}
+                      disabled={solicitudDetalle?.requiere_transporte && !hayAsignacionesDisponibles}
+                    />
+                  </Form.Group>
+                </Col>
+              </Row>
 
-                      />
-                    </Form.Group>
-                  </Col>
-                  <Col md={6}>
-                    <Form.Group controlId="hora_servicio_programada">
-                      <Form.Label>Hora programada*</Form.Label>
-                      <Form.Control
-                        type="time"
-                        name="hora_servicio_programada"
-                        required
-                        value={formAgendamiento.hora_servicio_programada}
-                        onChange={handleFormChange}
-                        disabled={solicitudDetalle?.requiere_transporte && !hayAsignacionesDisponibles}
-                      />
-                    </Form.Group>
-                  </Col>
-                </Row>
+              <Row className="mb-3">
+                <Col md={6}>
+                  <Form.Group controlId="id_linea_descarga">
+                    <Form.Label>Línea de descarga*</Form.Label>
+                    <Form.Select
+                      name="id_linea_descarga"
+                      required
+                      value={formAgendamiento.id_linea_descarga}
+                      onChange={handleFormChange}
+                      disabled={solicitudDetalle?.requiere_transporte && !hayAsignacionesDisponibles}
+                    >
+                      <option value="">Seleccionar línea…</option>
+                      {lineasDescarga.map((linea) => (
+                        <option key={linea.id_linea_descarga} value={linea.id_linea_descarga}>
+                          {linea.nombre_linea}
+                        </option>
+                      ))}
+                    </Form.Select>
+                  </Form.Group>
+                </Col>
+                <Col md={6}>
+                  <Form.Group controlId="numero_nota_venta">
+                    <Form.Label>Número de nota de venta*</Form.Label>
+                    <Form.Control
+                      type="text"
+                      name="numero_nota_venta"
+                      required
+                      value={formAgendamiento.numero_nota_venta}
+                      onChange={handleFormChange}
+                      disabled={solicitudDetalle?.requiere_transporte && !hayAsignacionesDisponibles}
+                    />
+                  </Form.Group>
+                </Col>
+              </Row>
 
-                <Row className="mb-3">
-                  <Col md={6}>
-                    <Form.Group controlId="id_linea_descarga">
-                      <Form.Label>Línea de descarga*</Form.Label>
-                      <Form.Select
-                        name="id_linea_descarga"
-                        required
-                        value={formAgendamiento.id_linea_descarga}
-                        onChange={handleFormChange}
-                        disabled={solicitudDetalle?.requiere_transporte && !hayAsignacionesDisponibles}
-                      >
-                        <option value="">Seleccionar línea…</option>
-                        {lineasDescarga.map((linea) => (
-                          <option key={linea.id_linea_descarga} value={linea.id_linea_descarga}>
-                            {linea.nombre_linea}
-                          </option>
-                        ))}
-                      </Form.Select>
-                    </Form.Group>
-                  </Col>
+              <Form.Group className="mb-3" controlId="descripcion">
+                <Form.Label>Descripción</Form.Label>
+                <Form.Control
+                  as="textarea"
+                  name="descripcion"
+                  rows={2}
+                  value={formAgendamiento.descripcion}
+                  onChange={handleFormChange}
+                  disabled={solicitudDetalle?.requiere_transporte && !hayAsignacionesDisponibles}
+                />
+              </Form.Group>
 
-                  <Col md={6}>
-                    <Form.Group controlId="numero_nota_venta">
-                      <Form.Label>Número de nota de venta*</Form.Label>
-                      <Form.Control
-                        type="text"
-                        name="numero_nota_venta"
-                        required
-                        value={formAgendamiento.numero_nota_venta}
-                        onChange={handleFormChange}
-                        disabled={solicitudDetalle?.requiere_transporte && !hayAsignacionesDisponibles}
-                      />
-                    </Form.Group>
-                  </Col>
-                </Row>
+              <h5 className="mt-4 mb-3">Información de peligrosidad (opcional)</h5>
+              <Row className="mb-3">
+                <Col md={6}>
+                  <Form.Group controlId="clase_peligrosidad">
+                    <Form.Label>Clase</Form.Label>
+                    <Form.Control
+                      name="clase_peligrosidad"
+                      value={formAgendamiento.clase_peligrosidad}
+                      onChange={handleFormChange}
+                      disabled={solicitudDetalle?.requiere_transporte && !hayAsignacionesDisponibles}
+                    />
+                  </Form.Group>
+                </Col>
+                <Col md={6}>
+                  <Form.Group controlId="declaracion_numero">
+                    <Form.Label>N° declaración</Form.Label>
+                    <Form.Control
+                      name="declaracion_numero"
+                      value={formAgendamiento.declaracion_numero}
+                      onChange={handleFormChange}
+                      disabled={solicitudDetalle?.requiere_transporte && !hayAsignacionesDisponibles}
+                    />
+                  </Form.Group>
+                </Col>
+              </Row>
 
-                {/* —— Descripción —— */}
-                <Form.Group className="mb-3" controlId="descripcion">
-                  <Form.Label>Descripción</Form.Label>
-                  <Form.Control
-                    as="textarea"
-                    name="descripcion"
-                    rows={2}
-                    value={formAgendamiento.descripcion}
-                    onChange={handleFormChange}
-                    disabled={solicitudDetalle?.requiere_transporte && !hayAsignacionesDisponibles}
-                  />
-                </Form.Group>
-
-                {/* —— Peligrosidad opcional —— */}
-                <h5 className="mt-4 mb-3">Información de peligrosidad (opcional)</h5>
-                <Row className="mb-3">
-                  <Col md={6}>
-                    <Form.Group controlId="clase_peligrosidad">
-                      <Form.Label>Clase</Form.Label>
-                      <Form.Control
-                        name="clase_peligrosidad"
-                        value={formAgendamiento.clase_peligrosidad}
-                        onChange={handleFormChange}
-                        disabled={solicitudDetalle?.requiere_transporte && !hayAsignacionesDisponibles}
-                      />
-                    </Form.Group>
-                  </Col>
-                  <Col md={6}>
-                    <Form.Group controlId="declaracion_numero">
-                      <Form.Label>N° declaración</Form.Label>
-                      <Form.Control
-                        name="declaracion_numero"
-                        value={formAgendamiento.declaracion_numero}
-                        onChange={handleFormChange}
-                        disabled={solicitudDetalle?.requiere_transporte && !hayAsignacionesDisponibles}
-                      />
-                    </Form.Group>
-                  </Col>
-                </Row>
-
-                {/* —— Transporte —— */}
-                {solicitudDetalle?.requiere_transporte && (
-                  <>
-                    <h5 className="mt-4 mb-3">Transporte</h5>
-                    <Row className="mb-3">
-                      <Col md={6}>
-                        <Form.Group controlId="transportista_id">
-                          <Form.Label>Transportista*</Form.Label>
-                          <Form.Select
-                            name="transportista_id"
-                            value={formAgendamiento.transportista_id ?? ''}
-                            onChange={handleFormChange}
-                            required
-                            disabled={solicitudDetalle?.requiere_transporte && !hayAsignacionesDisponibles}
-                          >
-                            <option value="">Seleccionar…</option>
-                            {transportistas.map((t) => (
-                              <option
-                                key={t.transportista_id}
-                                value={t.transportista_id}
-                              >
-                                {t.transportista_id} – {t.nombre_transportista}
-                              </option>
-                            ))}
-                          </Form.Select>
-                        </Form.Group>
-                      </Col>
-                      <Col md={6}>
-                        <Form.Group controlId="asignacion_id">
-                          <Form.Label>Asignación*</Form.Label>
-                          <Form.Select
-                            name="asignacion_id"
-                            value={formAgendamiento.asignacion_id ?? ''}
-                            onChange={handleFormChange}
-                            required
-                            disabled={solicitudDetalle?.requiere_transporte && !hayAsignacionesDisponibles}
-                          >
-                            <option value="">Seleccionar…</option>
-                            {asignaciones.map((a) => (
-                              <option
-                                key={a.asignacion_id}
-                                value={a.asignacion_id}
-                              >
-                                {a.nombre_transportista} – {a.descripcion_tarifa}
-                              </option>
-
-                            ))}
-                          </Form.Select>
-                        </Form.Group>
-                      </Col>
-                    </Row>
-
-                    {/* opcionales conductor/vehículo */}
-                    <Row className="mb-3">
-                      <Col md={6}>
-                        <Form.Group controlId="conductor_id">
-                          <Form.Label>Conductor</Form.Label>
-                          <Form.Control
-                            type="number"
-                            name="conductor_id"
-                            value={formAgendamiento.conductor_id ?? ''}
-                            onChange={handleFormChange}
-                            disabled={solicitudDetalle?.requiere_transporte && !hayAsignacionesDisponibles}
-                          />
-                        </Form.Group>
-                      </Col>
-                      <Col md={6}>
-                        <Form.Group controlId="vehiculo_id">
-                          <Form.Label>Vehículo</Form.Label>
-                          <Form.Control
-                            type="number"
-                            name="vehiculo_id"
-                            value={formAgendamiento.vehiculo_id ?? ''}
-                            onChange={handleFormChange}
-                            disabled={solicitudDetalle?.requiere_transporte && !hayAsignacionesDisponibles}
-                          />
-                        </Form.Group>
-                      </Col>
-                    </Row>
-                  </>
-                )}
-              </>
-            )}
-          </Modal.Body>
-          <Modal.Footer>
-            <Button
-              variant="secondary"
-              onClick={handleCloseAgendamientoModal}
-            >
-              Cancelar
-            </Button>
-            <Button
-              type="submit"
-              className="modal-save-button"
-              disabled={loadingAgendamiento || (solicitudDetalle?.requiere_transporte && !hayAsignacionesDisponibles)}
-            >
-
-              {loadingAgendamiento ? (
+              {solicitudDetalle?.requiere_transporte && (
                 <>
-                  <Spinner
-                    as="span"
-                    animation="border"
-                    size="sm"
-                    className="me-2"
-                  />
-                  Agendando…
-                </>
-              ) : (
-                <>
-                  <FaSave className="me-2" /> Guardar Agendamiento
+                  <h5 className="mt-4 mb-3">Transporte</h5>
+                  <Row className="mb-3">
+                    <Col md={6}>
+                      <Form.Group controlId="transportista_id">
+                        <Form.Label>Transportista*</Form.Label>
+                        <Form.Select
+                          name="transportista_id"
+                          value={formAgendamiento.transportista_id ?? ''}
+                          onChange={handleFormChange}
+                          required
+                          disabled={solicitudDetalle?.requiere_transporte && !hayAsignacionesDisponibles}
+                        >
+                          <option value="">Seleccionar…</option>
+                          {transportistas.map((t) => (
+                            <option key={t.transportista_id} value={t.transportista_id}>
+                              {t.transportista_id} – {t.nombre_transportista}
+                            </option>
+                          ))}
+                        </Form.Select>
+                      </Form.Group>
+                    </Col>
+
+                    <Col md={6}>
+                      <Form.Group controlId="conductor_id">
+                        <Form.Label>Conductor</Form.Label>
+                        <Form.Select
+                          name="conductor_id"
+                          value={formAgendamiento.conductor_id ?? ''}
+                          onChange={handleFormChange}
+                        >
+                          <option value="">Seleccionar…</option>
+                          {conductores.map((c) => (
+                            <option key={c.conductor_id} value={c.conductor_id}>
+                              {c.nombre}
+                            </option>
+                          ))}
+                        </Form.Select>
+                      </Form.Group>
+                    </Col>
+
+                    <Col md={6}>
+                      <Form.Group controlId="vehiculo_id">
+                        <Form.Label>Vehículo</Form.Label>
+                        <Form.Select
+                          name="vehiculo_id"
+                          value={formAgendamiento.vehiculo_id ?? ''}
+                          onChange={handleFormChange}
+                        >
+                          <option value="">Seleccionar…</option>
+                          {vehiculos.map((v) => (
+                            <option key={v.vehiculo_id} value={v.vehiculo_id}>
+                              {v.patente} – {v.nombre_tipo_transporte}
+                            </option>
+                          ))}
+                        </Form.Select>
+                      </Form.Group>
+                    </Col>
+
+                    <Col md={6}>
+                      <Form.Group controlId="asignacion_id">
+                        <Form.Label>Asignación*</Form.Label>
+                        <Form.Select
+                          name="asignacion_id"
+                          value={formAgendamiento.asignacion_id ?? ''}
+                          onChange={handleFormChange}
+                          required
+                          disabled={solicitudDetalle?.requiere_transporte && !hayAsignacionesDisponibles}
+                        >
+                          <option value="">Seleccionar…</option>
+                          {asignaciones.map((a) => (
+                            <option key={a.asignacion_id} value={a.asignacion_id}>
+                              {a.nombre_transportista} – {a.descripcion_tarifa}
+                            </option>
+                          ))}
+                        </Form.Select>
+                      </Form.Group>
+                    </Col>
+                  </Row>
                 </>
               )}
-            </Button>
-
-          </Modal.Footer>
-        </Form>
+            </>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={handleCloseAgendamientoModal}>
+            Cancelar
+          </Button>
+          <Button
+            type="submit"
+            className="modal-save-button"
+            disabled={loadingAgendamiento || (solicitudDetalle?.requiere_transporte && !hayAsignacionesDisponibles)}
+          >
+            {loadingAgendamiento ? (
+              <>
+                <Spinner as="span" animation="border" size="sm" className="me-2" />
+                Agendando…
+              </>
+            ) : (
+              <>
+                <FaSave className="me-2" /> Guardar Agendamiento
+              </>
+            )}
+          </Button>
+        </Modal.Footer>
+      </Form>
       </Modal>
     </Container>
   );

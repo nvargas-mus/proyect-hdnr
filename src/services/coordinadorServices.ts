@@ -292,3 +292,36 @@ export const getLineasDescarga = async (): Promise<LineaDescarga[]> => {
   return data;
 };
 
+export const getConductoresPorTransportista = async (id: number) => {
+  const token = getAuthToken();
+  if (!token) throw new Error('No token');
+
+  const { data } = await axios.get(
+    `${API_URL}/conductores/por-transportista/${id}`,
+    {
+      headers: {
+        accept: 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+  return data;
+};
+
+export const getVehiculosPorTransportista = async (id: number) => {
+  const token = getAuthToken();
+  if (!token) throw new Error('No token');
+
+  const { data } = await axios.get(
+    `${API_URL}/vehiculos/por-transportista/${id}`,
+    {
+      headers: {
+        accept: 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+  return data;
+};
+
+
