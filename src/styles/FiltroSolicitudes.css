@@ -1,0 +1,18 @@
+.filtros-header {
+  color: #243c6c !important;
+}
+
+.filtros-header .fa-filter,
+.filtros-header .fa-calendar-alt,
+.filtros-header .fa-search {
+  color: #243c6c !important;
+}
+
+.filtros-header .btn-link {
+  color: #243c6c !important;
+}
+
+.input-group-text svg {
+  color: #243c6c !important;
+}
+

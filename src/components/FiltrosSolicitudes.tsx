@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Button, Card, Row, Col, Form, InputGroup } from 'react-bootstrap';
 import { FaFilter, FaSearch, FaCalendarAlt } from 'react-icons/fa';
+import '../styles/FiltroSolicitudes.css';
 
 interface FiltersState {
   cliente: string;
@@ -96,7 +97,7 @@ const FiltrosSolicitudes: React.FC<FiltrosSolicitudesProps> = ({ onApplyFilters 
 
   return (
     <Card className="mb-4">
-      <Card.Header className="d-flex justify-content-between align-items-center bg-light">
+      <Card.Header className="d-flex justify-content-between align-items-center bg-light filtros-header">
         <div className="d-flex align-items-center">
           <FaFilter className="me-2" />
           <h5 className="mb-0">Filtros</h5>
