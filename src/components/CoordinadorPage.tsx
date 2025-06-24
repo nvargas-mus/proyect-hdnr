@@ -395,7 +395,7 @@ const CoordinadorPage: React.FC = () => {
                       <tr key={`${s.solicitud_id}-${s.fecha_solicitud}`}>
                         <td>{s.solicitud_id}</td>
                         <td>{s.codigo_cliente_kunnr}</td>
-                        <td>{s.nombre_name1}</td>
+                        <td>{s.nombre_cliente}</td>
                         <td>{s.sucursal_name2}</td>
                         <td>{formatDate(s.fecha_servicio_solicitada)}</td>
                         <td>{s.hora_servicio_solicitada.substring(0, 5)}</td>
@@ -490,119 +490,163 @@ const CoordinadorPage: React.FC = () => {
       <Modal
         show={showDetalleModal}
         onHide={handleCloseDetalleModal}
-        size="lg"
+        size="xl"
         centered
+        dialogClassName="modal-detalle-coordinador"
       >
+
         <Modal.Header closeButton>
           <Modal.Title>Detalle de Solicitud #{selectedSolicitudId}</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          {loadingDetalle ? (
-            <div className="text-center py-4">Cargando detalles…</div>
-          ) : !solicitudDetalle ? (
-            <div className="alert alert-warning">
-              No se encontró la solicitud
-            </div>
-          ) : (
-            <>
-              <Row className="mb-4">
-                <Col md={6}>
-                  <h5>Información General</h5>
-                  <div className="modal-table-container">
-                    <Table striped borderless size="sm" className="custom-table">
-                      <tbody>
-                        <tr>
-                          <td><strong>Cliente:</strong></td>
-                          <td>{solicitudDetalle.nombre_name1}</td>
-                        </tr>
-                        <tr>
-                          <td><strong>Sucursal:</strong></td>
-                          <td>{solicitudDetalle.sucursal_name2}</td>
-                        </tr>
-                        <tr>
-                          <td><strong>Código Cliente:</strong></td>
-                          <td>{solicitudDetalle.codigo_cliente_kunnr}</td>
-                        </tr>
-                        <tr>
-                          <td><strong>Estado:</strong></td>
-                          <td>{getEstadoBadge(solicitudDetalle.nombre_estado)}</td>
-                        </tr>
-                      </tbody>
-                    </Table>
-                  </div>
-                </Col>
-                <Col md={6}>
-                  <h5>Información de Servicio</h5>
-                  <div className="modal-table-container">
-                    <Table striped borderless size="sm" className="custom-table">
-                      <tbody>
-                        <tr>
-                          <td><strong>Fecha Solicitada:</strong></td>
-                          <td>{formatDate(solicitudDetalle.fecha_servicio_solicitada)}</td>
-                        </tr>
-                        <tr>
-                          <td><strong>Hora Solicitada:</strong></td>
-                          <td>{solicitudDetalle.hora_servicio_solicitada.substring(0, 5)}</td>
-                        </tr>
-                        <tr>
-                          <td><strong>Fecha de Solicitud:</strong></td>
-                          <td>{formatDate(solicitudDetalle.fecha_solicitud)}</td>
-                        </tr>
-                        <tr>
-                          <td><strong>Requiere Transporte:</strong></td>
-                          <td>
-                            {solicitudDetalle.requiere_transporte ? (
-                              <span className="d-flex align-items-center">
-                                <FaTruck size={16} color="#28a745" className="me-2" /> Sí
-                              </span>
-                            ) : (
-                              <span className="d-flex align-items-center">
-                                <FaTimesCircle size={16} color="#dc3545" className="me-2" /> No
-                              </span>
-                            )}
-                          </td>
-                        </tr>
-                      </tbody>
-                    </Table>
-                  </div>
-                </Col>
-              </Row>
-
-              {/* ─── Dirección ─── */}
-              <Row className="mb-4">
-                <Col>
-                  <h5>Dirección</h5>
-                  <p>{solicitudDetalle.direccion_completa || 'No especificada'}</p>
-                  <p><strong>Comuna:</strong> {solicitudDetalle.comuna || 'No especificada'}</p>
-                </Col>
-              </Row>
-
-              {/* ─── Contacto ─── */}
-                <Row className="mb-4">
-                  <Col>
-                    <h5>Contacto del Cliente</h5>
-                    <Table striped borderless size="sm" className="custom-table">
-                      <tbody>
-                        <tr>
-                          <td><strong>Nombre:</strong></td>
-                          <td>{solicitudDetalle.nombre || 'No especificado'}</td>
-                        </tr>
-                        <tr>
-                          <td><strong>Teléfono:</strong></td>
-                          <td>{solicitudDetalle.telefono || 'No especificado'}</td>
-                        </tr>
-                        <tr>
-                          <td><strong>Email:</strong></td>
-                          <td>{solicitudDetalle.email_contacto || 'No especificado'}</td>
-                        </tr>
-                      </tbody>
-                    </Table>
-                  </Col>
-                </Row>
-
-                {/* ─── Declaración y Generador ─── */}
+            </Modal.Header>
+            <Modal.Body>
+              {loadingDetalle ? (
+                <div className="text-center py-4">Cargando detalles…</div>
+              ) : !solicitudDetalle ? (
+                <div className="alert alert-warning">
+                  No se encontró la solicitud
+                </div>
+              ) : (
+                <>
                   <Row className="mb-4">
-                    <Col>
+                    <Col md={6}>
+                      <h5>Información General</h5>
+                      <div className="modal-table-container  mb-4">
+                        <Table striped borderless size="sm" className="custom-table">
+                          <tbody>
+                            <tr>
+                              <td><strong>Cliente:</strong></td>
+                              <td>{solicitudDetalle.nombre_cliente}</td>
+                            </tr>
+                            <tr>
+                              <td><strong>Sucursal:</strong></td>
+                              <td>{solicitudDetalle.sucursal_name2}</td>
+                            </tr>
+                            <tr>
+                              <td><strong>Código Cliente:</strong></td>
+                              <td>{solicitudDetalle.codigo_cliente_kunnr}</td>
+                            </tr>
+                            <tr>
+                              <td><strong>Estado:</strong></td>
+                              <td>{getEstadoBadge(solicitudDetalle.nombre_estado)}</td>
+                            </tr>
+                            <tr>
+                              <td><strong>ID Usuario:</strong></td>
+                              <td>{solicitudDetalle.usuario_id}</td>
+                            </tr>
+                            <tr>
+                              <td><strong>Email Usuario:</strong></td>
+                              <td>{solicitudDetalle.email}</td>
+                            </tr>
+                          </tbody>
+                        </Table>
+                      </div>
+
+                      <h5 className="mt-3">Centro de Operación</h5>
+                        <div className="modal-table-container mb-4">
+                          <Table striped borderless size="sm" className="custom-table">
+                          <tbody>
+                            <tr>
+                              <td><strong>Código Centro:</strong></td>
+                              <td>{solicitudDetalle.centro_vwerk || 'No informado'}</td>
+                            </tr>
+                            <tr>
+                              <td><strong>Descripción Centro:</strong></td>
+                              <td>{solicitudDetalle.descripcion_centro || 'No especificado'}</td>
+                            </tr>
+                          </tbody>
+                        </Table>
+                      </div>
+                    </Col>
+
+                    <Col md={6}>
+                      <h5>Información de Servicio</h5>
+                      <div className="modal-table-container">
+                        <Table striped borderless size="sm" className="custom-table">
+                          <tbody>
+                            <tr>
+                              <td><strong>Fecha Solicitada:</strong></td>
+                              <td>{formatDate(solicitudDetalle.fecha_servicio_solicitada)}</td>
+                            </tr>
+                            <tr>
+                              <td><strong>Hora Solicitada:</strong></td>
+                              <td>{solicitudDetalle.hora_servicio_solicitada.substring(0, 5)}</td>
+                            </tr>
+                            <tr>
+                              <td><strong>Fecha de Solicitud:</strong></td>
+                              <td>{formatDate(solicitudDetalle.fecha_solicitud)}</td>
+                            </tr>
+                            <tr>
+                              <td><strong>Requiere Transporte:</strong></td>
+                              <td>
+                                {solicitudDetalle.requiere_transporte ? (
+                                  <span className="d-flex align-items-center">
+                                    <FaTruck size={16} color="#28a745" className="me-2" /> Sí
+                                  </span>
+                                ) : (
+                                  <span className="d-flex align-items-center">
+                                    <FaTimesCircle size={16} color="#dc3545" className="me-2" /> No
+                                  </span>
+                                )}
+                              </td>
+                            </tr>
+                            <tr>
+                              <td><strong>Fecha Programación:</strong></td>
+                              <td>
+                                {solicitudDetalle.fecha_programacion
+                                  ? formatDate(solicitudDetalle.fecha_programacion)
+                                  : 'No asignada'}
+                              </td>
+                            </tr>
+                            <tr>
+                              <td><strong>Nota de Venta:</strong></td>
+                              <td>{solicitudDetalle.numero_nota_venta ?? 'No informada'}</td>
+                            </tr>
+                          </tbody>
+                        </Table>
+                      </div>
+                    </Col>
+                  </Row>
+
+                  
+                  {/* ─── Dirección, Contacto y Declaración ─── */}
+                  <Row className="mb-4">
+                    <Col md={4}>
+                      <h5>Dirección</h5>
+                      <Table striped borderless size="sm" className="custom-table">
+                        <tbody>
+                          <tr>
+                            <td><strong>Dirección:</strong></td>
+                            <td>{solicitudDetalle.direccion_completa || 'No especificada'}</td>
+                          </tr>
+                          <tr>
+                            <td><strong>Comuna:</strong></td>
+                            <td>{solicitudDetalle.comuna || 'No especificada'}</td>
+                          </tr>
+                        </tbody>
+                      </Table>
+                    </Col>
+
+                    <Col md={4}>
+                      <h5>Contacto del Cliente</h5>
+                      <Table striped borderless size="sm" className="custom-table">
+                        <tbody>
+                          <tr>
+                            <td><strong>Nombre:</strong></td>
+                            <td>{solicitudDetalle.nombre || 'No especificado'}</td>
+                          </tr>
+                          <tr>
+                            <td><strong>Teléfono:</strong></td>
+                            <td>{solicitudDetalle.telefono || 'No especificado'}</td>
+                          </tr>
+                          <tr>
+                            <td><strong>Email:</strong></td>
+                            <td>{solicitudDetalle.email_contacto || 'No especificado'}</td>
+                          </tr>
+                        </tbody>
+                      </Table>
+                    </Col>
+
+                    <Col md={4}>
                       <h5>Declaración y Generador</h5>
                       <Table striped borderless size="sm" className="custom-table">
                         <tbody>
@@ -633,112 +677,129 @@ const CoordinadorPage: React.FC = () => {
                     </Col>
                   </Row>
 
-              {/* ─── Transporte (si hay) ─── */}
-              {solicitudDetalle.detalles_con_transporte &&
-                solicitudDetalle.detalles_con_transporte.length > 0 && (
-                  <Row className="mb-4">
-                    <Col>
-                      <h5>Información de Transporte</h5>
-                      <div className="modal-table-container">
-                        <Table striped hover size="sm" className="custom-table">
-                          <thead>
-                            <tr>
-                              <th>Material</th>
-                              <th>Código</th>
-                              <th>Unidad</th>
-                              <th>Cantidad</th>
-                              <th>Transportista</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {solicitudDetalle.detalles_con_transporte.map(
-                              (d, i) => (
-                                <tr key={i}>
-                                  <td>{d.nombre_material_maktg}</td>
-                                  <td>{d.codigo_material_matnr}</td>
-                                  <td>{d.unidad_venta_kmein}</td>
-                                  <td>{d.cantidad}</td>
-                                  <td>{d.nombre_transportista || 'No asignado'}</td>
-                                </tr>
-                              )
-                            )}
-                          </tbody>
-                        </Table>
-                      </div>
-                    </Col>
-                  </Row>
-                )}
 
-                {/* ─── Detalles sin Transporte ─── */}
-                  {solicitudDetalle.detalles_sin_transporte &&
-                    solicitudDetalle.detalles_sin_transporte.length > 0 && (
+                  {/* ─── Transporte (si hay) ─── */}
+                  {solicitudDetalle.detalles_con_transporte &&
+                    solicitudDetalle.detalles_con_transporte.length > 0 && (
                       <Row className="mb-4">
                         <Col>
-                          <h5>Detalles sin Transporte</h5>
+                          <h5>Información de Transporte</h5>
                           <div className="modal-table-container">
                             <Table striped hover size="sm" className="custom-table">
                               <thead>
                                 <tr>
+                                  <th>Material</th>
+                                  <th>Código</th>
+                                  <th>Unidad Venta</th>
+                                  <th>Cantidad</th>
+                                  <th>Transportista</th>
                                   <th>Tipo Transporte</th>
                                   <th>Capacidad</th>
-                                  <th>Unidad</th>
+                                  <th>Unidad Capacidad</th>
+                                  <th>Nombre</th>
+                                  <th>RUT</th>
+                                  <th>Patente</th>
                                 </tr>
                               </thead>
+
                               <tbody>
-                                {solicitudDetalle.detalles_sin_transporte.map((d, i) => (
+                                {solicitudDetalle.detalles_con_transporte.map((d, i) => (
                                   <tr key={i}>
-                                    <td>{d.nombre_tipo_transporte || 'No informado'}</td>
+                                    <td>{d.nombre_material_maktg}</td>
+                                    <td>{d.codigo_material_matnr}</td>
+                                    <td>{d.unidad_venta_kmein}</td>
+                                    <td>{d.cantidad ?? 'N/A'}</td>
+                                    <td>{d.nombre_transportista || 'No asignado'}</td>
+                                    <td>{d.nombre_tipo_transporte || 'N/A'}</td>
                                     <td>{d.valor_capacidad ?? 'N/A'}</td>
                                     <td>{d.nombre_unidad || 'N/A'}</td>
+                                    <td>{d.nombre || 'N/A'}</td>
+                                    <td>{d.rut || 'N/A'}</td>
+                                    <td>{d.patente || 'N/A'}</td>
                                   </tr>
                                 ))}
                               </tbody>
+
                             </Table>
                           </div>
                         </Col>
                       </Row>
-                  )}
+                    )}
 
-              {/* ─── Residuos ─── */}
-              <Row>
-                <Col>
-                  <h5>Residuos</h5>
-                  {solicitudDetalle.residuos &&
-                  solicitudDetalle.residuos.length > 0 ? (
-                    <div className="modal-table-container">
-                      <Table striped hover size="sm" className="custom-table">
-                        <thead>
-                          <tr>
-                            <th>Material</th>
-                            <th>Cantidad</th>
-                            <th>Unidad</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {solicitudDetalle.residuos.map((r, i) => (
-                            <tr key={i}>
-                              <td>{r.nombre_material}</td>
-                              <td>{r.cantidad_declarada}</td>
-                              <td>{r.nombre_unidad}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </Table>
-                    </div>
-                  ) : (
-                    <p>No hay residuos declarados</p>
-                  )}
-                </Col>
-              </Row>
-            </>
-          )}
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={handleCloseDetalleModal}>
-            Cerrar
-          </Button>
-        </Modal.Footer>
-      </Modal>
+                    {/* ─── Detalles sin Transporte ─── */}
+                      {solicitudDetalle.detalles_sin_transporte &&
+                        solicitudDetalle.detalles_sin_transporte.length > 0 && (
+                          <Row className="mb-4">
+                            <Col>
+                              <h5>Detalles sin Transporte</h5>
+                              <div className="modal-table-container">
+                                <Table striped hover size="sm" className="custom-table">
+                                  <thead>
+                                    <tr>
+                                      <th>Tipo Transporte</th>
+                                      <th>Capacidad</th>
+                                      <th>Unidad</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {solicitudDetalle.detalles_sin_transporte.map((d, i) => (
+                                      <tr key={i}>
+                                        <td>{d.nombre_tipo_transporte || 'No informado'}</td>
+                                        <td>{d.valor_capacidad ?? 'N/A'}</td>
+                                        <td>{d.nombre_unidad || 'N/A'}</td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </Table>
+                              </div>
+                            </Col>
+                          </Row>
+                      )}
+
+                  {/* ─── Residuos ─── */}
+                  <Row>
+                    <Col>
+                      <h5>Residuos</h5>
+                      {solicitudDetalle.residuos &&
+                      solicitudDetalle.residuos.length > 0 ? (
+                        <div className="modal-table-container">
+                          <Table striped hover size="sm" className="custom-table">
+                            <thead>
+                              <tr>
+                                <th>Material</th>
+                                <th>Código</th>
+                                <th>Cantidad</th>
+                                <th>Unidad</th>
+                              </tr>
+                            </thead>
+
+                            <tbody>
+                              {solicitudDetalle.residuos.map((r, i) => (
+                                <tr key={i}>
+                                  <td>{r.nombre_material_maktg}</td>
+                                  <td>{r.codigo_material_matnr}</td>
+                                  <td>{r.cantidad_declarada}</td>
+                                  <td>{r.nombre_unidad}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+
+                          </Table>
+                        </div>
+                      ) : (
+                        <p>No hay residuos declarados</p>
+                      )}
+                    </Col>
+                  </Row>
+                </>
+              )}
+            </Modal.Body>
+            <Modal.Footer>
+              <Button variant="secondary" onClick={handleCloseDetalleModal}>
+                Cerrar
+              </Button>
+            </Modal.Footer>
+          </Modal>
 
       {/* ---------- Modal Agendamiento ---------- */}
       <Modal

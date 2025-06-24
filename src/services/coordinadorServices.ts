@@ -29,30 +29,65 @@ export interface Residuo {
 
 export interface Solicitud {
   solicitud_id: number;
+  usuario_id: number;
+  email: string;
+
   centro_vwerk: string | null;
+  descripcion_centro: string | null;
+
   codigo_cliente_kunnr: number;
+  nombre_cliente: string;
   nombre_name1: string;
   sucursal_name2: string;
+
+  fecha_solicitud: string;
   fecha_servicio_solicitada: string;
   hora_servicio_solicitada: string;
+  fecha_servicio_programada: string | null;
+  hora_servicio_programada: string | null;
+  fecha_programacion: string | null;
+
+  descripcion: string;
+  numero_nota_venta: number | null;
+
+  id_linea_descarga: number | null;
+  nombre_linea: string | null;
+
   requiere_transporte: boolean;
+  estado_id: number;
   nombre_estado: string;
-  fecha_solicitud: string;
-  comuna: string | null;
-  direccion_completa: string;
+
   direccion_id: number;
-  residuos: Residuo[] | null;
+  direccion: string | null;
+  direccion_completa: string;
+  comuna: string | null;
+
+  contacto_cliente_id: number;
+  nombre: string;
+  telefono: string;
+  email_contacto: string;
+
+  declaracion_id: number;
+  declaracion_nombre: string;
+  declaracion_numero: string | null;
+  clase_peligrosidad: string | null;
+
+  generador_id: number | null;
+  nombre_generador: string | null;
+  generador_igual_cliente: boolean;
+
   detalles_con_transporte?: DetalleConTransporte[] | null;
   detalles_sin_transporte?: DetalleSinTransporte[] | null;
-  nombre?: string;
-  telefono?: string;
-  email_contacto?: string;
-  declaracion_nombre?: string;
-  declaracion_numero?: string;
-  clase_peligrosidad?: string;
-  generador_igual_cliente?: boolean;
-  nombre_generador?: string | null;
+
+  residuos: {
+    codigo_material_matnr: number;
+    cantidad_declarada: number;
+    unidad_medida_id: number;
+    nombre_unidad: string;
+    nombre_material_maktg: string;
+  }[] | null;
 }
+
 
 export interface SolicitudesResponse {
   metadatos: {
