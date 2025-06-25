@@ -973,6 +973,28 @@ const CoordinadorPage: React.FC = () => {
                 <>
                   <h5 className="mt-4 mb-3">Transporte</h5>
                   <Row className="mb-3">
+                    {/* Asignación */}
+                    <Col md={6}>
+                      <Form.Group controlId="asignacion_id">
+                        <Form.Label>Asignación*</Form.Label>
+                        <Form.Select
+                          name="asignacion_id"
+                          value={formAgendamiento.asignacion_id ?? ''}
+                          onChange={handleFormChange}
+                          required
+                          disabled={solicitudDetalle?.requiere_transporte && !hayAsignacionesDisponibles}
+                        >
+                          <option value="">Seleccionar…</option>
+                          {asignaciones.map((a) => (
+                            <option key={a.asignacion_id} value={a.asignacion_id}>
+                              {a.nombre_transportista} – {a.descripcion_tarifa}
+                            </option>
+                          ))}
+                        </Form.Select>
+                      </Form.Group>
+                    </Col>
+
+                    {/* Transportista */}
                     <Col md={6}>
                       <Form.Group controlId="transportista_id">
                         <Form.Label>Transportista*</Form.Label>
@@ -993,25 +1015,8 @@ const CoordinadorPage: React.FC = () => {
                       </Form.Group>
                     </Col>
 
-                    <Col md={6}>
-                      <Form.Group controlId="conductor_id">
-                        <Form.Label>Conductor</Form.Label>
-                        <Form.Select
-                          name="conductor_id"
-                          value={formAgendamiento.conductor_id ?? ''}
-                          onChange={handleFormChange}
-                        >
-                          <option value="">Seleccionar…</option>
-                          {conductores.map((c) => (
-                            <option key={c.conductor_id} value={c.conductor_id}>
-                              {c.nombre}
-                            </option>
-                          ))}
-                        </Form.Select>
-                      </Form.Group>
-                    </Col>
-
-                    <Col md={6}>
+                    {/* Vehículo */}
+                    <Col md={6} className="mt-3">
                       <Form.Group controlId="vehiculo_id">
                         <Form.Label>Vehículo</Form.Label>
                         <Form.Select
@@ -1029,20 +1034,19 @@ const CoordinadorPage: React.FC = () => {
                       </Form.Group>
                     </Col>
 
-                    <Col md={6}>
-                      <Form.Group controlId="asignacion_id">
-                        <Form.Label>Asignación*</Form.Label>
+                    {/* Conductor */}
+                    <Col md={6} className="mt-3">
+                      <Form.Group controlId="conductor_id">
+                        <Form.Label>Conductor</Form.Label>
                         <Form.Select
-                          name="asignacion_id"
-                          value={formAgendamiento.asignacion_id ?? ''}
+                          name="conductor_id"
+                          value={formAgendamiento.conductor_id ?? ''}
                           onChange={handleFormChange}
-                          required
-                          disabled={solicitudDetalle?.requiere_transporte && !hayAsignacionesDisponibles}
                         >
                           <option value="">Seleccionar…</option>
-                          {asignaciones.map((a) => (
-                            <option key={a.asignacion_id} value={a.asignacion_id}>
-                              {a.nombre_transportista} – {a.descripcion_tarifa}
+                          {conductores.map((c) => (
+                            <option key={c.conductor_id} value={c.conductor_id}>
+                              {c.nombre}
                             </option>
                           ))}
                         </Form.Select>
@@ -1050,6 +1054,7 @@ const CoordinadorPage: React.FC = () => {
                     </Col>
                   </Row>
                 </>
+
               )}
             </>
           )}

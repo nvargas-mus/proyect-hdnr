@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getSolicitudesPorUsuario } from '../services/solicitudService';
+import { getSolicitudById } from '../services/coordinadorServices';
 import '../styles/Home.css'; 
 
 const HomePage: React.FC = () => {
@@ -15,7 +16,7 @@ const HomePage: React.FC = () => {
   const [loading, setLoading] = useState(false);
 
   const [page, setPage] = useState(1);
-  const itemsPerPage = 8;
+  const itemsPerPage = 7;
   const usuario_id = Number(localStorage.getItem('usuario_id'));
 
   useEffect(() => {
@@ -65,10 +66,19 @@ const HomePage: React.FC = () => {
     setSelectedSolicitud(null);
   };
 
-  const handleVerEstado = (solicitud: any) => {
-    setSelectedSolicitud(solicitud);
-    setShowEstadoModal(true);
+  const handleVerEstado = async (solicitud: any) => {
+    try {
+      setLoading(true);
+      const data = await getSolicitudById(solicitud.solicitud_id);
+      setSelectedSolicitud(data);
+      setShowEstadoModal(true);
+    } catch (error) {
+      console.error('Error al obtener el estado actualizado:', error);
+    } finally {
+      setLoading(false);
+    }
   };
+
 
   const handleCerrarEstadoModal = () => {
     setShowEstadoModal(false);
@@ -231,12 +241,11 @@ const HomePage: React.FC = () => {
                 <div className="modal-body">
                   <p>
                     <strong>Estado de la Solicitud:</strong>{" "}
-                    <span style={{ color: '#243c6c' }}>
-                      {selectedSolicitud.estado_id
-                        ? `ID de estado: ${selectedSolicitud.estado_id}`
-                        : "Sin estado definido"}
+                    <span style={{ color: '#243c6c', fontWeight: 600 }}>
+                      {selectedSolicitud.nombre_estado || 'Sin estado definido'}
                     </span>
                   </p>
+
                 </div>
                 <div className="modal-footer">
                   <button
