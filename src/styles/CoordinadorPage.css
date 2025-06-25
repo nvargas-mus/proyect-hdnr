@@ -278,37 +278,37 @@ table.custom-table thead th {
 
 /* Estados específicos */
 .badge-pendiente {
-  background-color: #ffc107 !important;
+  background-color: #ffc107bc !important;
   color: #212529 !important;
 }
 
 .badge-agendado {
-  background-color: #28a745 !important;
+  background-color: #28a746c5 !important;
   color: #fff !important;
 }
 
 .badge-incompleta {
-  background-color: #fd7e14 !important;
+  background-color: #fc933dbb !important;
   color: #fff !important;
 }
 
 .badge-rechazada {
-  background-color: #dc3545 !important;
+  background-color: #dc3546c3 !important;
   color: #fff !important;
 }
 
 .badge-en-proceso {
-  background-color: #0d6efd !important;
+  background-color: #0d6dfdca !important;
   color: #fff !important;
 }
 
 .badge-completada {
-  background-color: #20c997 !important;
+  background-color: #20c996c3 !important;
   color: #fff !important;
 }
 
 .badge-default {
-  background-color: #6c757d !important;
+  background-color: #6c757dc5 !important;
   color: #fff !important;
 }
 

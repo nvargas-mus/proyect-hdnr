@@ -413,7 +413,7 @@ const CoordinadorPage: React.FC = () => {
                       <tr key={`${s.solicitud_id}-${s.fecha_solicitud}`}>
                         <td>{s.solicitud_id}</td>
                         <td>{s.codigo_cliente_kunnr}</td>
-                        <td>{s.nombre_cliente}</td>
+                        <td>{s.nombre_name1}</td>
                         <td>{s.sucursal_name2}</td>
                         <td>{formatDate(s.fecha_servicio_solicitada)}</td>
                         <td>{s.hora_servicio_solicitada.substring(0, 5)}</td>
@@ -616,13 +616,36 @@ const CoordinadorPage: React.FC = () => {
                               </td>
                             </tr>
                             <tr>
+                              <td><strong>Hora Programación:</strong></td>
+                              <td>
+                                {solicitudDetalle.hora_servicio_programada
+                                  ? solicitudDetalle.hora_servicio_programada.substring(0, 5)
+                                  : 'No asignada'}
+                              </td>
+                            </tr>
+                            <tr>
                               <td><strong>Nota de Venta:</strong></td>
                               <td>{solicitudDetalle.numero_nota_venta ?? 'No informada'}</td>
+                            </tr>
+                            <tr>
+                              <td><strong>Descripción:</strong></td>
+                              <td>{solicitudDetalle.descripcion || 'No informada'}</td>
+                            </tr>
+                            <tr>
+                              <td><strong>Línea de Descarga:</strong></td>
+                              <td>{solicitudDetalle.nombre_linea || 'No informada'}</td>
+                            </tr>
+                            <tr>
+                              <td><strong>Dirección:</strong></td>
+                              <td>{solicitudDetalle.direccion}</td>
                             </tr>
                           </tbody>
                         </Table>
                       </div>
                     </Col>
+
+  
+
                   </Row>
 
                   
