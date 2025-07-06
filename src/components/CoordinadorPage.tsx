@@ -514,7 +514,7 @@ const CoordinadorPage: React.FC = () => {
       >
 
         <Modal.Header closeButton>
-          <Modal.Title>Detalle de Solicitud #{selectedSolicitudId}</Modal.Title>
+          <Modal.Title>Detalle de Solicitud Nro: {selectedSolicitudId}</Modal.Title>
             </Modal.Header>
             <Modal.Body>
               {loadingDetalle ? (
@@ -590,6 +590,14 @@ const CoordinadorPage: React.FC = () => {
                               <td>{solicitudDetalle.hora_servicio_solicitada.substring(0, 5)}</td>
                             </tr>
                             <tr>
+                              <td><strong>Fecha Servicio Programada:</strong></td>
+                              <td>
+                                {solicitudDetalle.fecha_servicio_programada
+                                  ? formatDate(solicitudDetalle.fecha_servicio_programada)
+                                  : 'No asignada'}
+                              </td>
+                            </tr>
+                            <tr>
                               <td><strong>Fecha de Solicitud:</strong></td>
                               <td>{formatDate(solicitudDetalle.fecha_solicitud)}</td>
                             </tr>
@@ -643,6 +651,7 @@ const CoordinadorPage: React.FC = () => {
                         </Table>
                       </div>
                     </Col>
+
 
   
 

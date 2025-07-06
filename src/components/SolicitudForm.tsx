@@ -330,36 +330,44 @@ useEffect(() => {
   };
 
   const handleSubmitDireccion = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      const data = await postDireccion({
-        ...newDireccion,
-        codigo_cliente_kunnr: formData.codigo_cliente_kunnr,
-      });
-  
-      const direccionesActualizadas = await getDirecciones(formData.codigo_cliente_kunnr);
-      const mappedDirecciones = direccionesActualizadas.map((direccion: any) => ({
-        id: direccion.direccion_id,
-        calle: direccion.calle,
-        numero: direccion.numero,
-        complemento: direccion.complemento,
-        comuna: direccion.comuna,
-        region: direccion.region,
-        contacto_terreno_id: direccion.contacto_terreno_id,
-      }));
-      setDirecciones(mappedDirecciones);
-  
-      setFormData((prev) => ({
-        ...prev,
-        direccion_id: data.direccion_id,
-      }));
-  
-      setShowAddDireccionModal(false);
-    } catch (error) {
-      console.error('Error al agregar dirección:', error);
-      alert('Error al agregar dirección.');
-    }
-  };
+  e.preventDefault();
+
+  // ✅ Paso 1: Validación
+  if (!formData.codigo_cliente_kunnr || formData.codigo_cliente_kunnr === 0) {
+    alert("Debes seleccionar un cliente válido antes de agregar una dirección.");
+    return;
+  }
+
+  try {
+    const data = await postDireccion({
+      ...newDireccion,
+      codigo_cliente_kunnr: formData.codigo_cliente_kunnr,
+    });
+
+    const direccionesActualizadas = await getDirecciones(formData.codigo_cliente_kunnr);
+    const mappedDirecciones = direccionesActualizadas.map((direccion: any) => ({
+      id: direccion.direccion_id,
+      calle: direccion.calle,
+      numero: direccion.numero,
+      complemento: direccion.complemento,
+      comuna: direccion.comuna,
+      region: direccion.region,
+      contacto_terreno_id: direccion.contacto_terreno_id,
+    }));
+    setDirecciones(mappedDirecciones);
+
+    setFormData((prev) => ({
+      ...prev,
+      direccion_id: data.direccion_id,
+    }));
+
+    setShowAddDireccionModal(false);
+  } catch (error) {
+    console.error('Error al agregar dirección:', error);
+    alert('Error al agregar dirección.');
+  }
+};
+
 
   const handleContactoChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -372,28 +380,43 @@ useEffect(() => {
   };
 
   const handleSubmitContacto = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      const data = await postContacto(newContacto);
-      const contactosActualizados = await getContactos(formData.codigo_cliente_kunnr);
-      const mappedContactos = contactosActualizados.map((contacto: any) => ({
-        id: contacto.contacto_id,
-        nombre: contacto.nombre,
-        telefono: contacto.telefono,
-        email: contacto.email,
-        referencia_id: contacto.referencia_id,
-      }));
-      setContactos(mappedContactos);
-      setFormData((prev) => ({
-        ...prev,
-        contacto_cliente_id: data.id,
-      }));
-      setShowAddContactoModal(false);
-    } catch (error) {
-      console.error('Error al agregar contacto:', error);
-      alert('Error al agregar contacto.');
-    }
-  };
+  e.preventDefault();
+
+  if (!formData.codigo_cliente_kunnr || formData.codigo_cliente_kunnr === 0) {
+    alert("Debes seleccionar un cliente válido antes de agregar un contacto.");
+    return;
+  }
+
+  try {
+    const contactoParaEnviar = {
+      ...newContacto,
+      codigo_cliente_kunnr: formData.codigo_cliente_kunnr,
+    };
+
+    const data = await postContacto(contactoParaEnviar);
+
+    const contactosActualizados = await getContactos(formData.codigo_cliente_kunnr);
+    const mappedContactos = contactosActualizados.map((contacto: any) => ({
+      id: contacto.contacto_id,
+      nombre: contacto.nombre,
+      telefono: contacto.telefono,
+      email: contacto.email,
+      referencia_id: contacto.referencia_id,
+    }));
+    setContactos(mappedContactos);
+
+    setFormData((prev) => ({
+      ...prev,
+      contacto_cliente_id: data.contacto_id,
+    }));
+
+    setShowAddContactoModal(false);
+  } catch (error) {
+    console.error('Error al agregar contacto:', error);
+    alert('Error al agregar contacto.');
+  }
+};
+
 
   const fetchReferencias = async () => {
     try {
@@ -464,6 +487,10 @@ useEffect(() => {
                       setSearchQuery(inputValue);
                       const parts = inputValue.split(' - ');
                       const code = parts[0] ? Number(parts[0]) : 0;
+
+                       console.log('Cliente seleccionado:', inputValue);
+                      console.log('Código extraído:', parts[0], '→', code);
+
                       setFormData((prev) => ({
                         ...prev,
                         clienteDisplay: inputValue,
