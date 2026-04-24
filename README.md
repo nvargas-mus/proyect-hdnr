@@ -1,124 +1,176 @@
 <p align="left">
-  <img src="./src/assets/logo.png" height="150" alt="logo-empresa"/>
+  <img src="./src/assets/logo.png" height="120" alt="logo-empresa"/>
 </p>
 
-# Proyecto Empresa Hidronor
+# Hidronor · Gestión Logística — Frontend
 
-# Arquitectura de datos Frontend
+Panel web para la gestión logística de residuos: solicitudes, contratos,
+tarifas, transportistas y coordinación de agendamientos.
 
-- React
-- Typescript
-- Vite
-- HTML 5
-- CSS 3
-- Bootstrap
-- Redux Toolkit
+## Stack
 
-# Instalación y Configuración
+- **React 18** + **TypeScript**
+- **Vite 6** como bundler
+- **Tailwind CSS v4** con tokens OKLCH y dark mode
+- **shadcn/ui** (Radix UI) para primitivos accesibles
+- **lucide-react** para iconografía
+- **React Router 7** para navegación
+- **Axios** para HTTP
 
-### 1. Clonar el repositorio
+## Requisitos
 
-- Abre una terminal en Visual Studio Code o tu editor de preferencia.
-- Clona el repositorio desde GitHub ejecutando el siguiente comando:
+- Node.js ≥ 20
+- npm ≥ 10
+- **Backend corriendo** en `http://localhost:3000` (el frontend consume `/api/v2`).
+  El backend de este proyecto vive en un repositorio aparte.
 
-  ```bash
-  git clone https://github.com/nvargas-mus/proyect-hdnr
-  ```
+## Instalación
 
-- Verifica que todo se clonó correctamente, usando el comando:
-  ```bash
-  git status
-  ```
+```bash
+git clone https://github.com/nvargas-mus/proyect-hdnr
+cd proyect-hdnr
+npm install
+```
 
-### 2. Navegar a la carpeta del proyecto
+## Configuración
 
-- Verifica que te encuentras en la carpeta correcta. Si no es así, utiliza el comando:
+El frontend apunta por defecto a `/api/v2` y el proxy de Vite lo reenvía a
+`http://localhost:3000`. Si tu backend corre en otra URL, creá un `.env.local`
+en la raíz:
 
-  ```bash
-  cd proyecto-hdnr
-  ```
+```
+VITE_API_URL=http://tu-backend:puerto
+```
 
-### 3. Instalar las dependencias
+> **Importante**: sin backend corriendo, el login y todos los listados van a
+> fallar. Asegurate de levantar primero el servicio `/api/v2`.
 
-- En la terminal, instala las dependencias de Node.js utilizando:
+## Uso
 
-  ```bash
-  npm install
-  ```
+### Modo desarrollo (hot reload)
 
-- Si al instalar genera un reporte de vulnerabilidades, intenta solucionarlo automáticamente ejecutando:
-  ```bash
-  npm audit fix
-  ```
+```bash
+npm run dev
+```
 
-### 4. Instalar Bootstrap, Type checker y Redux toolkit
+La app queda en `http://localhost:5173`.
 
-- Para incluir Bootstrap en el proyecto, ejecuta el siguiente comando en la terminal:
+### Verificación de tipos
 
-  ```bash
-  npm install bootstrap
-  npm install bootstrap @popperjs/core
-  npm install react-bootstrap-icons
-  ```
+```bash
+npx tsc -b
+```
 
-- Para incluir type checker, ejecuta:
+### Linter
 
-  ```bash
-  npm install file-type-checker 
-  ```
-- Para instalar Redux toolkit, ejecuta:
+```bash
+npm run lint
+```
 
-  ```bash
-  npm install @reduxjs/toolkit
-  ```
-### 5. Traer los últimos cambios
+### Build de producción
 
-- Para asegurarte de que estás trabajando con la versión más reciente, sigue estos pasos:
+```bash
+npm run build
+```
 
-#### 1. Verificar la rama actual
+Genera los archivos estáticos en `dist/`.
 
-- Asegúrate de estar en la rama correcta utilizando el siguiente comando:
+## Credenciales de desarrollo
 
-  ```bash
-  git branch
-  ```
+Si el backend está corriendo con los seeds de desarrollo, el login acepta
+cualquiera de estos perfiles (todos con password **`Admin.dev.2026`**):
 
-- Esto mostrará una lista de las ramas existentes y marcará con un asterisco (\*) la rama en la que estás actualmente.
+| Email | Rol | Redirige a |
+|---|---|---|
+| `admin@applogistica.dev` | Administrador | `/admin` |
+| `coordinador@applogistica.dev` | Coordinador Logístico | `/coordinador` |
+| `cliente@applogistica.dev` | Cliente | `/home` |
+| `transportista@applogistica.dev` | Transportista | `/home` |
+| `ejecutivo@applogistica.dev` | Ejecutivo | `/home` |
+| `aprobador@applogistica.dev` | Aprobador Financiero | `/home` |
 
-#### 2. Cambiar de rama (si es necesario)
+El Login tiene un dropdown de perfiles preconfigurado para agilizar las pruebas.
 
-- Para cambiar de rama, usa el comando:
-  ```bash
-  git checkout nombre-de-la-rama
-  ```
+## Estructura del proyecto
 
-#### 3. Traer los últimos cambios
+```
+src/
+├── App.tsx                  # Enrutado raíz
+├── main.tsx                 # Entry point (ThemeProvider + Router)
+├── index.css                # Tokens de diseño + reset Tailwind v4
+├── api/                     # Re-export del cliente axios unificado
+├── services/                # Capa de acceso a API (adapta shapes del backend)
+│   ├── api.ts
+│   ├── authService.ts
+│   ├── adminService.ts
+│   ├── coordinadorServices.ts
+│   ├── dashboardService.ts
+│   └── solicitudService.ts
+├── components/
+│   ├── ui/                  # Primitivos shadcn (Button, Input, Dialog, …)
+│   ├── ThemeProvider.tsx    # Dark mode (claro/oscuro, default oscuro)
+│   ├── ThemeToggle.tsx
+│   ├── NavBar.tsx
+│   ├── AdminLayout.tsx      # Sidebar admin con submenús
+│   ├── LoginForm.tsx / RegisterForm.tsx
+│   ├── HomePage.tsx         # Vista cliente: mis solicitudes
+│   ├── AdminPage.tsx        # Dashboard admin
+│   ├── CoordinadorPage.tsx  # Listado + agendamiento
+│   ├── SolicitudForm.tsx    # Wizard de 2 pasos
+│   ├── SolicitudCompletionForm.tsx
+│   ├── ContratosTable.tsx / ContratoModal / ContratoViewModal / NuevoContratoModal
+│   ├── TransportistasTable.tsx / TransportistaModal / TransportistaDetalleModal
+│   ├── TarifasContrato.tsx / AsignacionesTarifa.tsx / AsignacionTarifaPage.tsx
+│   ├── FiltrosSolicitudes.tsx
+│   ├── UserProfileSettings.tsx
+│   └── NotFoundPage.tsx
+├── context/
+│   └── SolicitudContext.tsx
+├── interfaces/
+│   └── solicitud.ts
+└── lib/
+    └── utils.ts             # cn() helper
+```
 
-- Una vez que estés en la rama correcta, utiliza el siguiente comando para traer los últimos cambios del repositorio remoto:
-  ```bash
-  git pull origin nombre-de-la-rama
-  ```
+## Temas
 
-### 6. Ejecutar el proyecto en desarrollo
+- **Default**: dark mode
+- **Toggle**: ícono sol/luna en el navbar (y en login/register)
+- **Paleta**: tokens OKLCH basados en el azul corporativo `#243c6c`
+- **Tipografía**: Inter (cargada de `rsms.me`)
+- **Persistencia**: `localStorage.ui-theme` (`"light"` o `"dark"`)
 
-- Para visualizar el proyecto en modo desarrollo, utiliza:
+## Responsive
 
-  ```bash
-  npm run dev
-  ```
-### 8. Revisar el código del proyecto
+- Tablas largas (Solicitudes, Contratos, Transportistas, Tarifas, Asignaciones)
+  se convierten en **listas de cards** en viewports `< md` (768px).
+- Grids de formularios apilan verticalmente en mobile.
+- Sidebar admin colapsable; botón flotante para abrirlo en mobile.
 
-- Para revisar el proyecto en busca de errores, ejecuta: 
+## Rutas principales
 
-  ```bash
-  npm run lint
-  ```
+| Ruta | Descripción |
+|---|---|
+| `/` | Login |
+| `/register` | Registro |
+| `/home` | Vista cliente (mis solicitudes) |
+| `/crear-solicitud` | Wizard de creación de solicitud |
+| `/coordinador` | Panel coordinador (listado + agendamiento) |
+| `/configuracion` | Perfil de usuario |
+| `/admin` | Dashboard admin (sidebar + submenús) |
+| `/admin/contratos` | Gestión de contratos |
+| `/admin/tarifas-contrato/:contratoId` | Tarifas de un contrato |
+| `/admin/asignaciones-tarifa/:tarifaId` | Asignaciones de una tarifa |
+| `/admin/asignar-tarifa/:tarifaId` | Formulario para asignar tarifa |
+| `/admin/transportistas` | Flota (transportistas, conductores, vehículos) |
+| `/admin/solicitudes` | Listado admin de solicitudes |
 
-### 8. Compilar el proyecto para producción
+## Notas
 
-- Para compilar el proyecto y preparar los archivos para producción, ejecuta:
-
-  ```bash
-  npm run build
-  ```
-
+- El login dev tiene un **dropdown de perfiles de prueba** con la contraseña
+  hardcoded para agilizar el testing. Esto debe removerse antes de producción
+  (ver comment `// TODO: eliminar antes de pasar a producción` en
+  `src/components/LoginForm.tsx`).
+- Los servicios de la carpeta `src/services/` hacen el _mapping_ entre los
+  shapes del backend v2 y los tipos internos que espera la UI — los componentes
+  no deberían llamar a axios directamente.
