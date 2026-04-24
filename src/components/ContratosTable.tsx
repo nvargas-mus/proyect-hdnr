@@ -1,57 +1,47 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Modal, Button } from 'react-bootstrap';
-import { 
-  getContratos, 
-  deleteContrato, 
+import {
+  ChevronLeft,
+  ChevronRight,
+  Download,
+  Eye,
+  FileText,
+  Loader2,
+  Pencil,
+  Plus,
+  Trash2,
+} from 'lucide-react';
+import {
+  getContratos,
+  deleteContrato,
   downloadContrato,
-  Contrato, 
-  PaginationInfo, 
-  ContratosResponse 
+  Contrato,
+  PaginationInfo,
+  ContratosResponse,
 } from '../services/adminService';
 import ContratoModal from './ContratoModal';
 import ContratoViewModal from './ContratoViewModal';
 import NuevoContratoModal from './NuevoContratoModal';
-import '../styles/ContratoStyle.css';
-
-interface DeleteConfirmModalProps {
-  show: boolean;
-  contratoId: number;
-  onClose: () => void;
-  onConfirm: () => void;
-}
-
-const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({ 
-  show, 
-  contratoId, 
-  onClose, 
-  onConfirm 
-}) => {
-  if (!show) return null;
-
-  return (
-  <Modal show={show} onHide={onClose} centered backdrop="static">
-    <Modal.Header closeButton>
-      <Modal.Title>Confirmar eliminación</Modal.Title>
-    </Modal.Header>
-    <Modal.Body className="text-center">
-      <div className="mb-3">
-        <i className="fa fa-exclamation-triangle fa-2x text-danger"></i>
-      </div>
-      <p>¿Está seguro que desea eliminar el contrato con ID <strong>{contratoId}</strong>?</p>
-      <p className="text-danger">Esta acción no se puede deshacer.</p>
-    </Modal.Body>
-    <Modal.Footer>
-      <Button variant="secondary" onClick={onClose}>
-        Cancelar
-      </Button>
-      <Button variant="danger" onClick={onConfirm}>
-        Eliminar
-      </Button>
-    </Modal.Footer>
-  </Modal>
-);
-};
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 
 const ContratosTable = () => {
   const navigate = useNavigate();
@@ -65,29 +55,25 @@ const ContratosTable = () => {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedContratoId, setSelectedContratoId] = useState<number | null>(null);
-
   const [showViewModal, setShowViewModal] = useState(false);
   const [viewContratoId, setViewContratoId] = useState<number | null>(null);
-  
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteContratoId, setDeleteContratoId] = useState<number | null>(null);
-  
   const [showCreateModal, setShowCreateModal] = useState(false);
 
   const fetchContratos = async (limit: number, offset: number) => {
     setLoading(true);
     setError(null);
-
     try {
       const response: ContratosResponse = await getContratos(limit, offset);
       setContratos(response.data);
       setPagination(response.pagination);
     } catch (err) {
       console.error('Error fetching contratos:', err);
-      setError('Error al obtener los contratos. Por favor, intenta nuevamente.');
+      setError('No se pudieron obtener los contratos. Intenta nuevamente.');
     } finally {
       setLoading(false);
     }
@@ -97,90 +83,25 @@ const ContratosTable = () => {
     fetchContratos(pagination.limit, pagination.offset);
   }, []);
 
-  useEffect(() => {
-  document.body.classList.add('contratos-page');
-  return () => document.body.classList.remove('contratos-page');
-}, []);
-
-
   const handlePrevPage = () => {
-    if (pagination.prevOffset !== null) {
+    if (pagination.prevOffset !== null)
       fetchContratos(pagination.limit, pagination.prevOffset);
-    }
   };
-
   const handleNextPage = () => {
-    if (pagination.nextOffset !== null) {
+    if (pagination.nextOffset !== null)
       fetchContratos(pagination.limit, pagination.nextOffset);
-    }
-  };
-
-  const handleEdit = (id: number) => {
-    setSelectedContratoId(id);
-    setShowEditModal(true);
-  };
-
-  const handleCloseEditModal = () => {
-    setShowEditModal(false);
-    setSelectedContratoId(null);
-  };
-
-  const handleSaveContrato = () => {
-    setShowEditModal(false);
-    setSelectedContratoId(null);
-    fetchContratos(pagination.limit, pagination.offset);
-  };
-  
-  const handleOpenCreateModal = () => {
-    setShowCreateModal(true);
-  };
-
-  const handleCloseCreateModal = () => {
-    setShowCreateModal(false);
-  };
-
-  const handleSaveNewContrato = () => {
-    setShowCreateModal(false);
-    fetchContratos(pagination.limit, pagination.offset);
-  };
-
-  const handleViewTarifas = (id: number) => {
-    navigate(`/admin/tarifas-contrato/${id}`);
-  };
-
-  const handleView = (id: number) => {
-    setViewContratoId(id);
-    setShowViewModal(true);
-  };
-
-  const handleCloseViewModal = () => {
-    setShowViewModal(false);
-    setViewContratoId(null);
-  };
-
-  const handleShowDeleteConfirm = (id: number) => {
-    setDeleteContratoId(id);
-    setShowDeleteModal(true);
-  };
-
-  const handleCloseDeleteModal = () => {
-    setShowDeleteModal(false);
-    setDeleteContratoId(null);
   };
 
   const handleConfirmDelete = async () => {
     if (deleteContratoId === null) return;
-    
     try {
       await deleteContrato(deleteContratoId);
-      
       setShowDeleteModal(false);
       setDeleteContratoId(null);
-      
       fetchContratos(pagination.limit, pagination.offset);
     } catch (err) {
       console.error('Error eliminando contrato:', err);
-      setError('Error al eliminar el contrato. Por favor, intente nuevamente.');
+      setError('No se pudo eliminar el contrato.');
     }
   };
 
@@ -197,163 +118,296 @@ const ContratosTable = () => {
       a.remove();
     } catch (err: any) {
       console.error('Error descargando contrato:', err);
-      
-      if (err.response && err.response.status === 404) {
-        alert('El documento solicitado no existe o no está disponible.');
-      } else {
-        alert('Error al descargar el documento. Por favor, intente nuevamente.');
-      }
+      alert(
+        err?.response?.status === 404
+          ? 'El documento solicitado no existe o no está disponible.'
+          : 'Error al descargar el documento.'
+      );
     }
   };
 
   const formatDate = (dateString: string | null) => {
-    if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleDateString();
+    if (!dateString) return '—';
+    try {
+      return new Intl.DateTimeFormat('es-CL', {
+        timeZone: 'America/Santiago',
+        dateStyle: 'medium',
+      }).format(new Date(dateString));
+    } catch {
+      return dateString;
+    }
   };
 
   return (
-    <div>
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h2>Gestión de Contratos</h2>
-        
-        <button 
-          className="btn form-button-primary" 
-          onClick={handleOpenCreateModal}
-        >
-          <i className="fa fa-plus mr-2"></i> Crear Nuevo Contrato
-        </button>
-      </div>
-      
-      {error && <div className="alert alert-danger">{error}</div>}
-      
-      {loading ? (
-        <div className="text-center">
-          <p>Cargando contratos...</p>
+    <div className="space-y-6">
+      <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Contratos</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Administra los contratos con transportistas y sus tarifarios
+          </p>
         </div>
-      ) : (
-        <>
-          <div className="table-responsive">
-            <table className="custom-table">
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>¿Es Spot?</th>
-                  <th>Documento</th>
-                  <th>Transportista</th>
-                  <th>Fecha Fin</th>
-                  <th>Tipo Reajuste</th>
-                  <th>Frecuencia Reajuste</th>
-                  <th>Próximo Reajuste</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {contratos.length > 0 ? (
-                  contratos.map((contrato) => (
-                    <tr key={contrato.contrato_id}>
-                      <td>{contrato.contrato_id}</td>
-                      <td>{contrato.es_spot ? 'Sí' : 'No'}</td>
+        <Button onClick={() => setShowCreateModal(true)}>
+          <Plus className="h-4 w-4" />
+          Nuevo contrato
+        </Button>
+      </div>
 
-                      <td>
-                        <div className="documento-container">
-                          <span className="documento-nombre">
-                            {contrato.documento_respaldo ? 
-                              contrato.documento_respaldo.split('/').pop() || `contrato${contrato.contrato_id}.pdf` : 
-                              'N/A'
-                            }
-                          </span>
-                          {contrato.documento_respaldo && (
-                            <button 
-                              className="btn-icon btn-download"
-                              onClick={() => handleDownload(contrato.contrato_id)}
-                              title="Descargar documento"
-                            >
-                              <i className="fa fa-download"></i>
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                      <td>{contrato.nombre_transportista || 'N/A'}</td>
-                      <td>{formatDate(contrato.fecha_fin)}</td>
-                      <td>{contrato.tipo_reajuste || 'N/A'}</td>
-                      <td>{contrato.frecuencia_reajuste || 'N/A'}</td>
-                      <td>{formatDate(contrato.fecha_proximo_reajuste)}</td>
-                      <td>
-                        <div className="d-flex justify-content-around action-buttons">
-                          <button
-                            title="Editar contrato"
-                            className="btn-action btn-edit"
-                            onClick={() => handleEdit(contrato.contrato_id)}
-                          >
-                            <i className="fa fa-edit"></i>
-                          </button>
-                          
-                          <button
-                            title="Ver tarifas"
-                            className="btn-action btn-list"
-                            onClick={() => handleViewTarifas(contrato.contrato_id)}
-                          >
-                            <i className="fa fa-list"></i>
-                          </button>
-                          
-                          <button
-                            title="Visualizar contrato"
-                            className="btn-action btn-view"
-                            onClick={() => handleView(contrato.contrato_id)}
-                          >
-                            <i className="fa fa-eye"></i>
-                          </button>
-                          
-                          <button
-                            title="Eliminar contrato"
-                            className="btn-action btn-delete"
-                            onClick={() => handleShowDeleteConfirm(contrato.contrato_id)}
-                          >
-                            <i className="fa fa-trash"></i>
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={9} className="text-center">
-                      No hay contratos disponibles
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-          
-          <div className="d-flex justify-content-between pagination-buttons mt-3">
-            <button
-              className="btn form-button-outline"
-              disabled={pagination.prevOffset === null}
-              onClick={handlePrevPage}
-            >
-              <i className="fa fa-chevron-left mr-1"></i> Anterior
-            </button>
-            <div className="pagination-info">
-              Mostrando {contratos.length} de {pagination.total} contratos
-            </div>
-            <button
-              className="btn form-button-outline"
-              disabled={pagination.nextOffset === null}
-              onClick={handleNextPage}
-            >
-              Siguiente <i className="fa fa-chevron-right ml-1"></i>
-            </button>
-          </div>
-        </>
+      {error && (
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
       )}
 
+      <Card>
+        <CardContent className="p-0">
+          {loading ? (
+            <div className="flex items-center justify-center py-16">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : contratos.length === 0 ? (
+            <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+                <FileText className="h-6 w-6 text-muted-foreground" />
+              </div>
+              <div>
+                <p className="font-medium">No hay contratos</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Crea tu primer contrato para empezar
+                </p>
+              </div>
+              <Button onClick={() => setShowCreateModal(true)}>
+                <Plus className="h-4 w-4" />
+                Crear contrato
+              </Button>
+            </div>
+          ) : (
+            <>
+            {/* Cards en mobile */}
+            <div className="divide-y divide-border md:hidden">
+              {contratos.map((c) => (
+                <div key={`m-${c.contrato_id}`} className="space-y-3 p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="rounded-md bg-muted px-1.5 py-0.5 text-xs font-mono font-semibold">
+                          #{c.contrato_id}
+                        </span>
+                        {c.es_spot ? (
+                          <Badge variant="warning">Spot</Badge>
+                        ) : (
+                          <Badge variant="secondary">Regular</Badge>
+                        )}
+                      </div>
+                      <p className="mt-1 truncate font-medium">
+                        {c.nombre_transportista || 'Sin transportista'}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Vence: {formatDate(c.fecha_fin)}
+                        {c.tipo_reajuste && ` · ${c.tipo_reajuste}`}
+                      </p>
+                    </div>
+                  </div>
+                  {c.documento_respaldo && (
+                    <button
+                      onClick={() => handleDownload(c.contrato_id)}
+                      className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
+                    >
+                      <Download className="h-3.5 w-3.5" />
+                      Descargar documento
+                    </button>
+                  )}
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setViewContratoId(c.contrato_id);
+                        setShowViewModal(true);
+                      }}
+                    >
+                      <Eye className="h-3.5 w-3.5" />
+                      Detalle
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        navigate(`/admin/tarifas-contrato/${c.contrato_id}`)
+                      }
+                    >
+                      <FileText className="h-3.5 w-3.5" />
+                      Tarifas
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setSelectedContratoId(c.contrato_id);
+                        setShowEditModal(true);
+                      }}
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-destructive hover:text-destructive"
+                      onClick={() => {
+                        setDeleteContratoId(c.contrato_id);
+                        setShowDeleteModal(true);
+                      }}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Tabla en desktop */}
+            <div className="hidden md:block">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>ID</TableHead>
+                  <TableHead>Tipo</TableHead>
+                  <TableHead>Documento</TableHead>
+                  <TableHead>Transportista</TableHead>
+                  <TableHead>Fin vigencia</TableHead>
+                  <TableHead>Reajuste</TableHead>
+                  <TableHead>Frecuencia</TableHead>
+                  <TableHead>Próx. reajuste</TableHead>
+                  <TableHead className="text-right">Acciones</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {contratos.map((c) => (
+                  <TableRow key={c.contrato_id}>
+                    <TableCell className="font-medium">#{c.contrato_id}</TableCell>
+                    <TableCell>
+                      {c.es_spot ? (
+                        <Badge variant="warning">Spot</Badge>
+                      ) : (
+                        <Badge variant="secondary">Regular</Badge>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {c.documento_respaldo ? (
+                        <button
+                          onClick={() => handleDownload(c.contrato_id)}
+                          className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
+                        >
+                          <Download className="h-3.5 w-3.5" />
+                          Descargar
+                        </button>
+                      ) : (
+                        <span className="text-sm text-muted-foreground">—</span>
+                      )}
+                    </TableCell>
+                    <TableCell>{c.nombre_transportista || '—'}</TableCell>
+                    <TableCell>{formatDate(c.fecha_fin)}</TableCell>
+                    <TableCell>{c.tipo_reajuste || '—'}</TableCell>
+                    <TableCell>{c.frecuencia_reajuste || '—'}</TableCell>
+                    <TableCell>{formatDate(c.fecha_proximo_reajuste)}</TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          title="Ver detalle"
+                          onClick={() => {
+                            setViewContratoId(c.contrato_id);
+                            setShowViewModal(true);
+                          }}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          title="Tarifas"
+                          onClick={() => navigate(`/admin/tarifas-contrato/${c.contrato_id}`)}
+                        >
+                          <FileText className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          title="Editar"
+                          onClick={() => {
+                            setSelectedContratoId(c.contrato_id);
+                            setShowEditModal(true);
+                          }}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          title="Eliminar"
+                          className="text-destructive hover:text-destructive"
+                          onClick={() => {
+                            setDeleteContratoId(c.contrato_id);
+                            setShowDeleteModal(true);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
+
+      {contratos.length > 0 && (
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-muted-foreground">
+            Mostrando {contratos.length} de {pagination.total} contratos
+          </p>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handlePrevPage}
+              disabled={pagination.prevOffset === null}
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Anterior
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleNextPage}
+              disabled={pagination.nextOffset === null}
+            >
+              Siguiente
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Modales */}
       {showEditModal && selectedContratoId && (
-        <ContratoModal 
+        <ContratoModal
           contratoId={selectedContratoId}
           show={showEditModal}
-          onClose={handleCloseEditModal}
-          onSave={handleSaveContrato}
+          onClose={() => {
+            setShowEditModal(false);
+            setSelectedContratoId(null);
+          }}
+          onSave={() => {
+            setShowEditModal(false);
+            setSelectedContratoId(null);
+            fetchContratos(pagination.limit, pagination.offset);
+          }}
         />
       )}
 
@@ -361,24 +415,43 @@ const ContratosTable = () => {
         <ContratoViewModal
           contratoId={viewContratoId}
           show={showViewModal}
-          onClose={handleCloseViewModal}
+          onClose={() => {
+            setShowViewModal(false);
+            setViewContratoId(null);
+          }}
         />
       )}
 
-      {showDeleteModal && deleteContratoId !== null && (
-        <DeleteConfirmModal
-          contratoId={deleteContratoId}
-          show={showDeleteModal}
-          onClose={handleCloseDeleteModal}
-          onConfirm={handleConfirmDelete}
-        />
-      )}
-      
       <NuevoContratoModal
         show={showCreateModal}
-        onClose={handleCloseCreateModal}
-        onSave={handleSaveNewContrato}
+        onClose={() => setShowCreateModal(false)}
+        onSave={() => {
+          setShowCreateModal(false);
+          fetchContratos(pagination.limit, pagination.offset);
+        }}
       />
+
+      <Dialog open={showDeleteModal} onOpenChange={setShowDeleteModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Eliminar contrato</DialogTitle>
+            <DialogDescription>
+              ¿Estás seguro que deseas eliminar el contrato{' '}
+              <span className="font-medium text-foreground">#{deleteContratoId}</span>? Esta
+              acción no se puede deshacer.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDeleteModal(false)}>
+              Cancelar
+            </Button>
+            <Button variant="destructive" onClick={handleConfirmDelete}>
+              <Trash2 className="h-4 w-4" />
+              Eliminar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

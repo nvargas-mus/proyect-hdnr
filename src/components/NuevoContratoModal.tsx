@@ -1,7 +1,25 @@
-// NuevoContratoModal.tsx
-import { useState, useEffect, FormEvent } from 'react';
-import { Modal, Button, Form, Alert, Spinner } from 'react-bootstrap';
+import { useEffect, useState, FormEvent } from 'react';
+import { Loader2 } from 'lucide-react';
 import { createContrato, getTransportistas } from '../services/adminService';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface NuevoContratoModalProps {
   show: boolean;
@@ -13,12 +31,9 @@ interface TransportistaAPI {
   transportista_id: number;
   nombre_transportista: string;
   rut_transportista: string;
-  direccion_transportista: string;
-  fecha_creacion: string;
-  ultima_actualizacion: string;
 }
 
-const NuevoContratoModal: React.FC<NuevoContratoModalProps> = ({ show, onClose, onSave }) => {
+const NuevoContratoModal = ({ show, onClose, onSave }: NuevoContratoModalProps) => {
   const [transportistas, setTransportistas] = useState<TransportistaAPI[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -27,208 +42,233 @@ const NuevoContratoModal: React.FC<NuevoContratoModalProps> = ({ show, onClose, 
   const [formData, setFormData] = useState({
     transportista_id: '',
     es_spot: 'false',
+    fecha_inicio: new Date().toISOString().split('T')[0],
     fecha_fin: '',
     tipo_reajuste: 'Sin reajuste',
     frecuencia_reajuste: 'Sin reajuste',
     fecha_proximo_reajuste: '',
-    documento: null as File | null
+    documento: null as File | null,
   });
 
   useEffect(() => {
-    if (show) {
-      setError(null);
-      setSuccess(null);
-      fetchTransportistas();
-    }
+    if (!show) return;
+    setError(null);
+    setSuccess(null);
+
+    (async () => {
+      setLoading(true);
+      try {
+        const data = await getTransportistas();
+        setTransportistas(data as TransportistaAPI[]);
+      } catch {
+        setError('No se pudieron cargar los transportistas.');
+      } finally {
+        setLoading(false);
+      }
+    })();
   }, [show]);
-
-  const fetchTransportistas = async () => {
-    setLoading(true);
-    try {
-      const data = await getTransportistas();
-      setTransportistas(data as unknown as TransportistaAPI[]);
-    } catch (err) {
-      console.error('Error al cargar transportistas:', err);
-      setError('No se pudieron cargar los transportistas. Por favor, intente nuevamente.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleInputChange = (e: React.ChangeEvent<any>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      setFormData(prev => ({ ...prev, documento: e.target.files![0] }));
-    }
-  };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
     setSuccess(null);
-
     try {
-      const formDataToSend = new FormData();
-      formDataToSend.append('transportista_id', formData.transportista_id);
-      formDataToSend.append('es_spot', formData.es_spot);
-      formDataToSend.append('fecha_fin', formData.fecha_fin);
-      formDataToSend.append('tipo_reajuste', formData.tipo_reajuste);
-      formDataToSend.append('frecuencia_reajuste', formData.frecuencia_reajuste);
-      formDataToSend.append('fecha_proximo_reajuste', formData.fecha_proximo_reajuste);
-
-      if (formData.documento) {
-        formDataToSend.append('documento', formData.documento);
-      }
-
-      await createContrato(formDataToSend);
+      const fd = new FormData();
+      fd.append('transportista_id', formData.transportista_id);
+      fd.append('es_spot', formData.es_spot);
+      fd.append('fecha_inicio', formData.fecha_inicio);
+      fd.append('fecha_fin', formData.fecha_fin);
+      if (formData.tipo_reajuste) fd.append('tipo_reajuste', formData.tipo_reajuste);
+      if (formData.frecuencia_reajuste)
+        fd.append('frecuencia_reajuste', formData.frecuencia_reajuste);
+      if (formData.fecha_proximo_reajuste)
+        fd.append('fecha_proximo_reajuste', formData.fecha_proximo_reajuste);
+      if (formData.documento) fd.append('documento', formData.documento);
+      await createContrato(fd);
       setSuccess('Contrato creado exitosamente');
-
       setFormData({
         transportista_id: '',
         es_spot: 'false',
+        fecha_inicio: new Date().toISOString().split('T')[0],
         fecha_fin: '',
         tipo_reajuste: 'Sin reajuste',
         frecuencia_reajuste: 'Sin reajuste',
         fecha_proximo_reajuste: '',
-        documento: null
+        documento: null,
       });
-
-      setTimeout(() => {
-        onSave();
-      }, 1500);
-    } catch (err) {
-      console.error('Error al crear contrato:', err);
-      setError('Error al crear el contrato. Por favor, intente nuevamente.');
+      setTimeout(() => onSave(), 1200);
+    } catch (err: any) {
+      const backendErr = err?.response?.data?.error;
+      const msg =
+        (typeof backendErr === 'string' ? backendErr : backendErr?.message) ||
+        err?.message ||
+        'No se pudo crear el contrato.';
+      setError(msg);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Modal show={show} onHide={onClose} centered size="lg">
-      <Modal.Header closeButton>
-        <Modal.Title>Crear Nuevo Contrato</Modal.Title>
-      </Modal.Header>
-      <Modal.Body>
-        {error && <Alert variant="danger">{error}</Alert>}
-        {success && <Alert variant="success">{success}</Alert>}
+    <Dialog open={show} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="sm:max-w-xl">
+        <DialogHeader>
+          <DialogTitle>Crear nuevo contrato</DialogTitle>
+          <DialogDescription>
+            Completa los datos para registrar un contrato con el transportista.
+          </DialogDescription>
+        </DialogHeader>
 
-        <Form onSubmit={handleSubmit}>
-          <Form.Group className="mb-3">
-            <Form.Label>Transportista</Form.Label>
-            <Form.Select
-              name="transportista_id"
+        {error && (
+          <Alert variant="destructive">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+        {success && (
+          <Alert variant="success">
+            <AlertDescription>{success}</AlertDescription>
+          </Alert>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2.5">
+            <Label>Transportista</Label>
+            <Select
               value={formData.transportista_id}
-              onChange={handleInputChange}
-              required
+              onValueChange={(v) => setFormData((p) => ({ ...p, transportista_id: v }))}
             >
-              <option value="">Seleccione un transportista</option>
-              {transportistas.map(t => (
-                <option key={t.transportista_id} value={t.transportista_id}>
-                  {`${t.transportista_id} - ${t.nombre_transportista}`}
-                </option>
-              ))}
-            </Form.Select>
-          </Form.Group>
+              <SelectTrigger>
+                <SelectValue placeholder="Seleccionar transportista…" />
+              </SelectTrigger>
+              <SelectContent>
+                {transportistas.map((t) => (
+                  <SelectItem key={t.transportista_id} value={String(t.transportista_id)}>
+                    {t.nombre_transportista} · {t.rut_transportista}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-          <Form.Group className="mb-3">
-            <Form.Label>¿Es Spot?</Form.Label>
-            <Form.Select
-              name="es_spot"
+          <div className="space-y-2.5">
+            <Label>¿Es Spot?</Label>
+            <Select
               value={formData.es_spot}
-              onChange={handleInputChange}
-              required
+              onValueChange={(v) => setFormData((p) => ({ ...p, es_spot: v }))}
             >
-              <option value="false">No</option>
-              <option value="true">Sí</option>
-            </Form.Select>
-          </Form.Group>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="false">No</SelectItem>
+                <SelectItem value="true">Sí</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-          <Form.Group className="mb-3">
-            <Form.Label>Fecha Fin</Form.Label>
-            <Form.Control
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="space-y-2.5">
+              <Label htmlFor="fecha_inicio">Fecha inicio *</Label>
+              <Input
+                id="fecha_inicio"
+                type="date"
+                value={formData.fecha_inicio}
+                onChange={(e) =>
+                  setFormData((p) => ({ ...p, fecha_inicio: e.target.value }))
+                }
+                required
+              />
+            </div>
+            <div className="space-y-2.5">
+              <Label htmlFor="fecha_fin">Fecha fin *</Label>
+              <Input
+                id="fecha_fin"
+                type="date"
+                value={formData.fecha_fin}
+                onChange={(e) => setFormData((p) => ({ ...p, fecha_fin: e.target.value }))}
+                required
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2.5">
+            <Label htmlFor="fecha_proximo_reajuste">
+              Próximo reajuste{' '}
+              <span className="text-xs font-normal text-muted-foreground">
+                (opcional)
+              </span>
+            </Label>
+            <Input
+              id="fecha_proximo_reajuste"
               type="date"
-              name="fecha_fin"
-              value={formData.fecha_fin}
-              onChange={handleInputChange}
-              required
-            />
-          </Form.Group>
-
-          <Form.Group className="mb-3">
-            <Form.Label>Tipo de Reajuste</Form.Label>
-            <Form.Select
-              name="tipo_reajuste"
-              value={formData.tipo_reajuste}
-              onChange={handleInputChange}
-              required
-            >
-              <option value="Sin reajuste">Sin reajuste</option>
-              <option value="Por polinomio">Por polinomio</option>
-            </Form.Select>
-          </Form.Group>
-
-          <Form.Group className="mb-3">
-            <Form.Label>Frecuencia de Reajuste</Form.Label>
-            <Form.Select
-              name="frecuencia_reajuste"
-              value={formData.frecuencia_reajuste}
-              onChange={handleInputChange}
-              required
-            >
-              <option value="Sin reajuste">Sin reajuste</option>
-              <option value="Mensual">Mensual</option>
-              <option value="Trimestral">Trimestral</option>
-              <option value="Semestral">Semestral</option>
-              <option value="Anual">Anual</option>
-            </Form.Select>
-          </Form.Group>
-
-          <Form.Group className="mb-3">
-            <Form.Label>Fecha Próximo Reajuste</Form.Label>
-            <Form.Control
-              type="date"
-              name="fecha_proximo_reajuste"
               value={formData.fecha_proximo_reajuste}
-              onChange={handleInputChange}
-              required
+              onChange={(e) =>
+                setFormData((p) => ({ ...p, fecha_proximo_reajuste: e.target.value }))
+              }
             />
-          </Form.Group>
+          </div>
 
-          <Form.Group className="mb-3">
-            <Form.Label>Documento Respaldo</Form.Label>
-            <Form.Control
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="space-y-2.5">
+              <Label>Tipo de reajuste</Label>
+              <Select
+                value={formData.tipo_reajuste}
+                onValueChange={(v) => setFormData((p) => ({ ...p, tipo_reajuste: v }))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Sin reajuste">Sin reajuste</SelectItem>
+                  <SelectItem value="Por polinomio">Por polinomio</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2.5">
+              <Label>Frecuencia</Label>
+              <Select
+                value={formData.frecuencia_reajuste}
+                onValueChange={(v) => setFormData((p) => ({ ...p, frecuencia_reajuste: v }))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Sin reajuste">Sin reajuste</SelectItem>
+                  <SelectItem value="Mensual">Mensual</SelectItem>
+                  <SelectItem value="Trimestral">Trimestral</SelectItem>
+                  <SelectItem value="Semestral">Semestral</SelectItem>
+                  <SelectItem value="Anual">Anual</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="space-y-2.5">
+            <Label htmlFor="documento">Documento de respaldo</Label>
+            <Input
+              id="documento"
               type="file"
-              name="documento"
-              onChange={handleFileChange}
+              onChange={(e) =>
+                setFormData((p) => ({ ...p, documento: e.target.files?.[0] ?? null }))
+              }
             />
-          </Form.Group>
+          </div>
 
-          <div className="d-flex justify-content-end">
-            <Button variant="secondary" onClick={onClose} className="me-2" disabled={loading}>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={onClose} disabled={loading}>
               Cancelar
             </Button>
-            <Button type="submit" variant="primary" disabled={loading}>
-              {loading ? (
-                <>
-                  <Spinner animation="border" size="sm" className="me-2" />
-                  Guardando...
-                </>
-              ) : (
-                'Guardar Contrato'
-              )}
+            <Button type="submit" disabled={loading || !formData.transportista_id}>
+              {loading && <Loader2 className="h-4 w-4 animate-spin" />}
+              Crear contrato
             </Button>
-          </div>
-        </Form>
-      </Modal.Body>
-    </Modal>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 };
 
 export default NuevoContratoModal;
-

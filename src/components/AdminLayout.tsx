@@ -1,369 +1,307 @@
-import { useState, useEffect } from 'react';
-import { useNavigate, Outlet, useLocation } from 'react-router-dom';
-import "../styles/AdminStyle.css";
+import { useEffect, useMemo, useState } from 'react';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
+import {
+  BarChart3,
+  Building2,
+  ChevronLeft,
+  ChevronRight,
+  ClipboardList,
+  FileSignature,
+  FileText,
+  Gauge,
+  Factory,
+  Key,
+  Layers,
+  Menu,
+  Plus,
+  Ruler,
+  ShieldCheck,
+  ShoppingBag,
+  Tag,
+  Truck,
+  UserCog,
+  Users,
+  Wrench,
+  X,
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
-interface AdminLayoutProps {
-  children?: React.ReactNode;
+interface NavItem {
+  id: string;
+  label: string;
+  path?: string;
+  icon: React.ComponentType<{ className?: string }>;
+  children?: NavItem[];
 }
 
-const AdminLayout = ({ children }: AdminLayoutProps): JSX.Element => {
+// Mapa de rutas derivadas → item padre del sidebar.
+// Cuando la URL matchea alguna de estas rutas, marcamos activo el item padre
+// aunque la URL no empiece con su path base.
+const CHILD_ROUTE_TO_PARENT: Array<[RegExp, string]> = [
+  [/^\/admin\/tarifas-contrato(\/|$)/,      '/admin/contratos'],
+  [/^\/admin\/asignaciones-tarifa(\/|$)/,   '/admin/contratos'],
+  [/^\/admin\/asignar-tarifa(\/|$)/,        '/admin/contratos'],
+];
+
+const NAV: NavItem[] = [
+  { id: 'dashboard', label: 'Dashboard', path: '/admin', icon: BarChart3 },
+  { id: 'crearSolicitud', label: 'Crear solicitud', path: '/admin/crear-solicitud', icon: Plus },
+  { id: 'solicitudes', label: 'Solicitudes', path: '/admin/solicitudes', icon: FileText },
+  { id: 'contratos', label: 'Contratos', path: '/admin/contratos', icon: FileSignature },
+  { id: 'clientes', label: 'Clientes', path: '/admin/clientes', icon: Users },
+  { id: 'transportistas', label: 'Transportistas', path: '/admin/transportistas', icon: Truck },
+  {
+    id: 'maestros',
+    label: 'Maestros',
+    icon: Layers,
+    children: [
+      { id: 'centros', label: 'Centros', path: '/admin/centros', icon: Building2 },
+      { id: 'declaraciones', label: 'Declaraciones', path: '/admin/declaraciones', icon: ClipboardList },
+      { id: 'unidades', label: 'Unidades referenciales', path: '/admin/unidades-referenciales', icon: Ruler },
+      { id: 'lineas', label: 'Líneas de descarga', path: '/admin/lineas-descarga', icon: ShoppingBag },
+      { id: 'tiposTransporte', label: 'Tipos de transporte', path: '/admin/tipos-transporte', icon: Truck },
+      { id: 'referencias', label: 'Referencias', path: '/admin/referencias', icon: Tag },
+      { id: 'capacidades', label: 'Capacidades de transporte', path: '/admin/capacidades-transporte', icon: Gauge },
+      { id: 'generadores', label: 'Generadores', path: '/admin/generadores', icon: Factory },
+    ],
+  },
+  {
+    id: 'administracion',
+    label: 'Administración',
+    icon: Wrench,
+    children: [
+      { id: 'usuarios', label: 'Usuarios', path: '/admin/usuarios', icon: UserCog },
+      { id: 'roles', label: 'Roles', path: '/admin/roles', icon: ShieldCheck },
+      { id: 'permisos', label: 'Permisos', path: '/admin/permisos', icon: Key },
+      { id: 'asignaciones', label: 'Asignaciones', path: '/admin/asignaciones', icon: ClipboardList },
+    ],
+  },
+];
+
+const AdminLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [activeTab, setActiveTab] = useState('');
-  const [openSubmenu, setOpenSubmenu] = useState('');
-  const [menuCollapsed, setMenuCollapsed] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [openGroup, setOpenGroup] = useState<string>('');
+
+  const activePath = location.pathname;
 
   useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth < 768) {
-        setMenuCollapsed(true);
-      }
+    const handler = () => {
+      if (window.innerWidth < 768) setCollapsed(false);
     };
-
-    handleResize();
-    window.addEventListener('resize', handleResize);
-    
-    return () => {
-      window.removeEventListener('resize', handleResize);
-    };
+    handler();
+    window.addEventListener('resize', handler);
+    return () => window.removeEventListener('resize', handler);
   }, []);
 
+  // Abrir automáticamente el grupo que contiene la ruta actual
   useEffect(() => {
-    const path = location.pathname;
+    for (const item of NAV) {
+      if (item.children?.some((c) => c.path && activePath.startsWith(c.path))) {
+        setOpenGroup(item.id);
+        return;
+      }
+    }
+  }, [activePath]);
 
-    if (path === '/admin') {
-      setActiveTab('dashboard');
-      setOpenSubmenu('');
-    } 
-    else if (path.includes('/admin/contratos')) setActiveTab('contratos');
-    else if (path.includes('/admin/crear-solicitud')) setActiveTab('crearSolicitud');
-    else if (path.includes('/admin/solicitudes')) setActiveTab('ultimasSolicitudes');
-    else if (path.includes('/admin/transportistas')) setActiveTab('transportistas');
-    else if (path.includes('/admin/clientes')) setActiveTab('gestionClientes');
-    else if (path.includes('/admin/usuarios')) {
-      setActiveTab('gestionUsuarios');
-      setOpenSubmenu('administracion');
-    }
-    else if (path.includes('/admin/roles')) {
-      setActiveTab('gestionRoles');
-      setOpenSubmenu('administracion');
-    }
-    else if (path.includes('/admin/permisos')) {
-      setActiveTab('gestionPermisos');
-      setOpenSubmenu('administracion');
-    }
-    else if (path.includes('/admin/asignaciones')) {
-      setActiveTab('asignaciones');
-      setOpenSubmenu('administracion');
-    }
-    else if (path.includes('/admin/centros')) {
-      setActiveTab('centros');
-      setOpenSubmenu('maestros');
-    }
-    else if (path.includes('/admin/declaraciones')) {
-      setActiveTab('declaraciones');
-      setOpenSubmenu('maestros');
-    }
-    else if (path.includes('/admin/unidades-referenciales')) {
-      setActiveTab('unidadesReferenciales');
-      setOpenSubmenu('maestros');
-    }
-    else if (path.includes('/admin/lineas-descarga')) {
-      setActiveTab('lineasDescarga');
-      setOpenSubmenu('maestros');
-    }
-    else if (path.includes('/admin/tipos-transporte')) {
-      setActiveTab('tiposTransporte');
-      setOpenSubmenu('maestros');
-    }
-    else if (path.includes('/admin/referencias')) {
-      setActiveTab('referencias');
-      setOpenSubmenu('maestros');
-    }
-    else if (path.includes('/admin/capacidades-transporte')) {
-      setActiveTab('capacidadesTransporte');
-      setOpenSubmenu('maestros');
-    }
-    else if (path.includes('/admin/generadores')) {
-      setActiveTab('generadores');
-      setOpenSubmenu('maestros');
-    }
-    
-    document.body.classList.add('admin-page');
-    return () => {
-      document.body.classList.remove('admin-page');
-    };
-  }, [location.pathname]);
+  const isActive = (path?: string) => {
+    if (!path) return false;
+    if (path === '/admin') return activePath === '/admin';
 
-  const toggleSubmenu = (menu: string) => {
-    setOpenSubmenu(openSubmenu === menu ? '' : menu);
+    // Match por ruta derivada (ej: /admin/tarifas-contrato/5 → /admin/contratos)
+    const parentMatch = CHILD_ROUTE_TO_PARENT.find(([re]) => re.test(activePath));
+    if (parentMatch && parentMatch[1] === path) return true;
+
+    // Para items hijos de sidebar (ej: /admin/centros), chequear que empieza con path.
+    // Para items "hoja" como /admin/contratos evitamos matchear /admin/contratos-algo.
+    if (activePath === path) return true;
+    return activePath.startsWith(path + '/');
   };
 
-  const handleNavigation = (route: string, tab: string, submenu: string = '') => {
-    navigate(route);
-    setActiveTab(tab);
-    if (submenu) {
-      setOpenSubmenu(submenu);
-    }
+  const groupHasActiveChild = (item: NavItem) =>
+    item.children?.some((c) => isActive(c.path)) ?? false;
 
-    if (window.innerWidth < 768) {
-      setMobileMenuOpen(false);
-    }
+  const go = (path?: string) => {
+    if (!path) return;
+    navigate(path);
+    setMobileOpen(false);
   };
+
+  const sidebarWidth = collapsed ? 'md:w-16' : 'md:w-64';
+
+  const sidebarContent = useMemo(
+    () => (
+      <nav className="flex h-full flex-col">
+        <div className="flex items-start justify-between gap-2 border-b border-sidebar-border px-5 py-5">
+          {!collapsed && (
+            <div className="min-w-0 flex-1">
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                Administración
+              </p>
+              <h2 className="mt-0.5 text-xl font-bold leading-tight tracking-tight text-sidebar-foreground">
+                Panel admin
+              </h2>
+            </div>
+          )}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="hidden h-8 w-8 shrink-0 md:flex"
+            onClick={() => setCollapsed((c) => !c)}
+            aria-label="Colapsar menú"
+          >
+            {collapsed ? (
+              <ChevronRight className="h-4 w-4" />
+            ) : (
+              <ChevronLeft className="h-4 w-4" />
+            )}
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="shrink-0 md:hidden"
+            onClick={() => setMobileOpen(false)}
+            aria-label="Cerrar menú"
+          >
+            <X className="h-5 w-5" />
+          </Button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto px-3 py-4">
+          <ul className="space-y-1">
+            {NAV.map((item) => {
+              const Icon = item.icon;
+              if (item.children) {
+                const isOpen = openGroup === item.id;
+                const hasActive = groupHasActiveChild(item);
+                return (
+                  <li key={item.id}>
+                    <button
+                      onClick={() => setOpenGroup(isOpen ? '' : item.id)}
+                      className={cn(
+                        'group flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
+                        hasActive
+                          ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+                          : 'text-sidebar-foreground hover:bg-sidebar-accent/60'
+                      )}
+                    >
+                      <Icon className="h-4 w-4 shrink-0" />
+                      {!collapsed && (
+                        <>
+                          <span className="flex-1 text-left">{item.label}</span>
+                          <ChevronRight
+                            className={cn(
+                              'h-4 w-4 transition-transform',
+                              isOpen && 'rotate-90'
+                            )}
+                          />
+                        </>
+                      )}
+                    </button>
+                    {!collapsed && isOpen && (
+                      <ul className="mt-1 space-y-0.5 pl-4">
+                        {item.children.map((c) => {
+                          const CIcon = c.icon;
+                          const active = isActive(c.path);
+                          return (
+                            <li key={c.id}>
+                              <button
+                                onClick={() => go(c.path)}
+                                className={cn(
+                                  'flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-sm transition-colors',
+                                  active
+                                    ? 'bg-primary/10 text-primary font-medium'
+                                    : 'text-sidebar-foreground/80 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground'
+                                )}
+                              >
+                                <CIcon className="h-3.5 w-3.5 shrink-0" />
+                                <span className="truncate">{c.label}</span>
+                              </button>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    )}
+                  </li>
+                );
+              }
+
+              const active = isActive(item.path);
+              return (
+                <li key={item.id}>
+                  <button
+                    onClick={() => go(item.path)}
+                    className={cn(
+                      'flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
+                      active
+                        ? 'bg-primary text-primary-foreground shadow-sm'
+                        : 'text-sidebar-foreground hover:bg-sidebar-accent/60'
+                    )}
+                    title={collapsed ? item.label : undefined}
+                  >
+                    <Icon className="h-4 w-4 shrink-0" />
+                    {!collapsed && <span className="truncate">{item.label}</span>}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      </nav>
+    ),
+    [collapsed, openGroup, activePath]
+  );
 
   return (
-    <div className="container-fluid px-0">
-      <button 
-        className="menu-toggle-btn d-md-none" 
-        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-        style={{
-          position: 'fixed',
-          top: '10px',
-          left: '10px',
-          zIndex: 1050,
-          background: '#243c6c',
-          color: 'white',
-          border: 'none',
-          borderRadius: '4px',
-          padding: '8px 12px',
-          fontSize: '1.2rem'
-        }}
+    <div className="flex min-h-[calc(100vh-5rem)]">
+      {/* Sidebar desktop */}
+      <aside
+        className={cn(
+          'fixed left-0 top-20 z-30 hidden h-[calc(100vh-5rem)] border-r border-sidebar-border bg-sidebar md:block',
+          sidebarWidth
+        )}
       >
-        <i className={`fa ${mobileMenuOpen ? 'fa-times' : 'fa-bars'}`}></i>
-      </button>
+        {sidebarContent}
+      </aside>
 
-      <div className="row g-0">
-        {/* Menú lateral con clases responsivas */}
-        <nav 
-          className={`sidebar-wrapper ${mobileMenuOpen ? 'mobile-open' : ''} ${menuCollapsed ? 'collapsed' : ''}`} 
-          style={{ 
-            position: 'fixed', 
-            top: 60, 
-            bottom: 0, 
-            left: 0, 
-            zIndex: 1030,
-            padding: '60px 0 0', 
-            boxShadow: '0 0 10px rgba(0,0,0,0.1)',
-            overflow: 'hidden',
-            width: '16.666%', 
-            transition: 'all 0.3s ease',
-            backgroundColor: '#ffffff'
-          }}
-        >
+      {/* Sidebar mobile */}
+      {mobileOpen && (
+        <>
+          <div
+            className="fixed inset-0 top-20 z-40 bg-black/50 backdrop-blur-sm md:hidden"
+            onClick={() => setMobileOpen(false)}
+          />
+          <aside className="fixed left-0 top-20 z-50 h-[calc(100vh-5rem)] w-64 border-r border-sidebar-border bg-sidebar md:hidden">
+            {sidebarContent}
+          </aside>
+        </>
+      )}
 
-          <div className="sidebar-header d-flex justify-content-between align-items-center px-3 py-2">
-            <h2 className="sidebar-title">Gestión Logística</h2>
+      {/* Botón mobile para abrir */}
+      <Button
+        variant="outline"
+        size="icon"
+        className="fixed bottom-4 left-4 z-40 shadow-lg md:hidden"
+        onClick={() => setMobileOpen(true)}
+        aria-label="Abrir menú"
+      >
+        <Menu className="h-5 w-5" />
+      </Button>
 
-            <button 
-              className="collapse-toggle d-none d-md-block"
-              onClick={() => setMenuCollapsed(!menuCollapsed)}
-              style={{
-                background: 'transparent',
-                border: 'none',
-                color: 'white',
-                fontSize: '1rem'
-              }}
-            >
-              <i className={`fa ${menuCollapsed ? 'fa-chevron-right' : 'fa-chevron-left'}`}></i>
-            </button>
-          </div>
-
-          {/* Contenedor del menú con scroll */}
-          <div className="sidebar-menu" style={{ overflowY: 'auto', height: 'calc(100% - 120px)' }}>
-            <ul className="nav-list">
-              {/* Dashboard */}
-              <li>
-                <button
-                  className={`menu-item ${activeTab === 'dashboard' ? 'active' : ''}`}
-                  onClick={() => handleNavigation('/admin', 'dashboard')}
-                >
-                  <i className="fa fa-chart-bar"></i>
-                  <span className={menuCollapsed ? 'd-none d-md-inline collapse-text' : ''}>Dashboard</span>
-                </button>
-              </li>
-
-              {/* Crear Solicitud */}
-              <li>
-                <button
-                  className={`menu-item ${activeTab === 'crearSolicitud' ? 'active' : ''}`}
-                  onClick={() => handleNavigation('/admin/crear-solicitud', 'crearSolicitud')}
-                >
-                  <i className="fa fa-plus-circle"></i>
-                  <span className={menuCollapsed ? 'd-none d-md-inline collapse-text' : ''}>Crear Nueva Solicitud</span>
-                </button>
-              </li>
-
-              <li>
-                <button
-                  className={`menu-item ${activeTab === 'ultimasSolicitudes' ? 'active' : ''}`}
-                  onClick={() => handleNavigation('/admin/solicitudes', 'ultimasSolicitudes')}
-                >
-                  <i className="fa fa-file-alt"></i>
-                  <span className={menuCollapsed ? 'd-none d-md-inline collapse-text' : ''}>Solicitudes</span>
-                </button>
-              </li>
-
-              <li>
-                <button
-                  className={`menu-item ${activeTab === 'contratos' ? 'active' : ''}`}
-                  onClick={() => handleNavigation('/admin/contratos', 'contratos')}
-                >
-                  <i className="fa fa-file-contract"></i>
-                  <span className={menuCollapsed ? 'd-none d-md-inline collapse-text' : ''}>Contratos</span>
-                </button>
-              </li>
-
-              <li>
-                <button
-                  className={`menu-item ${activeTab === 'gestionClientes' ? 'active' : ''}`}
-                  onClick={() => handleNavigation('/admin/clientes', 'gestionClientes')}
-                >
-                  <i className="fa fa-users"></i>
-                  <span className={menuCollapsed ? 'd-none d-md-inline collapse-text' : ''}>Clientes</span>
-                </button>
-              </li>
-
-              <li>
-                <button
-                  className={`menu-item ${activeTab === 'transportistas' ? 'active' : ''}`}
-                  onClick={() => handleNavigation('/admin/transportistas', 'transportistas')}
-                >
-                  <i className="fa fa-truck"></i>
-                  <span className={menuCollapsed ? 'd-none d-md-inline collapse-text' : ''}>Transportistas</span>
-                </button>
-              </li>
-
-              {/* Submenú Maestros */}
-              <li className="submenu-container">
-                <button
-                  className={`menu-item ${openSubmenu === 'maestros' ? 'expanded' : ''} ${
-                    ['centros', 'declaraciones', 'unidadesReferenciales', 'lineasDescarga', 'tiposTransporte', 'referencias', 'capacidadesTransporte', 'generadores'].includes(activeTab) ? 'active' : ''
-                  }`}
-                  onClick={() => toggleSubmenu('maestros')}
-                >
-                  <i className="fa fa-cog"></i>
-                  <span className={menuCollapsed ? 'd-none d-md-inline collapse-text' : ''}>Maestros</span>
-                  <i className={`fa fa-chevron-right chevron-icon ${menuCollapsed ? 'd-none d-md-inline collapse-text' : ''}`}></i>
-                </button>
-
-                <ul className={`submenu ${openSubmenu === 'maestros' ? 'open' : ''}`}>
-                  <li>
-                    <button className={`submenu-item ${activeTab === 'centros' ? 'active' : ''}`} onClick={() => handleNavigation('/admin/centros', 'centros', 'maestros')}>
-                      <i className="fa fa-building"></i><span>Centros</span>
-                    </button>
-                  </li>
-                  <li>
-                    <button className={`submenu-item ${activeTab === 'declaraciones' ? 'active' : ''}`} onClick={() => handleNavigation('/admin/declaraciones', 'declaraciones', 'maestros')}>
-                      <i className="fa fa-file-signature"></i><span>Declaraciones</span>
-                    </button>
-                  </li>
-                  <li>
-                    <button className={`submenu-item ${activeTab === 'unidadesReferenciales' ? 'active' : ''}`} onClick={() => handleNavigation('/admin/unidades-referenciales', 'unidadesReferenciales', 'maestros')}>
-                      <i className="fa fa-ruler"></i><span>Unidades Referenciales</span>
-                    </button>
-                  </li>
-                  <li>
-                    <button className={`submenu-item ${activeTab === 'lineasDescarga' ? 'active' : ''}`} onClick={() => handleNavigation('/admin/lineas-descarga', 'lineasDescarga', 'maestros')}>
-                      <i className="fa fa-download"></i><span>Líneas de Descarga</span>
-                    </button>
-                  </li>
-                  <li>
-                    <button className={`submenu-item ${activeTab === 'tiposTransporte' ? 'active' : ''}`} onClick={() => handleNavigation('/admin/tipos-transporte', 'tiposTransporte', 'maestros')}>
-                      <i className="fa fa-shipping-fast"></i><span>Tipos de Transporte</span>
-                    </button>
-                  </li>
-                  <li>
-                    <button className={`submenu-item ${activeTab === 'referencias' ? 'active' : ''}`} onClick={() => handleNavigation('/admin/referencias', 'referencias', 'maestros')}>
-                      <i className="fa fa-bookmark"></i><span>Referencias</span>
-                    </button>
-                  </li>
-                  <li>
-                    <button className={`submenu-item ${activeTab === 'capacidadesTransporte' ? 'active' : ''}`} onClick={() => handleNavigation('/admin/capacidades-transporte', 'capacidadesTransporte', 'maestros')}>
-                      <i className="fa fa-weight"></i><span>Capacidades de Transporte</span>
-                    </button>
-                  </li>
-                  <li>
-                    <button className={`submenu-item ${activeTab === 'generadores' ? 'active' : ''}`} onClick={() => handleNavigation('/admin/generadores', 'generadores', 'maestros')}>
-                      <i className="fa fa-industry"></i><span>Generadores</span>
-                    </button>
-                  </li>
-                </ul>
-              </li>
-
-              {/* Submenú Administración */}
-              <li className="submenu-container">
-                <button
-                  className={`menu-item admin-item ${openSubmenu === 'administracion' ? 'expanded' : ''} ${
-                    ['gestionUsuarios', 'gestionRoles', 'gestionPermisos', 'asignaciones'].includes(activeTab) ? 'active' : ''
-                  }`}
-                  onClick={() => toggleSubmenu('administracion')}
-                >
-                  <i className="fa fa-wrench"></i>
-                  <span className={menuCollapsed ? 'd-none d-md-inline collapse-text' : ''}>Administración</span>
-                  <i className={`fa fa-chevron-right chevron-icon ${menuCollapsed ? 'd-none d-md-inline collapse-text' : ''}`}></i>
-                </button>
-
-                <ul className={`submenu ${openSubmenu === 'administracion' ? 'open' : ''}`}>
-                  <li>
-                    <button className={`submenu-item ${activeTab === 'gestionUsuarios' ? 'active' : ''}`} onClick={() => handleNavigation('/admin/usuarios', 'gestionUsuarios', 'administracion')}>
-                      <i className="fa fa-user-cog"></i><span>Gestión Usuarios</span>
-                    </button>
-                  </li>
-                  <li>
-                    <button className={`submenu-item ${activeTab === 'gestionRoles' ? 'active' : ''}`} onClick={() => handleNavigation('/admin/roles', 'gestionRoles', 'administracion')}>
-                      <i className="fa fa-user-tag"></i><span>Gestión de Roles</span>
-                    </button>
-                  </li>
-                  <li>
-                    <button className={`submenu-item ${activeTab === 'gestionPermisos' ? 'active' : ''}`} onClick={() => handleNavigation('/admin/permisos', 'gestionPermisos', 'administracion')}>
-                      <i className="fa fa-lock"></i><span>Gestión de Permisos</span>
-                    </button>
-                  </li>
-                  <li>
-                    <button className={`submenu-item ${activeTab === 'asignaciones' ? 'active' : ''}`} onClick={() => handleNavigation('/admin/asignaciones', 'asignaciones', 'administracion')}>
-                      <i className="fa fa-tasks"></i><span>Asignaciones</span>
-                    </button>
-                  </li>
-                </ul>
-              </li>
-            </ul>
-          </div>
-        </nav>
-
-
-                {/* Overlay para cerrar menú móvil */}
-                {mobileMenuOpen && (
-                  <div 
-                    className="menu-overlay d-md-none" 
-                    onClick={() => setMobileMenuOpen(false)}
-                    style={{
-                      position: 'fixed',
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      bottom: 0,
-                      backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                      zIndex: 1025
-                    }}
-                  ></div>
-                )}
-
-        <div className={`d-none d-md-block ${menuCollapsed ? 'col-md-1' : 'col-md-2'}`}></div>
-          <main 
-            role="main" 
-            className={`px-4 py-4 main-content ${menuCollapsed ? 'collapsed-menu' : ''}`}
-            style={{
-              marginLeft: menuCollapsed ? '60px' : '16.666%',
-              width: menuCollapsed ? 'calc(100% - 60px)' : 'calc(100% - 16.666%)',
-              transition: 'all 0.3s ease'
-            }}
-          >
-            {children ? children : <Outlet />}
-
-          </main>
-
-      </div>
+      {/* Main content */}
+      <main
+        className={cn(
+          'flex-1 transition-all',
+          collapsed ? 'md:ml-16' : 'md:ml-64'
+        )}
+      >
+        <div className="mx-auto max-w-[1400px] px-4 py-6 md:px-8 md:py-8">
+          <Outlet />
+        </div>
+      </main>
     </div>
   );
 };

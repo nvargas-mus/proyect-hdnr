@@ -1,33 +1,56 @@
-import React, { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
+  ArrowLeft,
+  CheckCircle2,
+  Loader2,
+  Package,
+  Plus,
+  Trash2,
+  Truck,
+} from 'lucide-react';
+import {
+  getCapacidadesTransporte,
   getMaterialesResiduos,
   getMaterialesServicios,
-  getUnidadesReferenciales,
   getTiposTransporte,
-  getCapacidadesTransporte,
-  crearSolicitudMateriales,
-  crearDetalleConTransporte,
-  crearDetalleSinTransporte
+  getUnidadesReferenciales,
+  ingresarSolicitud,
 } from '../services/solicitudService';
-import '../styles/Form.css';
-import '../styles/SolicitudesStyle.css';
-import ReactDOM from 'react-dom';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
-interface SolicitudCompletionFormProps {
+interface Props {
   solicitudId: number;
   requiereTransporte: boolean;
   onBack: () => void;
-  onCompleted: () => void; 
+  onCompleted: () => void;
 }
 
-const SolicitudCompletionForm: React.FC<SolicitudCompletionFormProps> = ({
+const SolicitudCompletionForm: React.FC<Props> = ({
   solicitudId,
   requiereTransporte,
   onBack,
   onCompleted,
 }) => {
-
   const navigate = useNavigate();
 
   const [residuos, setResiduos] = useState<any[]>([]);
@@ -35,22 +58,17 @@ const SolicitudCompletionForm: React.FC<SolicitudCompletionFormProps> = ({
   const [servicios, setServicios] = useState<any[]>([]);
   const [tiposTransporte, setTiposTransporte] = useState<any[]>([]);
   const [capacidades, setCapacidades] = useState<any[]>([]);
-  const [loading, setLoading] = useState<boolean>(false); 
-  const [errorMessage, setErrorMessage] = useState<string | null>(null); 
 
-  const [residuosSeleccionados, setResiduosSeleccionados] = useState<
-    {
-      codigo_material_matnr_residuo: string;
-      cantidad_declarada: string;
-      unidad_medida_id_residuo: string;
-    }[]
-  >([
-    { codigo_material_matnr_residuo: '', cantidad_declarada: '', unidad_medida_id_residuo: '' },
-  ]);
+  const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const [residuosSel, setResiduosSel] = useState<
+    { codigo: string; cantidad: string; unidad_medida_id: string }[]
+  >([{ codigo: '', cantidad: '', unidad_medida_id: '' }]);
 
   const [formData, setFormData] = useState({
     codigo_material_matnr_servicio: '',
-    cantidad_servicio: '',
+    cantidad_servicio: '1',
     unidad_venta_kmein: '',
     tipo_transporte_id: '',
     capacidad_id: '',
@@ -59,457 +77,410 @@ const SolicitudCompletionForm: React.FC<SolicitudCompletionFormProps> = ({
 
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
-
   useEffect(() => {
-    const fetchData = async () => {
+    (async () => {
       try {
-        const residuosData = await getMaterialesResiduos(solicitudId);
-        setResiduos(residuosData);
-
-        const unidadesData = await getUnidadesReferenciales();
-        setUnidades(unidadesData);
-
-        const serviciosData = await getMaterialesServicios(solicitudId);
-        setServicios(serviciosData);
-
-        const tiposData = await getTiposTransporte();
-        setTiposTransporte(tiposData);
-
-        const capacidadesData = await getCapacidadesTransporte();
-        setCapacidades(capacidadesData);
-      } catch (error) {
-        console.error('Error al cargar datos:', error);
-        setErrorMessage('Error al cargar datos iniciales. Por favor, intente nuevamente.');
+        const [res, uni, serv, tipos, caps] = await Promise.all([
+          getMaterialesResiduos(solicitudId),
+          getUnidadesReferenciales(),
+          getMaterialesServicios(solicitudId),
+          getTiposTransporte(),
+          getCapacidadesTransporte(),
+        ]);
+        setResiduos(res);
+        setUnidades(uni);
+        setServicios(serv);
+        setTiposTransporte(tipos);
+        setCapacidades(caps);
+      } catch {
+        setErrorMessage('Error al cargar los catálogos iniciales.');
       }
-    };
-    fetchData();
-  }, [solicitudId, requiereTransporte]);
+    })();
+  }, [solicitudId]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
-  };
-
-  const handleServicioChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const selectedCode = e.target.value;
-    const foundServicio = servicios.find((s) => String(s.material_matnr) === selectedCode);
-    const unidadVenta = foundServicio ? foundServicio.unidad_venta_kmein : '';
-    setFormData({ ...formData, codigo_material_matnr_servicio: selectedCode, unidad_venta_kmein: unidadVenta });
-  };
-
-  const handleCapacidadChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const selectedCapacidadId = e.target.value;
-    const foundCapacidad = capacidades.find((c) => String(c.capacidad_id) === selectedCapacidadId);
-    const unidadMedida = foundCapacidad ? foundCapacidad.unidad_medida_id : '';
-    setFormData({ ...formData, capacidad_id: selectedCapacidadId, unidad_medida_id_transport: unidadMedida });
-  };
-
-  const handleResiduosChange = (
-    index: number,
-    field: 'codigo_material_matnr_residuo' | 'cantidad_declarada' | 'unidad_medida_id_residuo',
-    value: string
-  ) => {
-    setResiduosSeleccionados((prev) =>
-      prev.map((row, i) => (i === index ? { ...row, [field]: value } : row))
+  const handleResiduoChange = (idx: number, field: string, value: string) => {
+    setResiduosSel((prev) =>
+      prev.map((r, i) => (i === idx ? { ...r, [field]: value } : r))
     );
   };
+  const addResiduoRow = () =>
+    setResiduosSel((p) => [...p, { codigo: '', cantidad: '', unidad_medida_id: '' }]);
+  const removeResiduoRow = (idx: number) =>
+    setResiduosSel((p) => p.filter((_, i) => i !== idx));
 
-  const handleAddResiduosRow = () => {
-    setResiduosSeleccionados((prev) => [
-      ...prev,
-      { codigo_material_matnr_residuo: '', cantidad_declarada: '', unidad_medida_id_residuo: '' },
-    ]);
+  const unidadNombre =
+    capacidades.find(
+      (c) => String(c.unidad_medida_id) === formData.unidad_medida_id_transport
+    )?.nombre_unidad || formData.unidad_medida_id_transport;
+
+  const handleServicioChange = (value: string) => {
+    const found = servicios.find((s) => String(s.material_matnr) === value);
+    setFormData((p) => ({
+      ...p,
+      codigo_material_matnr_servicio: value,
+      unidad_venta_kmein: found?.unidad_venta_kmein || '',
+    }));
   };
 
-  const handleRemoveResiduosRow = (index: number) => {
-    setResiduosSeleccionados((prev) => prev.filter((_, i) => i !== index));
+  const handleCapacidadChange = (value: string) => {
+    const found = capacidades.find((c) => String(c.capacidad_id) === value);
+    setFormData((p) => ({
+      ...p,
+      capacidad_id: value,
+      unidad_medida_id_transport: found ? String(found.unidad_medida_id) : '',
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setLoading(true);
-  setErrorMessage(null);
+    e.preventDefault();
+    setLoading(true);
+    setErrorMessage(null);
 
-  try {
-    const materiales: {
-      codigo_material_matnr: number;
-      cantidad_declarada: number;
-      unidad_medida_id: number;
-    }[] = [];
+    try {
+      const materiales: {
+        codigo_material_matnr: number;
+        cantidad_declarada: number;
+        unidad_medida_id: number;
+      }[] = [];
 
-    for (const row of residuosSeleccionados) {
-      if (!row.codigo_material_matnr_residuo.trim()) continue;
-
-      let codeString = row.codigo_material_matnr_residuo;
-      if (codeString.includes(' - ')) {
-        codeString = codeString.split(' - ')[0].trim();
+      for (const row of residuosSel) {
+        if (!row.codigo.trim()) continue;
+        const codigo = Number(row.codigo);
+        const cantidad = Number(row.cantidad);
+        const unidad = Number(row.unidad_medida_id);
+        if (isNaN(codigo) || isNaN(cantidad) || isNaN(unidad)) {
+          setErrorMessage('Verifica que todos los campos de residuos sean válidos.');
+          setLoading(false);
+          return;
+        }
+        materiales.push({
+          codigo_material_matnr: codigo,
+          cantidad_declarada: cantidad,
+          unidad_medida_id: unidad,
+        });
       }
 
-      const codigo = Number(codeString);
-      const cantidad = Number(row.cantidad_declarada);
-      const unidad = Number(row.unidad_medida_id_residuo);
-
-      if (isNaN(codigo) || isNaN(cantidad) || isNaN(unidad)) {
-        setErrorMessage('Verifica que todos los campos de residuos sean válidos.');
+      if (materiales.length === 0) {
+        setErrorMessage('Debes agregar al menos un residuo.');
         setLoading(false);
         return;
       }
 
-      materiales.push({
-        codigo_material_matnr: codigo,
-        cantidad_declarada: cantidad,
-        unidad_medida_id: unidad,
-      });
-    }
+      if (requiereTransporte) {
+        // Con transporte: agregar el servicio de transporte al mismo array de materiales
+        const codServicio = Number(formData.codigo_material_matnr_servicio);
+        if (!codServicio || isNaN(codServicio)) {
+          setErrorMessage('Selecciona el servicio de transporte.');
+          setLoading(false);
+          return;
+        }
+        // Usar la primera unidad disponible como unidad por defecto para el servicio
+        const unidadServicio = Number(residuosSel[0]?.unidad_medida_id) || unidades[0]?.unidad_medida_id;
+        materiales.push({
+          codigo_material_matnr: codServicio,
+          cantidad_declarada: 1,
+          unidad_medida_id: unidadServicio,
+        });
 
-    if (materiales.length === 0) {
-      setErrorMessage('Debes seleccionar al menos un residuo.');
+        await ingresarSolicitud(solicitudId, {
+          requiere_transporte: true,
+          materiales,
+        });
+      } else {
+        const tipo = Number(formData.tipo_transporte_id);
+        const capacidad = Number(formData.capacidad_id);
+        const unidad = Number(formData.unidad_medida_id_transport);
+        if (isNaN(tipo) || isNaN(capacidad) || isNaN(unidad)) {
+          setErrorMessage('Faltan datos de transporte.');
+          setLoading(false);
+          return;
+        }
+
+        await ingresarSolicitud(solicitudId, {
+          requiere_transporte: false,
+          materiales,
+          tipo_transporte_id: tipo,
+          capacidad_id: capacidad,
+          unidad_medida_id_det: unidad,
+        });
+      }
+
+      onCompleted();
+      setTimeout(() => setShowSuccessModal(true), 800);
+    } catch (err: any) {
+      const backendMsg =
+        err?.response?.data?.error?.message ||
+        err?.response?.data?.message ||
+        err?.message;
+      setErrorMessage(`Error al completar: ${backendMsg || 'Intenta nuevamente.'}`);
+    } finally {
       setLoading(false);
-      return;
     }
-
-    await crearSolicitudMateriales({
-      solicitud_id: solicitudId,
-      materiales,
-    });
-
-    if (requiereTransporte && formData.codigo_material_matnr_servicio) {
-      let codigoServicio = formData.codigo_material_matnr_servicio;
-      if (codigoServicio.includes(' - ')) {
-        codigoServicio = codigoServicio.split(' - ')[0].trim();
-      }
-
-      const cantidadServicio = Number(formData.cantidad_servicio);
-
-      if (
-        isNaN(Number(codigoServicio)) ||
-        isNaN(cantidadServicio) ||
-        !formData.unidad_venta_kmein
-      ) {
-        setErrorMessage('Verifica que todos los campos de servicio sean válidos.');
-        setLoading(false);
-        return;
-      }
-
-      const detalleTransporte = {
-        solicitud_id: solicitudId,
-        codigo_material_matnr: Number(codigoServicio),
-        unidad_venta_kmein: formData.unidad_venta_kmein,
-        cantidad: cantidadServicio,
-      };
-
-      await crearDetalleConTransporte(detalleTransporte);
-    } else {
-      const tipo = Number(formData.tipo_transporte_id);
-      const capacidad = Number(formData.capacidad_id);
-      const unidad = Number(formData.unidad_medida_id_transport);
-
-      if (isNaN(tipo) || isNaN(capacidad) || isNaN(unidad)) {
-        setErrorMessage('Faltan datos para el detalle sin transporte.');
-        setLoading(false);
-        return;
-      }
-
-      await crearDetalleSinTransporte({
-        solicitud_id: solicitudId,
-        tipo_transporte_id: tipo,
-        capacidad_id: capacidad,
-        unidad_medida_id: unidad,
-      });
-    }
-
-    onCompleted();
-
-    setTimeout(() => {
-      setShowSuccessModal(true);
-    }, 1600);
-  } catch (err: any) {
-    console.error('Error al completar la solicitud:', err);
-    setErrorMessage(
-      `Error al completar la solicitud: ${err.message || 'Verifica los datos e intente nuevamente.'}`
-    );
-  } finally {
-    setLoading(false);
-  }
-};
-
-const unidadNombre = capacidades.find(
-    (c) => c.unidad_medida_id === formData.unidad_medida_id_transport
-  )?.nombre_unidad || formData.unidad_medida_id_transport;
-
+  };
 
   const handleSuccessOK = () => {
-  setShowSuccessModal(false);
-  
-  const rol = localStorage.getItem('user_role');
-  if (rol === 'admin') {
-    sessionStorage.setItem('scrollToTop', 'true');
-    window.location.reload();
-
-  } else {
-    navigate('/home');
-  }
-};
+    setShowSuccessModal(false);
+    const rol = localStorage.getItem('user_role');
+    if (rol === 'admin') {
+      sessionStorage.setItem('scrollToTop', 'true');
+      window.location.reload();
+    } else {
+      navigate('/home');
+    }
+  };
 
   return (
-    <div className="container mt-0">
-      <h3 className="card-title text-center">Completar Solicitud - ID de la solicitud: {solicitudId} </h3>
-      <div className="row justify-content-center">
-        <div className="col-md-8">
-          <div className="card p-4">
+    <>
+      <div className="space-y-6">
+        {errorMessage && (
+          <Alert variant="destructive">
+            <AlertDescription>{errorMessage}</AlertDescription>
+          </Alert>
+        )}
 
-            
-            {/* Mensaje de error */}
-            {errorMessage && (
-              <div className="alert alert-danger" role="alert">
-                {errorMessage}
-              </div>
-            )}
-            
-            <form onSubmit={handleSubmit}>
-              <input type="hidden" name="solicitud_id" value={solicitudId} />
-
-              <h4>Información de Residuos</h4>
-              {residuosSeleccionados.map((row, index) => (
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Residuos */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Package className="h-4 w-4 text-primary" />
+                Información de residuos
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {residuosSel.map((row, idx) => (
                 <div
-                  key={index}
-                  style={{
-                    border: '1px solid #f9f9f9',
-                    borderRadius: '8px',
-                    backgroundColor: '#f8f9f9',
-                    padding: '10px',
-                    marginBottom: '10px',
-                  }}
+                  key={idx}
+                  className="rounded-md border border-border bg-muted/30 p-4"
                 >
-                  <div className="mb-3">
-                    <label className="form-label">Código Material Residuo:</label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      list={`residuosList-${index}`}
-                      value={row.codigo_material_matnr_residuo}
-                      onChange={(e) =>
-                        handleResiduosChange(index, 'codigo_material_matnr_residuo', e.target.value)
-                      }
-                      placeholder="Escribe para buscar..."
-                      required
-                    />
-                    <datalist id={`residuosList-${index}`}>
-                      {residuos.map((r, i) => (
-                        <option key={i} value={`${r.material_matnr} - ${r.nombre_material_maktg}`} />
-                      ))}
-                    </datalist>
+                  <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+                    <div className="space-y-2.5 md:col-span-2">
+                      <Label>Material</Label>
+                      <Select
+                        value={row.codigo}
+                        onValueChange={(v) => handleResiduoChange(idx, 'codigo', v)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Seleccionar residuo…" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {residuos.map((r) => (
+                            <SelectItem
+                              key={r.material_matnr}
+                              value={String(r.material_matnr)}
+                            >
+                              {r.material_matnr} · {r.nombre_material_maktg}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2.5">
+                      <Label>Unidad</Label>
+                      <Select
+                        value={row.unidad_medida_id}
+                        onValueChange={(v) =>
+                          handleResiduoChange(idx, 'unidad_medida_id', v)
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Unidad…" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {unidades.map((u) => (
+                            <SelectItem
+                              key={u.unidad_medida_id}
+                              value={String(u.unidad_medida_id)}
+                            >
+                              {u.nombre_unidad}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
-                  <div className="mb-3">
-                    <label className="form-label">Cantidad Declarada:</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      className="form-control"
-                      value={row.cantidad_declarada}
-                      onChange={(e) =>
-                        handleResiduosChange(index, 'cantidad_declarada', e.target.value)
-                      }
-                      required
-                    />
+                  <div className="mt-3 flex items-end gap-3">
+                    <div className="flex-1 space-y-2.5">
+                      <Label>Cantidad declarada</Label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={row.cantidad}
+                        onChange={(e) =>
+                          handleResiduoChange(idx, 'cantidad', e.target.value)
+                        }
+                        required
+                      />
+                    </div>
+                    {residuosSel.length > 1 && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="text-destructive hover:text-destructive"
+                        onClick={() => removeResiduoRow(idx)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
                   </div>
-                  <div className="mb-3">
-                    <label className="form-label">Unidad Medida Residuo:</label>
-                    <select
-                      className="form-select"
-                      value={row.unidad_medida_id_residuo}
-                      onChange={(e) =>
-                        handleResiduosChange(index, 'unidad_medida_id_residuo', e.target.value)
-                      }
-                      required
-                    >
-                      <option value="">Seleccione</option>
-                      {unidades.map((uni, idx) => (
-                        <option key={idx} value={uni.unidad_medida_id}>
-                          {uni.nombre_unidad}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  {residuosSeleccionados.length > 1 && (
-                    <button
-                      type="button"
-                      className="btn btn-danger"
-                      onClick={() => handleRemoveResiduosRow(index)}
-                    >
-                      Eliminar residuo
-                    </button>
-                  )}
                 </div>
               ))}
+              <Button type="button" variant="outline" onClick={addResiduoRow}>
+                <Plus className="h-4 w-4" />
+                Agregar otro residuo
+              </Button>
+            </CardContent>
+          </Card>
 
-              <button type="button" className="btn btn-secondary mb-4" onClick={handleAddResiduosRow}>
-                 Agregar otro residuo
-              </button>
-
+          {/* Servicio o transporte */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Truck className="h-4 w-4 text-primary" />
+                {requiereTransporte
+                  ? 'Información del servicio'
+                  : 'Información de transporte'}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
               {requiereTransporte ? (
                 <>
-                  <h4>Información de Servicio</h4>
-                  <div className="mb-3">
-                    <label htmlFor="codigo_material_matnr_servicio" className="form-label">
-                      Código Material Servicio:
-                    </label>
-                    <select
-                      name="codigo_material_matnr_servicio"
-                      className="form-select"
+                  <div className="space-y-2.5">
+                    <Label>Código material servicio</Label>
+                    <Select
                       value={formData.codigo_material_matnr_servicio}
-                      onChange={handleServicioChange}
-                      required
+                      onValueChange={handleServicioChange}
+                      disabled={servicios.length === 0}
                     >
-                      <option value="">Seleccione</option>
-                      {servicios.map((item, idx) => (
-                        <option key={idx} value={item.material_matnr}>
-                          {item.material_matnr} - {item.nombre_material_maktg}
-                        </option>
-                      ))}
-                    </select>
+                      <SelectTrigger>
+                        <SelectValue
+                          placeholder={
+                            servicios.length === 0
+                              ? 'Sin servicios cotizados para este cliente'
+                              : 'Seleccionar…'
+                          }
+                        />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {servicios.map((s) => (
+                          <SelectItem
+                            key={s.material_matnr}
+                            value={String(s.material_matnr)}
+                          >
+                            {s.material_matnr} · {s.nombre_material_maktg}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {servicios.length === 0 && (
+                      <p className="text-xs text-muted-foreground">
+                        Este cliente no tiene servicios cotizados en SAP. Contacta a un
+                        administrador para cargar la cotización A900.
+                      </p>
+                    )}
                   </div>
-                  <div className="mb-3">
-                    <label htmlFor="cantidad_servicio" className="form-label">
-                      Cantidad Servicio:
-                    </label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      name="cantidad_servicio_disabled"
-                      className="form-control"
-                      value={1}
-                      disabled
-                    />
-
-                    <input
-                      type="hidden"
-                      name="cantidad_servicio"
-                      value={1}
-                    />
-                  </div>
-
-
-                  <div className="mb-3">
-                    <label htmlFor="unidad_venta_kmein" className="form-label">
-                      Unidad de Venta (automático):
-                    </label>
-                    <input
-                      type="text"
-                      name="unidad_venta_kmein"
-                      className="form-control"
-                      value={formData.unidad_venta_kmein}
-                      readOnly
-                    />
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div className="space-y-2.5">
+                      <Label>Cantidad</Label>
+                      <Input value="1" disabled />
+                    </div>
+                    <div className="space-y-2.5">
+                      <Label>Unidad venta</Label>
+                      <Input value={formData.unidad_venta_kmein} readOnly />
+                    </div>
                   </div>
                 </>
               ) : (
                 <>
-                  <h4>Información de Transporte</h4>
-                  <div className="mb-3">
-                    <label htmlFor="tipo_transporte_id" className="form-label">
-                      Tipo de Transporte:
-                    </label>
-                    <select
-                      name="tipo_transporte_id"
-                      className="form-select"
+                  <div className="space-y-2.5">
+                    <Label>Tipo de transporte</Label>
+                    <Select
                       value={formData.tipo_transporte_id}
-                      onChange={handleChange}
-                      required
+                      onValueChange={(v) =>
+                        setFormData((p) => ({ ...p, tipo_transporte_id: v }))
+                      }
                     >
-                      <option value="">Seleccione</option>
-                      {tiposTransporte.map((tipo) => (
-                        <option key={tipo.tipo_transporte_id} value={tipo.tipo_transporte_id}>
-                          {tipo.nombre_tipo_transporte}
-                        </option>
-                      ))}
-                    </select>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seleccionar…" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {tiposTransporte.map((t) => (
+                          <SelectItem
+                            key={t.tipo_transporte_id}
+                            value={String(t.tipo_transporte_id)}
+                          >
+                            {t.nombre_tipo_transporte}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
-                  <div className="mb-3">
-                    <label htmlFor="capacidad_id" className="form-label">
-                      Capacidad:
-                    </label>
-                    <select
-                      name="capacidad_id"
-                      className="form-select"
-                      value={formData.capacidad_id}
-                      onChange={handleCapacidadChange}
-                      required
-                    >
-                      <option value="">Seleccione</option>
-                      {capacidades.map((c) => (
-                        <option key={c.capacidad_id} value={c.capacidad_id}>
-                          {parseFloat(c.valor_capacidad)} {c.nombre_unidad}
-                        </option>
-                      ))}
-
-                    </select>
+                  <div className="space-y-2.5">
+                    <Label>Capacidad</Label>
+                    <Select value={formData.capacidad_id} onValueChange={handleCapacidadChange}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seleccionar…" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {capacidades.map((c) => (
+                          <SelectItem key={c.capacidad_id} value={String(c.capacidad_id)}>
+                            {parseFloat(c.valor_capacidad)} {c.nombre_unidad}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
-                  <div className="mb-3">
-                    <label htmlFor="unidad_medida_id_transport" className="form-label">
-                      Unidad Medida Transporte (automático):
-                    </label>
-                    <input
-                      type="text"
-                      name="unidad_medida_id_transport"
-                      className="form-control"
-                      value={unidadNombre}
-                      readOnly
-                    />
+                  <div className="space-y-2.5">
+                    <Label>Unidad medida transporte</Label>
+                    <Input value={unidadNombre} readOnly />
                   </div>
                 </>
               )}
+            </CardContent>
+          </Card>
 
-              <button 
-                type="submit" 
-                className="btn btn-primary w-100 form-button-primary"
-                disabled={loading}
-              >
-                {loading ? 'Guardando...' : 'Completar Solicitud'}
-              </button>
-            </form>
+          <div className="flex items-center justify-between">
+            <Button type="button" variant="ghost" onClick={onBack} disabled={loading}>
+              <ArrowLeft className="h-4 w-4" />
+              Volver
+            </Button>
+            <Button type="submit" disabled={loading}>
+              {loading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Guardando…
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 className="h-4 w-4" />
+                  Completar solicitud
+                </>
+              )}
+            </Button>
           </div>
-        </div>
+        </form>
       </div>
 
-      {/* Botón Volver */}
-      <div className="col-12 d-flex justify-content-start mt-3">
-        <button type="button" className="btn btn-secondary btn-volver" onClick={onBack} disabled={loading}>
-          Volver
-        </button>
-      </div>
-
-      {/* Modal de Éxito */}
-      {showSuccessModal && (
-        <>
-          {ReactDOM.createPortal(
-            <>
-              <div className="modal show d-block" tabIndex={-1}>
-                <div className="modal-dialog modal-dialog-centered" style={{ maxWidth: '500px', width: '90%' }}>
-                  <div className="modal-content border-0">
-                    <div className="modal-header border-0">
-                      <h5 className="modal-title">Solicitud Creada con Éxito</h5>
-                      <button type="button" className="btn-close" onClick={handleSuccessOK}></button>
-                    </div>
-                    <div className="modal-body border-0">
-                      <p>La solicitud ha sido completada exitosamente.</p>
-                    </div>
-                    <div className="modal-footer border-0">
-                      <button type="button" className="btn btn-primary modal-save-button" onClick={handleSuccessOK}>
-                        Aceptar
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="modal-backdrop fade show"></div>
-            </>,
-            document.body
-          )}
-        </>
-      )}
-
-    </div>
+      {/* Modal éxito */}
+      <Dialog open={showSuccessModal} onOpenChange={setShowSuccessModal}>
+        <DialogContent>
+          <DialogHeader>
+            <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-success/15">
+              <CheckCircle2 className="h-6 w-6 text-success" />
+            </div>
+            <DialogTitle>Solicitud creada exitosamente</DialogTitle>
+            <DialogDescription>
+              La solicitud #{solicitudId} ha sido registrada. Puedes seguir su estado desde
+              el panel principal.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button onClick={handleSuccessOK}>Aceptar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
 

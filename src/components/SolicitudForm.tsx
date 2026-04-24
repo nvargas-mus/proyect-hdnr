@@ -1,28 +1,56 @@
-import ReactDOM from 'react-dom';
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import {
+  ArrowLeft,
+  ArrowRight,
+  CheckCircle2,
+  Plus,
+  Search,
+  Truck,
+} from 'lucide-react';
 import {
   crearSolicitud,
   getClientesAsociados,
-  getDirecciones,
   getContactos,
   getDeclaraciones,
+  getDirecciones,
   getGeneradores,
-  postDireccion,
-  postContacto,
   getReferencias,
+  postContacto,
+  postDireccion,
   Referencia,
 } from '../services/solicitudService';
 import {
   Cliente,
-  Direccion,
   Contacto,
   Declaracion,
+  Direccion,
   Generador,
 } from '../interfaces/solicitud';
 import SolicitudCompletionForm from './SolicitudCompletionForm';
-import '../styles/Form.css';
-import '../styles/SolicitudesStyle.css'
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { cn } from '@/lib/utils';
 
 const LOCAL_STORAGE_KEY = 'solicitudFormData';
 
@@ -34,20 +62,7 @@ const SolicitudForm = () => {
   const isAdminContext = location.pathname.startsWith('/admin');
   const [completed, setCompleted] = useState(false);
 
-  const [formData, setFormData] = useState<{
-    usuario_id: number;
-    codigo_cliente_kunnr: number;
-    clienteDisplay: string;
-    fecha_servicio_solicitada: string;
-    hora_servicio_solicitada: string;
-    descripcion: string;
-    requiere_transporte: boolean;
-    direccion_id: number | null;
-    contacto_cliente_id: number;
-    declaracion_id: number;
-    generador_igual_cliente: boolean;
-    generador_id: number | null;
-  }>({
+  const [formData, setFormData] = useState({
     usuario_id: Number(localStorage.getItem('usuario_id')),
     codigo_cliente_kunnr: 0,
     clienteDisplay: '',
@@ -55,30 +70,30 @@ const SolicitudForm = () => {
     hora_servicio_solicitada: '',
     descripcion: '',
     requiere_transporte: false,
-    direccion_id: null,
+    direccion_id: null as number | null,
     contacto_cliente_id: 0,
     declaracion_id: 0,
     generador_igual_cliente: true,
-    generador_id: null,
+    generador_id: null as number | null,
   });
-  
 
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [direcciones, setDirecciones] = useState<Direccion[]>([]);
   const [contactos, setContactos] = useState<Contacto[]>([]);
   const [declaraciones, setDeclaraciones] = useState<Declaracion[]>([]);
   const [generadores, setGeneradores] = useState<Generador[]>([]);
+  const [referencias, setReferencias] = useState<Referencia[]>([]);
+
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showClientesDropdown, setShowClientesDropdown] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
-  const [searchQuery, setSearchQuery] = useState('');
 
   const [showAddDireccionModal, setShowAddDireccionModal] = useState(false);
   const [showAddContactoModal, setShowAddContactoModal] = useState(false);
 
-  const [referencias, setReferencias] = useState<Referencia[]>([]);
-
   const [newDireccion, setNewDireccion] = useState({
-    codigo_cliente_kunnr: formData.codigo_cliente_kunnr,
+    codigo_cliente_kunnr: 0,
     calle: '',
     numero: '',
     complemento: '',
@@ -88,7 +103,7 @@ const SolicitudForm = () => {
   });
 
   const [newContacto, setNewContacto] = useState({
-    codigo_cliente_kunnr: formData.codigo_cliente_kunnr,
+    codigo_cliente_kunnr: 0,
     nombre: '',
     telefono: '',
     email: '',
@@ -100,920 +115,812 @@ const SolicitudForm = () => {
     for (let hour = 8; hour <= 18; hour++) {
       for (let min = 0; min < 60; min += 15) {
         if (hour === 18 && min > 0) break;
-        const hStr = hour.toString().padStart(2, '0');
-        const mStr = min.toString().padStart(2, '0');
-        times.push(`${hStr}:${mStr}`);
+        times.push(`${String(hour).padStart(2, '0')}:${String(min).padStart(2, '0')}`);
       }
     }
     return times;
   };
 
+  // Rehidratar desde localStorage
   useEffect(() => {
-    const shouldScrollTop = sessionStorage.getItem('scrollToTop');
-    if (shouldScrollTop === 'true') {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      sessionStorage.removeItem('scrollToTop');
-    }
+    const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (saved) setFormData(JSON.parse(saved));
   }, []);
-
-
-  useEffect(() => {
-    const savedData = localStorage.getItem(LOCAL_STORAGE_KEY);
-    if (savedData) {
-      setFormData(JSON.parse(savedData));
-    }
-  }, []);
-
   useEffect(() => {
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(formData));
   }, [formData]);
 
+  // Buscar clientes
   useEffect(() => {
     const fetchClientes = async () => {
       try {
-        const clientesData = await getClientesAsociados(searchQuery);
-        let clientesList: any[] = [];
-        if (Array.isArray(clientesData)) {
-          clientesList = clientesData;
-        } else if (clientesData && typeof clientesData === 'object') {
-          clientesList = clientesData.clientes || clientesData.data || [];
-        }
-        const mappedClientes = clientesList.map((cliente: any) => ({
-          codigo: cliente.codigo_cliente_kunnr,
-          nombre: cliente.nombre_name1,
-          sucursal: cliente.sucursal_name2,
-        }));
-        setClientes(mappedClientes);
-      } catch (error) {
-        console.error("Error al obtener clientes:", error);
+        const data = await getClientesAsociados(searchQuery);
+        let list: any[] = [];
+        if (Array.isArray(data)) list = data;
+        else if (data && typeof data === 'object') list = data.clientes || data.data || [];
+        setClientes(
+          list.map((c: any) => ({
+            codigo: c.codigo_cliente_kunnr,
+            nombre: c.nombre_name1,
+            sucursal: c.sucursal_name2,
+          }))
+        );
+      } catch {
+        setClientes([]);
       }
     };
     fetchClientes();
   }, [searchQuery]);
 
+  // Catálogos
   useEffect(() => {
-    const fetchDeclaraciones = async () => {
+    (async () => {
       try {
-        const declaracionesData = await getDeclaraciones();
-        let declaracionesList: any[] = [];
-        if (Array.isArray(declaracionesData)) {
-          declaracionesList = declaracionesData;
-        } else if (declaracionesData && typeof declaracionesData === 'object') {
-          declaracionesList = declaracionesData.declaraciones || declaracionesData.data || [];
-        }
-        const mappedDeclaraciones = declaracionesList.map((decl: any) => ({
-          id: decl.declaracion_id,
-          descripcion: decl.declaracion_nombre,
-        }));
-        setDeclaraciones(mappedDeclaraciones);
-      } catch (err) {
-        console.error('Error al cargar declaraciones:', err);
+        const decl = await getDeclaraciones();
+        let list: any[] = [];
+        if (Array.isArray(decl)) list = decl;
+        else if (decl && typeof decl === 'object') list = decl.declaraciones || decl.data || [];
+        setDeclaraciones(
+          list.map((d: any) => ({ id: d.declaracion_id, descripcion: d.declaracion_nombre }))
+        );
+      } catch {
+        // silencioso
       }
-    };
-    fetchDeclaraciones();
+    })();
+    (async () => {
+      try {
+        const data = await getReferencias();
+        setReferencias(data);
+      } catch {
+        // silencioso
+      }
+    })();
   }, []);
 
+  // Detalles cliente
   useEffect(() => {
-    if (formData.codigo_cliente_kunnr && formData.codigo_cliente_kunnr !== 0) {
-      const fetchDetails = async () => {
-        try {
-          const codigo = Number(formData.codigo_cliente_kunnr);
-          
-          const direccionesResponse = await getDirecciones(codigo);
-          const mappedDirecciones = direccionesResponse.map((direccion: any) => ({
-            id: direccion.direccion_id,
-            calle: direccion.calle,
-            numero: direccion.numero,
-            complemento: direccion.complemento,
-            comuna: direccion.comuna,
-            region: direccion.region,
-            contacto_terreno_id: direccion.contacto_terreno_id,
-          }));
-          setDirecciones(mappedDirecciones);
-  
-          const contactosResponse = await getContactos(codigo);
-          const mappedContactos = contactosResponse.map((contacto: any) => ({
-            id: contacto.contacto_id,
-            nombre: contacto.nombre,
-            telefono: contacto.telefono,
-            email: contacto.email,
-            referencia_id: contacto.referencia_id,
-          }));
-          setContactos(mappedContactos);
-          setNewDireccion((prev) => ({ ...prev, codigo_cliente_kunnr: codigo }));
-          setNewContacto((prev) => ({ ...prev, codigo_cliente_kunnr: codigo }));
-  
-        } catch (err) {
-          console.error('Error al cargar direcciones o contactos:', err);
-        }
-      };
-      fetchDetails();
-    }
+    if (!formData.codigo_cliente_kunnr) return;
+    const fetchDetails = async () => {
+      try {
+        const codigo = Number(formData.codigo_cliente_kunnr);
+        const dir = await getDirecciones(codigo);
+        setDirecciones(
+          (dir as any[]).map((d: any) => ({
+            id: d.direccion_id,
+            calle: d.calle,
+            numero: d.numero,
+            comuna: d.comuna,
+          }))
+        );
+        const cont = await getContactos(codigo);
+        setContactos(
+          cont.map((c: any) => ({
+            id: c.contacto_id,
+            nombre: c.nombre,
+            telefono: c.telefono,
+            email: c.email,
+          }))
+        );
+        setNewDireccion((p) => ({ ...p, codigo_cliente_kunnr: codigo }));
+        setNewContacto((p) => ({ ...p, codigo_cliente_kunnr: codigo }));
+      } catch {
+        // silencioso
+      }
+    };
+    fetchDetails();
   }, [formData.codigo_cliente_kunnr]);
 
   useEffect(() => {
     if (!formData.generador_igual_cliente) {
-      const fetchGeneradores = async () => {
+      (async () => {
         try {
-          const generadoresData = await getGeneradores();
-          setGeneradores(generadoresData);
-        } catch (err) {
-          console.error('Error al cargar generadores:', err);
+          const gens = await getGeneradores();
+          setGeneradores(gens);
+        } catch {
+          setGeneradores([]);
         }
-      };
-      fetchGeneradores();
+      })();
     }
   }, [formData.generador_igual_cliente]);
 
-  useEffect(() => {
-  const input = document.getElementById('fecha_servicio_solicitada') as HTMLInputElement | null;
-  if (input && input.showPicker) {
-    const handleClick = () => input.showPicker();
-    input.addEventListener('focus', handleClick);
-    return () => input.removeEventListener('focus', handleClick);
-  }
-}, []);
-
-useEffect(() => {
-  fetchReferencias();
-}, []);
-
-
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value, type } = e.target;
-    let newValue: any = value;
-    if (type === 'checkbox') {
-      newValue = (e.target as HTMLInputElement).checked;
-    } else if (type === 'radio' && name === 'generador_igual_cliente') {
-      newValue = value === 'true';
-    }
-    setFormData((prev) => ({
-      ...prev,
-      [name]: newValue,
-    }));
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  const [year, month, day] = formData.fecha_servicio_solicitada
-    .split('-')
-    .map(Number);
-  const fechaServicio = new Date(year, month - 1, day);
-  fechaServicio.setHours(0, 0, 0, 0);
-
-  const hoy = new Date();
-  hoy.setHours(0, 0, 0, 0);
-
-  if (fechaServicio < hoy) {
-    alert("Error: La fecha de servicio no puede estar en el pasado.");
-    return;
-  }
-
-  const [horaStr, minutoStr] = formData.hora_servicio_solicitada.split(':');
-  const hora = parseInt(horaStr, 10);
-  const minuto = parseInt(minutoStr, 10);
-
-  if (
-    hora < 8 ||
-    hora > 18 ||
-    ![0, 15, 30, 45].includes(minuto) ||
-    formData.hora_servicio_solicitada === ""
-  ) {
-    alert("Error: Hora inválida. Debe ser entre 08:00 y 18:00 con minutos exactos (00, 15, 30, 45).");
-    return;
-  }
-
-  if (formData.requiere_transporte && !formData.direccion_id) {
-    alert("Error: Debe seleccionar una dirección cuando requiere transporte.");
-    return;
-  }
-
-  try {
-    const { clienteDisplay, ...payload } = formData;
-
-    if (payload.hora_servicio_solicitada.length === 5) {
-      payload.hora_servicio_solicitada += ":00";
+    const [y, m, d] = formData.fecha_servicio_solicitada.split('-').map(Number);
+    const fechaServicio = new Date(y, m - 1, d);
+    fechaServicio.setHours(0, 0, 0, 0);
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    if (fechaServicio < hoy) {
+      setError('La fecha de servicio no puede estar en el pasado.');
+      return;
     }
 
-    payload.fecha_servicio_solicitada = formData.fecha_servicio_solicitada;
+    const [h, min] = formData.hora_servicio_solicitada.split(':');
+    const hora = parseInt(h, 10);
+    const minuto = parseInt(min, 10);
+    if (
+      hora < 8 ||
+      hora > 18 ||
+      ![0, 15, 30, 45].includes(minuto) ||
+      !formData.hora_servicio_solicitada
+    ) {
+      setError(
+        'Hora inválida. Debe ser entre 08:00 y 18:00 con minutos exactos (00, 15, 30, 45).'
+      );
+      return;
+    }
 
-    payload.generador_id = payload.generador_igual_cliente
-      ? 0
-      : payload.generador_id;
+    if (formData.requiere_transporte && !formData.direccion_id) {
+      setError('Debes seleccionar una dirección cuando requiere transporte.');
+      return;
+    }
 
-    const data = await crearSolicitud(payload);
+    try {
+      const { clienteDisplay: _ignored, ...payload } = formData;
+      let hora_servicio = payload.hora_servicio_solicitada;
+      if (hora_servicio.length === 5) hora_servicio += ':00';
 
-    setError('');
-    setSolicitudId(data.solicitud_id);
-    setStep(2);
-    window.scrollTo({ top: 0, behavior: 'smooth' }); 
-    localStorage.removeItem(LOCAL_STORAGE_KEY);
+      const data = await crearSolicitud({
+        ...payload,
+        hora_servicio_solicitada: hora_servicio,
+        generador_id: payload.generador_igual_cliente ? 0 : payload.generador_id,
+      });
 
-  } catch (err) {
-    console.error('Error al crear la solicitud:', err);
-    setError('Error al crear la solicitud. Verifique los datos e intente nuevamente.');
-    setMessage('');
-  }
-};
-
-  const handleDireccionChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
-    const { name, value } = e.target;
-    setNewDireccion((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+      setError('');
+      setSolicitudId(data.solicitud_id);
+      setStep(2);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      localStorage.removeItem(LOCAL_STORAGE_KEY);
+    } catch {
+      setError('Error al crear la solicitud. Verifica los datos e intenta nuevamente.');
+      setMessage('');
+    }
   };
 
   const handleSubmitDireccion = async (e: React.FormEvent) => {
-  e.preventDefault();
-
-  // ✅ Paso 1: Validación
-  if (!formData.codigo_cliente_kunnr || formData.codigo_cliente_kunnr === 0) {
-    alert("Debes seleccionar un cliente válido antes de agregar una dirección.");
-    return;
-  }
-
-  try {
-    const data = await postDireccion({
-      ...newDireccion,
-      codigo_cliente_kunnr: formData.codigo_cliente_kunnr,
-    });
-
-    const direccionesActualizadas = await getDirecciones(formData.codigo_cliente_kunnr);
-    const mappedDirecciones = direccionesActualizadas.map((direccion: any) => ({
-      id: direccion.direccion_id,
-      calle: direccion.calle,
-      numero: direccion.numero,
-      complemento: direccion.complemento,
-      comuna: direccion.comuna,
-      region: direccion.region,
-      contacto_terreno_id: direccion.contacto_terreno_id,
-    }));
-    setDirecciones(mappedDirecciones);
-
-    setFormData((prev) => ({
-      ...prev,
-      direccion_id: data.direccion_id,
-    }));
-
-    setShowAddDireccionModal(false);
-  } catch (error) {
-    console.error('Error al agregar dirección:', error);
-    alert('Error al agregar dirección.');
-  }
-};
-
-
-  const handleContactoChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
-    const { name, value } = e.target;
-    setNewContacto((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const handleSubmitContacto = async (e: React.FormEvent) => {
-  e.preventDefault();
-
-  if (!formData.codigo_cliente_kunnr || formData.codigo_cliente_kunnr === 0) {
-    alert("Debes seleccionar un cliente válido antes de agregar un contacto.");
-    return;
-  }
-
-  try {
-    const contactoParaEnviar = {
-      ...newContacto,
-      codigo_cliente_kunnr: formData.codigo_cliente_kunnr,
-    };
-
-    const data = await postContacto(contactoParaEnviar);
-
-    const contactosActualizados = await getContactos(formData.codigo_cliente_kunnr);
-    const mappedContactos = contactosActualizados.map((contacto: any) => ({
-      id: contacto.contacto_id,
-      nombre: contacto.nombre,
-      telefono: contacto.telefono,
-      email: contacto.email,
-      referencia_id: contacto.referencia_id,
-    }));
-    setContactos(mappedContactos);
-
-    setFormData((prev) => ({
-      ...prev,
-      contacto_cliente_id: data.contacto_id,
-    }));
-
-    setShowAddContactoModal(false);
-  } catch (error) {
-    console.error('Error al agregar contacto:', error);
-    alert('Error al agregar contacto.');
-  }
-};
-
-
-  const fetchReferencias = async () => {
+    e.preventDefault();
+    if (!formData.codigo_cliente_kunnr) {
+      setError('Selecciona un cliente antes de agregar una dirección.');
+      return;
+    }
     try {
-      const data = await getReferencias();
-      setReferencias(data);
-    } catch (error) {
-      console.error('Error al obtener referencias:', error);
+      const data = await postDireccion({
+        ...newDireccion,
+        codigo_cliente_kunnr: formData.codigo_cliente_kunnr,
+      });
+      const updated = await getDirecciones(formData.codigo_cliente_kunnr);
+      setDirecciones(
+        (updated as any[]).map((d: any) => ({
+          id: d.direccion_id,
+          calle: d.calle,
+          numero: d.numero,
+          comuna: d.comuna,
+        }))
+      );
+      setFormData((p) => ({ ...p, direccion_id: data.direccion_id }));
+      setShowAddDireccionModal(false);
+    } catch {
+      setError('Error al agregar la dirección.');
     }
   };
 
-  const progressPercent =
-  step === 1
-    ? 15
-    : completed
-      ? 100
-      : 66;
+  const handleSubmitContacto = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.codigo_cliente_kunnr) {
+      setError('Selecciona un cliente antes de agregar un contacto.');
+      return;
+    }
+    try {
+      const data = await postContacto({
+        ...newContacto,
+        codigo_cliente_kunnr: formData.codigo_cliente_kunnr,
+      });
+      const updated = await getContactos(formData.codigo_cliente_kunnr);
+      setContactos(
+        updated.map((c: any) => ({
+          id: c.contacto_id,
+          nombre: c.nombre,
+          telefono: c.telefono,
+          email: c.email,
+        }))
+      );
+      setFormData((p) => ({ ...p, contacto_cliente_id: data.contacto_id }));
+      setShowAddContactoModal(false);
+    } catch {
+      setError('Error al agregar el contacto.');
+    }
+  };
 
+  const progressPercent = step === 1 ? 33 : completed ? 100 : 66;
 
   return (
-     <>
-      <div className="barra-progreso-wrapper">
-        <div className="container mt-5">
-          <div className="progress mb-4 position-relative" style={{ height: '12px' }}>
-            <div
-              className="progress-bar progress-bar-custom"
-              role="progressbar"
-              style={{
-                width: `${progressPercent + (progressPercent === 100 ? 1.5 : 0)}%`
-              }}
-              aria-valuenow={progressPercent}
-              aria-valuemin={0}
-              aria-valuemax={100}
-            />
-            <i
-              className={`bi bi-check-circle-fill check-icon ${progressPercent === 100 ? 'complete' : ''}`}
-              style={{
-                left: `calc(${progressPercent}% - 1px)`,
-                fontSize: progressPercent === 100 ? '1.9rem' : '1.5rem',
-              }}
-            />
-
-          </div>
+    <div className="mx-auto w-full max-w-3xl px-4 py-8 md:px-6">
+      {/* Progress */}
+      <div className="mb-8">
+        <div className="mb-3 flex items-center justify-end">
+          <span className="text-sm font-medium text-muted-foreground">
+            {progressPercent}%
+          </span>
+        </div>
+        <div className="flex items-center gap-3">
+          <StepDot active={step >= 1} done={step > 1} label="1" />
+          <div
+            className={cn(
+              'h-0.5 flex-1 transition-colors',
+              step > 1 ? 'bg-primary' : 'bg-border'
+            )}
+          />
+          <StepDot active={step >= 2 && !completed} done={completed} label="2" />
+          <div
+            className={cn(
+              'h-0.5 flex-1 transition-colors',
+              completed ? 'bg-primary' : 'bg-border'
+            )}
+          />
+          <StepDot
+            active={completed}
+            done={completed}
+            label={<CheckCircle2 className="h-3.5 w-3.5" />}
+          />
+        </div>
+        <div className="mt-3 flex justify-between text-xs font-medium text-muted-foreground">
+          <span className={step >= 1 ? 'text-foreground' : ''}>Datos generales</span>
+          <span className={step >= 2 ? 'text-foreground' : ''}>
+            Materiales y detalle
+          </span>
+          <span className={completed ? 'text-foreground' : ''}>Listo</span>
         </div>
       </div>
 
-      <h3 className="card-title text-center">Crear Solicitud de Servicio</h3>
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">
+          {step === 1 ? 'Nueva solicitud de servicio' : `Completar solicitud #${solicitudId}`}
+        </h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          {step === 1
+            ? 'Completa los datos principales para crear la solicitud'
+            : 'Registra los materiales y detalles del transporte'}
+        </p>
+      </div>
+
       {step === 1 && (
-        <div className="row justify-content-center">
-          <div className="col-md-8">
-            <div className="card p-4">
-              
-              <form onSubmit={handleSubmit}>
-                {/* Selección de cliente con autocompletado */}
-                <div className="mb-3">
-                  <label htmlFor="codigo_cliente_kunnr" className="form-label">
-                    Cliente
-                  </label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    list="clientesList"
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle>Datos generales</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-5">
+              {error && (
+                <Alert variant="destructive">
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
+              {message && (
+                <Alert variant="success">
+                  <AlertDescription>{message}</AlertDescription>
+                </Alert>
+              )}
+
+              {/* Cliente */}
+              <div className="relative space-y-2.5">
+                <Label htmlFor="codigo_cliente_kunnr">Cliente</Label>
+                <div className="relative">
+                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
                     id="codigo_cliente_kunnr"
                     name="codigo_cliente_kunnr"
-                    placeholder="Escribe para buscar..."
+                    placeholder="Escribe para buscar…"
+                    autoComplete="off"
+                    className="pl-10"
                     value={formData.clienteDisplay}
+                    onFocus={() => setShowClientesDropdown(true)}
+                    onBlur={() => setTimeout(() => setShowClientesDropdown(false), 200)}
                     onChange={(e) => {
-                      const inputValue = e.target.value;
-                      setSearchQuery(inputValue);
-                      const parts = inputValue.split(' - ');
-                      const code = parts[0] ? Number(parts[0]) : 0;
-
-                       console.log('Cliente seleccionado:', inputValue);
-                      console.log('Código extraído:', parts[0], '→', code);
-
-                      setFormData((prev) => ({
-                        ...prev,
-                        clienteDisplay: inputValue,
-                        codigo_cliente_kunnr: code,
+                      const v = e.target.value;
+                      setSearchQuery(v);
+                      setShowClientesDropdown(true);
+                      setFormData((p) => ({
+                        ...p,
+                        clienteDisplay: v,
+                        codigo_cliente_kunnr: 0,
                       }));
                     }}
                     required
                   />
-                  <datalist id="clientesList">
-                    {clientes.map((cliente) => (
-                      <option
-                        key={cliente.codigo}
-                        value={`${cliente.codigo} - ${cliente.nombre} - ${cliente.sucursal}`}
-                      />
-                    ))}
-                  </datalist>
                 </div>
+                {showClientesDropdown && clientes.length > 0 && (
+                  <ul className="absolute z-50 mt-1 max-h-64 w-full overflow-y-auto rounded-md border border-border bg-popover shadow-lg">
+                    {clientes.map((c) => (
+                      <li key={c.codigo}>
+                        <button
+                          type="button"
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            const display = `${c.codigo} · ${c.nombre}${
+                              c.sucursal ? ' · ' + c.sucursal : ''
+                            }`;
+                            setFormData((p) => ({
+                              ...p,
+                              clienteDisplay: display,
+                              codigo_cliente_kunnr: c.codigo,
+                            }));
+                            setSearchQuery(display);
+                            setShowClientesDropdown(false);
+                          }}
+                          className="w-full px-3 py-2 text-left text-sm transition-colors hover:bg-accent"
+                        >
+                          <span className="font-semibold text-foreground">{c.codigo}</span>
+                          <span className="ml-2">{c.nombre}</span>
+                          {c.sucursal && (
+                            <span className="ml-2 text-muted-foreground">· {c.sucursal}</span>
+                          )}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
 
-                {/* Fecha de servicio */}
-                <div className="mb-3">
-                  <label htmlFor="fecha_servicio_solicitada" className="form-label">
-                    Fecha de Servicio
-                  </label>
-                  <input
-                    type="date"
-                    className="form-control"
+              {/* Fecha y hora */}
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="space-y-2.5">
+                  <Label htmlFor="fecha_servicio_solicitada">Fecha de servicio</Label>
+                  <Input
                     id="fecha_servicio_solicitada"
-                    name="fecha_servicio_solicitada"
+                    type="date"
                     value={formData.fecha_servicio_solicitada}
-                    onChange={handleChange}
+                    onChange={(e) =>
+                      setFormData((p) => ({
+                        ...p,
+                        fecha_servicio_solicitada: e.target.value,
+                      }))
+                    }
                     required
                   />
                 </div>
-
-                {/* Hora de servicio */}
-                <div className="mb-3">
-                  <label htmlFor="hora_servicio_solicitada" className="form-label">
-                    Hora de Servicio
-                  </label>
-                  <select
-                    className="form-select"
-                    id="hora_servicio_solicitada"
-                    name="hora_servicio_solicitada"
+                <div className="space-y-2.5">
+                  <Label>Hora de servicio</Label>
+                  <Select
                     value={formData.hora_servicio_solicitada}
-                    onChange={handleChange}
-                    required
+                    onValueChange={(v) =>
+                      setFormData((p) => ({ ...p, hora_servicio_solicitada: v }))
+                    }
                   >
-                    <option value="">Seleccione una hora</option>
-                    {generateTimeOptions().map((time, index) => (
-                      <option key={index} value={time}>
-                        {time}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Descripción */}
-                <div className="mb-3">
-                  <label htmlFor="descripcion" className="form-label">
-                    Descripción
-                  </label>
-                  <textarea
-                    className="form-control"
-                    id="descripcion"
-                    name="descripcion"
-                    rows={3}
-                    value={formData.descripcion}
-                    onChange={handleChange}
-                    required
-                  ></textarea>
-                </div>
-
-                {/* ¿Requiere transporte? */}
-                <div className="mb-3 form-check">
-                  <input
-                    type="checkbox"
-                    className="form-check-input"
-                    id="requiere_transporte"
-                    name="requiere_transporte"
-                    checked={formData.requiere_transporte}
-                    onChange={handleChange}
-                  />
-                  <label htmlFor="requiere_transporte" className="form-check-label">
-                    ¿Requiere Transporte?
-                  </label>
-                </div>
-
-                {/* Dirección (solo si requiere transporte) */}
-                {formData.requiere_transporte && (
-                  <div className="mb-3">
-                    <label htmlFor="direccion_id" className="form-label">
-                      Dirección
-                    </label>
-                    <div className="input-group">
-                      <select
-                        className="form-select"
-                        id="direccion_id"
-                        name="direccion_id"
-                        value={formData.direccion_id || ""}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          setFormData((prev) => ({
-                            ...prev,
-                            direccion_id: value ? Number(value) : null,
-                          }));
-                        }}
-                        required
-                      >
-                        <option value="">Seleccione una dirección</option>
-                        {direcciones.map((direccion) => (
-                          <option key={direccion.id} value={direccion.id}>
-                            {direccion.calle}, {direccion.numero}, {direccion.comuna}
-                          </option>
-                        ))}
-                      </select>
-                      <button
-                        type="button"
-                        className="btn form-button-outline"
-                        onClick={() => setShowAddDireccionModal(true)}
-                      >
-                        Agregar Dirección
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {/* Contacto */}
-                <div className="mb-3">
-                  <label htmlFor="contacto_cliente_id" className="form-label">
-                    Contacto
-                  </label>
-                  <div className="input-group">
-                    <select
-                      className="form-select"
-                      id="contacto_cliente_id"
-                      name="contacto_cliente_id"
-                      value={formData.contacto_cliente_id}
-                      onChange={handleChange}
-                    >
-                      <option value="">Seleccione un contacto</option>
-                      {contactos.map((contacto) => (
-                        <option key={contacto.id} value={contacto.id}>
-                          {contacto.nombre} - {contacto.email}
-                        </option>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccionar hora…" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {generateTimeOptions().map((t) => (
+                        <SelectItem key={t} value={t}>
+                          {t}
+                        </SelectItem>
                       ))}
-                    </select>
-                    <button
-                      type="button"
-                      className="btn form-button-outline"
-                      onClick={() => setShowAddContactoModal(true)}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* Descripción */}
+              <div className="space-y-2.5">
+                <Label htmlFor="descripcion">Descripción</Label>
+                <Textarea
+                  id="descripcion"
+                  rows={3}
+                  placeholder="Detalles del servicio solicitado"
+                  value={formData.descripcion}
+                  onChange={(e) =>
+                    setFormData((p) => ({ ...p, descripcion: e.target.value }))
+                  }
+                  required
+                />
+              </div>
+
+              {/* Requiere transporte */}
+              <label className="flex cursor-pointer items-start gap-3 rounded-md border border-border bg-muted/30 p-4">
+                <Checkbox
+                  checked={formData.requiere_transporte}
+                  onCheckedChange={(v) =>
+                    setFormData((p) => ({ ...p, requiere_transporte: v === true }))
+                  }
+                />
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <Truck className="h-4 w-4 text-primary" />
+                    <span className="font-medium">¿Requiere transporte?</span>
+                  </div>
+                  <p className="mt-0.5 text-sm text-muted-foreground">
+                    Activa si necesitas que Hidronor gestione el transporte del servicio
+                  </p>
+                </div>
+              </label>
+
+              {/* Dirección */}
+              {formData.requiere_transporte && (
+                <div className="space-y-2.5">
+                  <Label>Dirección</Label>
+                  <div className="flex gap-2">
+                    <Select
+                      value={formData.direccion_id ? String(formData.direccion_id) : ''}
+                      onValueChange={(v) =>
+                        setFormData((p) => ({ ...p, direccion_id: Number(v) }))
+                      }
                     >
-                      Agregar Contacto
-                    </button>
-                  </div>
-                </div>
-
-                {/* Declaración */}
-                <div className="mb-3">
-                  <label htmlFor="declaracion_id" className="form-label">
-                    Declaración
-                  </label>
-                  <select
-                    className="form-select"
-                    id="declaracion_id"
-                    name="declaracion_id"
-                    value={formData.declaracion_id}
-                    onChange={handleChange}
-                    required
-                  >
-                    <option value="">Seleccione una declaración</option>
-                    {declaraciones.map((declaracion) => (
-                      <option key={declaracion.id} value={declaracion.id}>
-                        {declaracion.descripcion}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Generador */}
-                <div className="mb-3">
-                  <label className="form-label">
-                    ¿El cliente es el generador del residuo?
-                  </label>
-                  <div>
-                    <input
-                      type="radio"
-                      id="generadorSi"
-                      name="generador_igual_cliente"
-                      value="true"
-                      checked={formData.generador_igual_cliente === true}
-                      onChange={handleChange}
-                    />
-                    <label htmlFor="generadorSi" className="me-3">
-                      Sí
-                    </label>
-                    <input
-                      type="radio"
-                      id="generadorNo"
-                      name="generador_igual_cliente"
-                      value="false"
-                      checked={formData.generador_igual_cliente === false}
-                      onChange={handleChange}
-                    />
-                    <label htmlFor="generadorNo">No</label>
-                  </div>
-                </div>
-                {!formData.generador_igual_cliente && (
-                  <div className="mb-3">
-                    <label htmlFor="generador_id" className="form-label">
-                      Generador
-                    </label>
-                    <div className="input-group">
-                      <select
-                        className="form-select"
-                        id="generador_id"
-                        name="generador_id"
-                        value={formData.generador_id !== null ? formData.generador_id.toString() : ""}
-                        onChange={handleChange}
-                        required
-                      >
-                        <option value="">Seleccione un generador</option>
-                        {generadores.map((generador) => (
-                          <option key={generador.id} value={generador.id}>
-                            {generador.nombre}
-                          </option>
+                      <SelectTrigger className="flex-1">
+                        <SelectValue placeholder="Seleccionar dirección…" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {direcciones.map((d) => (
+                          <SelectItem key={d.id} value={String(d.id)}>
+                            {d.calle}, {d.numero}, {d.comuna}
+                          </SelectItem>
                         ))}
-                      </select>
-                      <button
-                        type="button"
-                        className="btn form-button-outline"
-                        onClick={() =>
-                          alert('Funcionalidad para agregar generador pendiente de implementar.')
-                        }
-                      >
-                        Agregar Generador
-                      </button>
-                    </div>
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setShowAddDireccionModal(true)}
+                      disabled={!formData.codigo_cliente_kunnr}
+                    >
+                      <Plus className="h-4 w-4" />
+                      Agregar
+                    </Button>
                   </div>
-                )}
+                </div>
+              )}
 
-                <button
-                  type="submit"
-                  className="btn btn-primary w-100 form-button-primary"
+              {/* Contacto */}
+              <div className="space-y-2.5">
+                <Label>Contacto</Label>
+                <div className="flex gap-2">
+                  <Select
+                    value={formData.contacto_cliente_id ? String(formData.contacto_cliente_id) : ''}
+                    onValueChange={(v) =>
+                      setFormData((p) => ({ ...p, contacto_cliente_id: Number(v) }))
+                    }
+                  >
+                    <SelectTrigger className="flex-1">
+                      <SelectValue placeholder="Seleccionar contacto…" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {contactos.map((c) => (
+                        <SelectItem key={c.id} value={String(c.id)}>
+                          {c.nombre} {c.email ? `· ${c.email}` : ''}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setShowAddContactoModal(true)}
+                    disabled={!formData.codigo_cliente_kunnr}
+                  >
+                    <Plus className="h-4 w-4" />
+                    Agregar
+                  </Button>
+                </div>
+              </div>
+
+              {/* Declaración */}
+              <div className="space-y-2.5">
+                <Label>Declaración</Label>
+                <Select
+                  value={formData.declaracion_id ? String(formData.declaracion_id) : ''}
+                  onValueChange={(v) =>
+                    setFormData((p) => ({ ...p, declaracion_id: Number(v) }))
+                  }
                 >
-                  Crear Solicitud
-                </button>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar declaración…" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {declaraciones.map((d) => (
+                      <SelectItem key={d.id} value={String(d.id)}>
+                        {d.descripcion}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-                {error && <p className="text-danger mt-3">{error}</p>}
-                {message && <p className="text-success mt-3">{message}</p>}
-              </form>
-            </div>
-          </div>
+              {/* Generador */}
+              <div className="space-y-2.5">
+                <Label>¿El cliente es el generador del residuo?</Label>
+                <div className="flex gap-3">
+                  <label className="flex cursor-pointer items-center gap-2 rounded-md border border-border px-4 py-2 hover:bg-accent">
+                    <input
+                      type="radio"
+                      name="generador_igual_cliente"
+                      checked={formData.generador_igual_cliente === true}
+                      onChange={() =>
+                        setFormData((p) => ({ ...p, generador_igual_cliente: true }))
+                      }
+                    />
+                    <span className="text-sm">Sí</span>
+                  </label>
+                  <label className="flex cursor-pointer items-center gap-2 rounded-md border border-border px-4 py-2 hover:bg-accent">
+                    <input
+                      type="radio"
+                      name="generador_igual_cliente"
+                      checked={formData.generador_igual_cliente === false}
+                      onChange={() =>
+                        setFormData((p) => ({ ...p, generador_igual_cliente: false }))
+                      }
+                    />
+                    <span className="text-sm">No</span>
+                  </label>
+                </div>
+              </div>
+              {!formData.generador_igual_cliente && (
+                <div className="space-y-2.5">
+                  <Label>Generador</Label>
+                  <Select
+                    value={formData.generador_id ? String(formData.generador_id) : ''}
+                    onValueChange={(v) =>
+                      setFormData((p) => ({ ...p, generador_id: Number(v) }))
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccionar generador…" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {generadores.map((g: any) => (
+                        <SelectItem key={g.id} value={String(g.id)}>
+                          {g.nombre}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
-          <div className="col-12 d-flex justify-content-start mt-3">
-            <button
-              type="button"
-              className="btn btn-secondary btn-volver"
-              onClick={() => {
-                if (isAdminContext) {
-                  navigate('/admin');
-                } else {
-                  navigate('/home');
-                }
-              }}
-            >
-              Volver
-            </button>
-          </div>
-        </div>
+              <div className="flex items-center justify-between gap-3 pt-4">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => navigate(isAdminContext ? '/admin' : '/home')}
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  Volver
+                </Button>
+                <Button type="submit">
+                  Continuar
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
       )}
 
       {step === 2 && solicitudId && (
-        <SolicitudCompletionForm
-          solicitudId={solicitudId}
-          requiereTransporte={formData.requiere_transporte}
-          onBack={() => {
-            setFormData({
-              usuario_id: Number(localStorage.getItem('usuario_id')),
-              codigo_cliente_kunnr: 0,
-              clienteDisplay: '',
-              fecha_servicio_solicitada: '',
-              hora_servicio_solicitada: '',
-              descripcion: '',
-              requiere_transporte: false,
-              direccion_id: null,
-              contacto_cliente_id: 0,
-              declaracion_id: 0,
-              generador_igual_cliente: true,
-              generador_id: null,
-            });
-            setStep(1);
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-          }}
-          onCompleted={() => setCompleted(true)}
-        />
-
+        <div className="mt-6">
+          <SolicitudCompletionForm
+            solicitudId={solicitudId}
+            requiereTransporte={formData.requiere_transporte}
+            onBack={() => {
+              setFormData({
+                usuario_id: Number(localStorage.getItem('usuario_id')),
+                codigo_cliente_kunnr: 0,
+                clienteDisplay: '',
+                fecha_servicio_solicitada: '',
+                hora_servicio_solicitada: '',
+                descripcion: '',
+                requiere_transporte: false,
+                direccion_id: null,
+                contacto_cliente_id: 0,
+                declaracion_id: 0,
+                generador_igual_cliente: true,
+                generador_id: null,
+              });
+              setStep(1);
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            onCompleted={() => setCompleted(true)}
+          />
+        </div>
       )}
 
-      {/* Modal para Agregar Dirección */}
-      {showAddDireccionModal && ReactDOM.createPortal(
-        <>
-          <div className="modal-backdrop fade show"></div>
-          <div className="modal show d-block" tabIndex={-1}>
-            <div className="modal-dialog modal-dialog-centered">
-              <div className="modal-content">
-                <form onSubmit={handleSubmitDireccion}>
-                  <div className="modal-header">
-                    <h5 className="modal-title">Agregar Dirección</h5>
-                    <button
-                      type="button"
-                      className="btn-close"
-                      onClick={() => setShowAddDireccionModal(false)}
-                    ></button>
-                  </div>
-                  <div className="modal-body">
-                    <div className="mb-3">
-                      <label htmlFor="calle" className="form-label">
-                        Calle
-                      </label>
-                      <input
-                        type="text"
-                        id="calle"
-                        name="calle"
-                        value={newDireccion.calle}
-                        onChange={handleDireccionChange}
-                        className="form-control"
-                        required
-                      />
-                    </div>
-                    <div className="mb-3">
-                      <label htmlFor="numero" className="form-label">
-                        Número
-                      </label>
-                      <input
-                        type="text"
-                        id="numero"
-                        name="numero"
-                        value={newDireccion.numero}
-                        onChange={handleDireccionChange}
-                        className="form-control"
-                        required
-                      />
-                    </div>
-                    <div className="mb-3">
-                      <label htmlFor="complemento" className="form-label">
-                        Complemento
-                      </label>
-                      <input
-                        type="text"
-                        id="complemento"
-                        name="complemento"
-                        value={newDireccion.complemento}
-                        onChange={handleDireccionChange}
-                        className="form-control"
-                      />
-                    </div>
-                    <div className="mb-3">
-                      <label htmlFor="comuna" className="form-label">
-                        Comuna
-                      </label>
-                      <input
-                        type="text"
-                        id="comuna"
-                        name="comuna"
-                        value={newDireccion.comuna}
-                        onChange={handleDireccionChange}
-                        className="form-control"
-                        required
-                      />
-                    </div>
-                    <div className="mb-3">
-                      <label htmlFor="region" className="form-label">
-                        Región
-                      </label>
-                      <input
-                        type="text"
-                        id="region"
-                        name="region"
-                        value={newDireccion.region}
-                        onChange={handleDireccionChange}
-                        className="form-control"
-                        required
-                      />
-                    </div>
-                    <div className="mb-3">
-                      <label htmlFor="contacto_terreno_id" className="form-label">
-                        Contacto Terreno
-                      </label>
-                      <div className="input-group">
-                        <select
-                          id="contacto_terreno_id"
-                          name="contacto_terreno_id"
-                          value={newDireccion.contacto_terreno_id}
-                          onChange={handleDireccionChange}
-                          className="form-select"
-                          required
-                        >
-                          <option value="">Seleccione un contacto</option>
-                          {contactos.map((contacto) => (
-                            <option key={contacto.id} value={contacto.id}>
-                              {contacto.nombre} - {contacto.email}
-                            </option>
-                          ))}
-                        </select>
-                        <button
-                          type="button"
-                          className="btn form-button-outline"
-                          onClick={() => setShowAddContactoModal(true)}
-                        >
-                          Agregar Contacto
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="modal-footer">
-                    <button type="submit" className="btn btn-primary modal-save-button">
-                      Guardar Dirección
-                    </button>
-                  </div>
-                </form>
+      {/* Modal agregar dirección */}
+      <Dialog open={showAddDireccionModal} onOpenChange={setShowAddDireccionModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Agregar dirección</DialogTitle>
+            <DialogDescription>
+              Registra una nueva dirección para este cliente
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleSubmitDireccion} className="space-y-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="space-y-2.5">
+                <Label>Calle</Label>
+                <Input
+                  value={newDireccion.calle}
+                  onChange={(e) => setNewDireccion((p) => ({ ...p, calle: e.target.value }))}
+                  required
+                />
+              </div>
+              <div className="space-y-2.5">
+                <Label>Número</Label>
+                <Input
+                  value={newDireccion.numero}
+                  onChange={(e) =>
+                    setNewDireccion((p) => ({ ...p, numero: e.target.value }))
+                  }
+                  required
+                />
               </div>
             </div>
-          </div>
-        </>,
-        document.body
-      )}
-
-      {/* Modal para Agregar Contacto */}
-      {showAddContactoModal && ReactDOM.createPortal(
-        <>
-          <div className="modal-backdrop fade show"></div>
-          <div className="modal show d-block" tabIndex={-1}>
-            <div className="modal-dialog modal-dialog-centered">
-              <div className="modal-content">
-                <form onSubmit={handleSubmitContacto}>
-                  <div className="modal-header">
-                    <h5 className="modal-title">Agregar Contacto</h5>
-                    <button
-                      type="button"
-                      className="btn-close"
-                      onClick={() => setShowAddContactoModal(false)}
-                    ></button>
-                  </div>
-                  <div className="modal-body">
-                    <div className="mb-3">
-                      <label htmlFor="nombre" className="form-label">
-                        Nombre
-                      </label>
-                      <input
-                        type="text"
-                        id="nombre"
-                        name="nombre"
-                        value={newContacto.nombre}
-                        onChange={handleContactoChange}
-                        className="form-control"
-                        required
-                      />
-                    </div>
-                    <div className="mb-3">
-                      <label htmlFor="telefono" className="form-label">
-                        Teléfono
-                      </label>
-                      <input
-                        type="text"
-                        id="telefono"
-                        name="telefono"
-                        value={newContacto.telefono}
-                        onChange={handleContactoChange}
-                        className="form-control"
-                        required
-                      />
-                    </div>
-                    <div className="mb-3">
-                      <label htmlFor="email" className="form-label">
-                        Email
-                      </label>
-                      <input
-                        type="email"
-                        id="email"
-                        name="email"
-                        value={newContacto.email}
-                        onChange={handleContactoChange}
-                        className="form-control"
-                        required
-                      />
-                    </div>
-                    <div className="mb-3">
-                      <label htmlFor="referencia_id" className="form-label">
-                        Referencia
-                      </label>
-                      <select
-                        id="referencia_id"
-                        name="referencia_id"
-                        value={newContacto.referencia_id}
-                        onChange={handleContactoChange}
-                        className="form-select"
-                        required
-                      >
-                        <option value="">Seleccione una referencia</option>
-                        {referencias.map((ref) => (
-                          <option key={ref.referencia_id} value={ref.referencia_id}>
-                            {ref.nombre_referencia}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                  </div>
-                  <div className="modal-footer">
-                    <button type="submit" className="btn btn-primary modal-save-button">
-                      Guardar Contacto
-                    </button>
-                  </div>
-                </form>
+            <div className="space-y-2.5">
+              <Label>Complemento</Label>
+              <Input
+                value={newDireccion.complemento}
+                onChange={(e) =>
+                  setNewDireccion((p) => ({ ...p, complemento: e.target.value }))
+                }
+              />
+            </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="space-y-2.5">
+                <Label>Comuna</Label>
+                <Input
+                  value={newDireccion.comuna}
+                  onChange={(e) =>
+                    setNewDireccion((p) => ({ ...p, comuna: e.target.value }))
+                  }
+                  required
+                />
+              </div>
+              <div className="space-y-2.5">
+                <Label>Región</Label>
+                <Input
+                  value={newDireccion.region}
+                  onChange={(e) =>
+                    setNewDireccion((p) => ({ ...p, region: e.target.value }))
+                  }
+                  required
+                />
               </div>
             </div>
-          </div>
-        </>,
-        document.body
-      )}
-    </>
+            <div className="space-y-2.5">
+              <Label>Contacto en terreno</Label>
+              <Select
+                value={String(newDireccion.contacto_terreno_id || '')}
+                onValueChange={(v) =>
+                  setNewDireccion((p) => ({ ...p, contacto_terreno_id: Number(v) }))
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccionar contacto…" />
+                </SelectTrigger>
+                <SelectContent>
+                  {contactos.map((c) => (
+                    <SelectItem key={c.id} value={String(c.id)}>
+                      {c.nombre}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowAddDireccionModal(false)}
+              >
+                Cancelar
+              </Button>
+              <Button type="submit">Guardar dirección</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal agregar contacto */}
+      <Dialog open={showAddContactoModal} onOpenChange={setShowAddContactoModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Agregar contacto</DialogTitle>
+            <DialogDescription>
+              Registra un nuevo contacto para este cliente
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleSubmitContacto} className="space-y-4">
+            <div className="space-y-2.5">
+              <Label>Nombre</Label>
+              <Input
+                value={newContacto.nombre}
+                onChange={(e) =>
+                  setNewContacto((p) => ({ ...p, nombre: e.target.value }))
+                }
+                required
+              />
+            </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="space-y-2.5">
+                <Label>Teléfono</Label>
+                <Input
+                  value={newContacto.telefono}
+                  onChange={(e) =>
+                    setNewContacto((p) => ({ ...p, telefono: e.target.value }))
+                  }
+                  required
+                />
+              </div>
+              <div className="space-y-2.5">
+                <Label>Email</Label>
+                <Input
+                  type="email"
+                  value={newContacto.email}
+                  onChange={(e) =>
+                    setNewContacto((p) => ({ ...p, email: e.target.value }))
+                  }
+                  required
+                />
+              </div>
+            </div>
+            <div className="space-y-2.5">
+              <Label>Referencia</Label>
+              <Select
+                value={String(newContacto.referencia_id || '')}
+                onValueChange={(v) =>
+                  setNewContacto((p) => ({ ...p, referencia_id: Number(v) }))
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccionar referencia…" />
+                </SelectTrigger>
+                <SelectContent>
+                  {referencias.map((r) => (
+                    <SelectItem key={r.referencia_id} value={String(r.referencia_id)}>
+                      {r.nombre_referencia}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowAddContactoModal(false)}
+              >
+                Cancelar
+              </Button>
+              <Button type="submit">Guardar contacto</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 };
 
+function StepDot({
+  active,
+  done,
+  label,
+}: {
+  active: boolean;
+  done: boolean;
+  label: React.ReactNode;
+}) {
+  return (
+    <div
+      className={cn(
+        'flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold transition-all',
+        done
+          ? 'bg-primary text-primary-foreground'
+          : active
+            ? 'bg-primary/20 text-primary ring-2 ring-primary'
+            : 'bg-muted text-muted-foreground'
+      )}
+    >
+      {label}
+    </div>
+  );
+}
 
 export default SolicitudForm;

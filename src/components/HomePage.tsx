@@ -1,22 +1,40 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import {
+  Calendar,
+  ChevronLeft,
+  ChevronRight,
+  Eye,
+  FileText,
+  Inbox,
+  Loader2,
+  Plus,
+  Truck,
+} from 'lucide-react';
 import { getSolicitudesPorUsuario } from '../services/solicitudService';
 import { getSolicitudById } from '../services/coordinadorServices';
-import '../styles/Home.css'; 
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
 
   const [solicitudes, setSolicitudes] = useState<any[]>([]);
   const [selectedSolicitud, setSelectedSolicitud] = useState<any>(null);
-
   const [showDetallesModal, setShowDetallesModal] = useState(false);
   const [showEstadoModal, setShowEstadoModal] = useState(false);
-
   const [loading, setLoading] = useState(false);
-
   const [page, setPage] = useState(1);
-  const itemsPerPage = 7;
+  const itemsPerPage = 8;
   const usuario_id = Number(localStorage.getItem('usuario_id'));
 
   useEffect(() => {
@@ -32,38 +50,17 @@ const HomePage: React.FC = () => {
       }
     };
 
-    if (usuario_id) {
-      fetchSolicitudes();
-    }
+    if (usuario_id) fetchSolicitudes();
   }, [usuario_id]);
 
   const totalSolicitudes = solicitudes.length;
-  const totalPages = Math.ceil(totalSolicitudes / itemsPerPage);
-
+  const totalPages = Math.max(1, Math.ceil(totalSolicitudes / itemsPerPage));
   const startIndex = (page - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const paginatedSolicitudes = solicitudes.slice(startIndex, endIndex);
-
-  const handlePreviousPage = () => {
-    if (page > 1) setPage(page - 1);
-  };
-
-  const handleNextPage = () => {
-    if (page < totalPages) setPage(page + 1);
-  };
-
-  const handleCrearSolicitud = () => {
-    navigate('/crear-solicitud');
-  };
+  const paginatedSolicitudes = solicitudes.slice(startIndex, startIndex + itemsPerPage);
 
   const handleVerDetalles = (solicitud: any) => {
     setSelectedSolicitud(solicitud);
     setShowDetallesModal(true);
-  };
-
-  const handleCerrarDetallesModal = () => {
-    setShowDetallesModal(false);
-    setSelectedSolicitud(null);
   };
 
   const handleVerEstado = async (solicitud: any) => {
@@ -73,199 +70,246 @@ const HomePage: React.FC = () => {
       setSelectedSolicitud(data);
       setShowEstadoModal(true);
     } catch (error) {
-      console.error('Error al obtener el estado actualizado:', error);
+      console.error('Error al obtener el estado:', error);
     } finally {
       setLoading(false);
     }
   };
 
+  const formatFecha = (fecha: string) => {
+    if (!fecha) return '—';
+    try {
+      return new Intl.DateTimeFormat('es-CL', {
+        timeZone: 'America/Santiago',
+        dateStyle: 'medium',
+      }).format(new Date(fecha));
+    } catch {
+      return fecha;
+    }
+  };
 
-  const handleCerrarEstadoModal = () => {
-    setShowEstadoModal(false);
-    setSelectedSolicitud(null);
+  const getEstadoBadge = (estado?: string) => {
+    if (!estado) return <Badge variant="outline">Sin estado</Badge>;
+    const e = estado.toLowerCase();
+    if (e.includes('cancel')) return <Badge variant="destructive">{estado}</Badge>;
+    if (e.includes('complet') || e.includes('retiro')) return <Badge variant="success">{estado}</Badge>;
+    if (e.includes('agend')) return <Badge variant="default">{estado}</Badge>;
+    if (e.includes('pendient') || e.includes('incomplet') || e.includes('borrador'))
+      return <Badge variant="warning">{estado}</Badge>;
+    return <Badge variant="secondary">{estado}</Badge>;
   };
 
   return (
-    <div className="container mt-5">
-      {loading ? (
-        <div className="d-flex justify-content-center my-5">
-          <div className="spinner-border" role="status">
-            <span className="visually-hidden">Cargando...</span>
-          </div>
+    <div className="mx-auto max-w-[1400px] px-4 py-8 md:px-8">
+      <div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Mis solicitudes</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Historial de solicitudes creadas y su estado actual
+          </p>
         </div>
-      ) : (
-        <div className="card mb-4">
-          <div className="card-header text-center">
-            <h3 className="m-0">Mis Solicitudes</h3>
-          </div>
-
-          {totalSolicitudes === 0 ? (
-            <div className="card-body">
-              <p className="text-center">No hay solicitudes registradas.</p>
-            </div>
-          ) : (
-            <>
-              <ul className="list-group list-group-flush solicitudes-list">
-                {paginatedSolicitudes.map((solicitud) => (
-                  <li
-                    key={solicitud.solicitud_id}
-                    className="list-group-item d-flex justify-content-between align-items-center"
-                  >
-                    <div>
-                      <strong>ID:</strong> <span style={{ color: '#243c6c' }}>{solicitud.solicitud_id}</span>
-                      <br />
-                      <strong>Descripción:</strong> <span style={{ color: '#243c6c' }}>{solicitud.descripcion}</span>
-                    </div>
-                    <div>
-                      <button
-                        className="btn home-ver-detalles me-2"
-                        onClick={() => handleVerDetalles(solicitud)}
-                      >
-                        Ver Detalles
-                      </button>
-                      <button
-                        className="btn btn-success"
-                        onClick={() => handleVerEstado(solicitud)}
-                      >
-                        Ver Estado
-                      </button>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-
-              <div className="card-footer">
-                <div className="d-flex justify-content-center align-items-center">
-                  <button
-                    className="btn btn-secondary me-3"
-                    onClick={handlePreviousPage}
-                    disabled={page === 1}
-                  >
-                    Anterior
-                  </button>
-                  <span>
-                    Página {page} de {totalPages}
-                  </span>
-                  <button
-                    className="btn btn-secondary ms-3"
-                    onClick={handleNextPage}
-                    disabled={page === totalPages}
-                  >
-                    Siguiente
-                  </button>
-                </div>
-              </div>
-            </>
-          )}
-        </div>
-      )}
-
-      <div className="d-flex justify-content-center mt-5">
-        <button
-          className="btn home-create-solicitud"
-          onClick={handleCrearSolicitud}
-        >
-          Crear Solicitud
-        </button>
+        <Button size="lg" onClick={() => navigate('/crear-solicitud')}>
+          <Plus className="h-4 w-4" />
+          Crear solicitud
+        </Button>
       </div>
 
-      {/* Modal de Detalles */}
-      {showDetallesModal && selectedSolicitud && (
-        <>
-          <div className="modal show d-block" tabIndex={-1}>
-            <div className="modal-dialog modal-dialog-centered">
-              <div className="modal-content">
-                <div className="modal-header">
-                  <h5 className="modal-title">
-                    Detalles de Solicitud ID: {selectedSolicitud.solicitud_id}
-                  </h5>
-                  <button
-                    type="button"
-                    className="btn-close"
-                    onClick={handleCerrarDetallesModal}
-                  ></button>
-                </div>
-                <div className="modal-body">
-                  <p>
-                    <strong>Descripción:</strong> <span style={{ color: '#243c6c' }}>{selectedSolicitud.descripcion}</span>
-                  </p>
-                  <p>
-                    <strong>Fecha de Servicio Solicitada:</strong>{" "}
-                    <span style={{ color: '#243c6c' }}>
-                      {new Date(selectedSolicitud.fecha_servicio_solicitada).toLocaleDateString()}
-                    </span>
-                  </p>
-                  <p>
-                    <strong>Hora de Servicio Solicitada:</strong>{" "}
-                    <span style={{ color: '#243c6c' }}>{selectedSolicitud.hora_servicio_solicitada}</span>
-                  </p>
-                  <p>
-                    <strong>Requiere Transporte:</strong>{" "}
-                    <span style={{ color: '#243c6c' }}>
-                      {selectedSolicitud.requiere_transporte ? "Sí" : "No"}
-                    </span>
-                  </p>
-                </div>
-                <div className="modal-footer">
-                  <button
-                    type="button"
-                    className="btn btn-secondary"
-                    onClick={handleCerrarDetallesModal}
-                  >
-                    Cerrar
-                  </button>
-                </div>
-              </div>
+      {loading ? (
+        <div className="flex items-center justify-center py-24">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      ) : totalSolicitudes === 0 ? (
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center gap-4 py-16 text-center">
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-muted">
+              <Inbox className="h-7 w-7 text-muted-foreground" />
             </div>
+            <div>
+              <h3 className="text-lg font-semibold">Aún no tienes solicitudes</h3>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Crea tu primera solicitud para verla aquí
+              </p>
+            </div>
+            <Button onClick={() => navigate('/crear-solicitud')}>
+              <Plus className="h-4 w-4" />
+              Crear solicitud
+            </Button>
+          </CardContent>
+        </Card>
+      ) : (
+        <>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {paginatedSolicitudes.map((s) => (
+              <Card
+                key={s.solicitud_id}
+                className="group flex flex-col transition-all hover:shadow-md hover:-translate-y-0.5"
+              >
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10 text-primary">
+                        <FileText className="h-4 w-4" />
+                      </div>
+                      <div>
+                        <div className="text-xs text-muted-foreground">Solicitud</div>
+                        <div className="font-semibold leading-tight">#{s.solicitud_id}</div>
+                      </div>
+                    </div>
+                    {s.requiere_transporte ? (
+                      <Badge variant="default" className="gap-1">
+                        <Truck className="h-3 w-3" />
+                        Transporte
+                      </Badge>
+                    ) : null}
+                  </div>
+                </CardHeader>
+                <CardContent className="flex flex-1 flex-col justify-between gap-4 pt-0">
+                  <div className="space-y-2">
+                    <p className="line-clamp-2 text-sm text-foreground">
+                      {s.descripcion || 'Sin descripción'}
+                    </p>
+                    {s.fecha_servicio_solicitada && (
+                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <Calendar className="h-3 w-3" />
+                        {formatFecha(s.fecha_servicio_solicitada)}
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex gap-2 pt-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1"
+                      onClick={() => handleVerDetalles(s)}
+                    >
+                      <Eye className="h-3.5 w-3.5" />
+                      Detalles
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="flex-1"
+                      onClick={() => handleVerEstado(s)}
+                    >
+                      Estado
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
-          <div className="modal-backdrop fade show"></div>
+
+          {totalPages > 1 && (
+            <div className="mt-8 flex items-center justify-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page === 1}
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Anterior
+              </Button>
+              <span className="px-3 text-sm text-muted-foreground">
+                Página <span className="font-medium text-foreground">{page}</span> de{' '}
+                {totalPages}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={page === totalPages}
+              >
+                Siguiente
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
         </>
       )}
 
-      {/* Modal de Estado */}
-      {showEstadoModal && selectedSolicitud && (
-        <>
-          <div className="modal show d-block" tabIndex={-1}>
-            <div className="modal-dialog modal-dialog-centered">
-              <div className="modal-content">
-                <div className="modal-header">
-                  <h5 className="modal-title">
-                    Estado de la Solicitud (ID: {selectedSolicitud.solicitud_id})
-                  </h5>
-                  <button
-                    type="button"
-                    className="btn-close"
-                    onClick={handleCerrarEstadoModal}
-                  ></button>
+      {/* Modal detalles */}
+      <Dialog open={showDetallesModal} onOpenChange={setShowDetallesModal}>
+        <DialogContent>
+          {selectedSolicitud && (
+            <>
+              <DialogHeader>
+                <DialogTitle>Solicitud #{selectedSolicitud.solicitud_id}</DialogTitle>
+                <DialogDescription>Detalles de tu solicitud</DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    Descripción
+                  </div>
+                  <p className="mt-1 text-sm">{selectedSolicitud.descripcion || '—'}</p>
                 </div>
-                <div className="modal-body">
-                  <p>
-                    <strong>Estado de la Solicitud:</strong>{" "}
-                    <span style={{ color: '#243c6c', fontWeight: 600 }}>
-                      {selectedSolicitud.nombre_estado || 'Sin estado definido'}
-                    </span>
-                  </p>
-
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div>
+                    <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                      Fecha servicio
+                    </div>
+                    <p className="mt-1 text-sm">
+                      {formatFecha(selectedSolicitud.fecha_servicio_solicitada)}
+                    </p>
+                  </div>
+                  <div>
+                    <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                      Hora
+                    </div>
+                    <p className="mt-1 text-sm">
+                      {selectedSolicitud.hora_servicio_solicitada || '—'}
+                    </p>
+                  </div>
                 </div>
-                <div className="modal-footer">
-                  <button
-                    type="button"
-                    className="btn btn-secondary"
-                    onClick={handleCerrarEstadoModal}
-                  >
-                    Regresar
-                  </button>
+                <div>
+                  <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    Transporte
+                  </div>
+                  <div className="mt-1">
+                    {selectedSolicitud.requiere_transporte ? (
+                      <Badge variant="default">Requiere transporte</Badge>
+                    ) : (
+                      <Badge variant="secondary">Sin transporte</Badge>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
-          <div className="modal-backdrop fade show"></div>
-        </>
-      )}
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setShowDetallesModal(false)}>
+                  Cerrar
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal estado */}
+      <Dialog open={showEstadoModal} onOpenChange={setShowEstadoModal}>
+        <DialogContent>
+          {selectedSolicitud && (
+            <>
+              <DialogHeader>
+                <DialogTitle>
+                  Estado de solicitud #{selectedSolicitud.solicitud_id}
+                </DialogTitle>
+              </DialogHeader>
+              <div className="flex items-center gap-3 rounded-lg border border-border bg-muted/30 p-4">
+                <div className="text-sm text-muted-foreground">Estado actual:</div>
+                {getEstadoBadge(selectedSolicitud.nombre_estado)}
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setShowEstadoModal(false)}>
+                  Cerrar
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
 
 export default HomePage;
-
-

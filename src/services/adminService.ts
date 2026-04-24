@@ -1,4 +1,4 @@
-import api from '../api/api';
+import api from './api';
 
 export interface Cliente {
   id: number;
@@ -6,7 +6,7 @@ export interface Cliente {
 }
 
 export interface Contrato {
-  contrato_id: number; 
+  contrato_id: number;
   transportista_id: number | null;
   es_spot: boolean;
   documento_respaldo: string | null;
@@ -98,9 +98,9 @@ export interface DireccionCliente {
 }
 
 export interface MaterialServicio {
-  material_matnr: number; 
+  material_matnr: number;
   nombre_material_maktg: string;
-  unidad_venta_kmein: string; 
+  unidad_venta_kmein: string;
 }
 
 export interface AsignacionTarifaData {
@@ -110,30 +110,60 @@ export interface AsignacionTarifaData {
   tarifario_contrato_id: number;
 }
 
-// Funciones comienzan aquí
+// Helpers
+
+interface BackendPaginated<T> {
+  data: T[];
+  total: number;
+  limit: number;
+  offset: number;
+  next_offset: number | null;
+  prev_offset: number | null;
+}
+
+const toPaginationInfo = <T>(payload: BackendPaginated<T>): PaginationInfo => ({
+  limit: payload.limit,
+  offset: payload.offset,
+  total: payload.total,
+  nextOffset: payload.next_offset,
+  prevOffset: payload.prev_offset,
+});
+
+// Funciones
 
 export const getClienteById = async (id: number | string): Promise<Cliente> => {
-  const response = await api.get<Cliente>(`/clientes/${id}`);
-  return response.data;
+  const response = await api.get(`/clientes/clientes/${id}`);
+  const d = response.data;
+  return {
+    id: d.codigo_cliente_kunnr,
+    nombre: [d.nombre_name1, d.sucursal_name2].filter(Boolean).join(' - '),
+  };
 };
 
 export const asignarClientesAUsuario = async (
-  usuarioId: number | string,
-  clienteIds: number[]
+  _usuarioId: number | string,
+  clienteIds: number[],
+  email?: string
 ): Promise<{ success: boolean }> => {
-  const payload = {
-    usuario_id: usuarioId,
+  const storedEmail = email || localStorage.getItem('user_email') || '';
+  await api.post('/clientes/asignaciones', {
+    email: storedEmail,
     cliente_ids: clienteIds,
-  };
-  const response = await api.post<{ success: boolean }>(`/usuarios/${usuarioId}/asignar-clientes`, payload);
-  return response.data;
+  });
+  return { success: true };
 };
 
-export const getContratos = async (limit: number = 10, offset: number = 0): Promise<ContratosResponse> => {
-  const response = await api.get<ContratosResponse>(`/contratos`, {
-    params: { limit, offset }
+export const getContratos = async (
+  limit: number = 10,
+  offset: number = 0
+): Promise<ContratosResponse> => {
+  const response = await api.get<BackendPaginated<Contrato>>(`/contratos`, {
+    params: { limit, offset },
   });
-  return response.data;
+  return {
+    data: response.data.data,
+    pagination: toPaginationInfo(response.data),
+  };
 };
 
 export const getContratoById = async (id: number): Promise<Contrato> => {
@@ -144,52 +174,186 @@ export const getContratoById = async (id: number): Promise<Contrato> => {
 export const createContrato = async (contratoData: FormData): Promise<Contrato> => {
   const response = await api.post<Contrato>(`/contratos`, contratoData, {
     headers: {
-      'Content-Type': 'multipart/form-data'
-    }
+      'Content-Type': 'multipart/form-data',
+    },
   });
   return response.data;
 };
 
 export const updateContrato = async (id: number, contratoData: FormData): Promise<Contrato> => {
-  const response = await api.put<Contrato>(`/contratos/${id}`, contratoData);
+  const response = await api.put<Contrato>(`/contratos/${id}`, contratoData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
   return response.data;
 };
 
 export const deleteContrato = async (id: number): Promise<{ success: boolean }> => {
-  const response = await api.delete<{ success: boolean }>(`/contratos/${id}`);
-  return response.data;
+  await api.delete(`/contratos/${id}`);
+  return { success: true };
 };
 
 export const downloadContrato = async (id: number): Promise<Blob> => {
-  const response = await api.get(`/contratos/${id}/download`, {
-    responseType: 'blob'
+  const response = await api.get(`/contratos/${id}/documento`, {
+    responseType: 'blob',
   });
   return response.data;
 };
 
 export const getTransportistas = async (): Promise<Transportista[]> => {
-  const response = await api.get<Transportista[]>(`/transportistas`);
+  const response = await api.get<BackendPaginated<Transportista>>(`/flota/transportistas`, {
+    params: { limit: 200, offset: 0 },
+  });
+  return response.data.data;
+};
+
+export interface TransportistaDetalle extends Transportista {
+  total_vehiculos?: number;
+  total_conductores?: number;
+}
+
+export const getTransportistaById = async (id: number): Promise<TransportistaDetalle> => {
+  const response = await api.get<TransportistaDetalle>(`/flota/transportistas/${id}`);
   return response.data;
 };
 
-export const getTarifasByContrato = async (contratoId: number, limit: number = 10, offset: number = 0): Promise<TarifasResponse> => {
-  const response = await api.get<TarifasResponse>(`/tarifario_contrato/contrato/${contratoId}`, {
-    params: { limit, offset }
-  });
+export const createTransportista = async (data: {
+  nombre_transportista: string;
+  rut_transportista: string;
+  direccion_transportista?: string;
+}): Promise<Transportista> => {
+  const response = await api.post<Transportista>(`/flota/transportistas`, data);
   return response.data;
+};
+
+export const updateTransportista = async (
+  id: number,
+  data: {
+    nombre_transportista?: string;
+    rut_transportista?: string;
+    direccion_transportista?: string;
+  }
+): Promise<Transportista> => {
+  const response = await api.patch<Transportista>(`/flota/transportistas/${id}`, data);
+  return response.data;
+};
+
+export const deleteTransportista = async (id: number): Promise<{ success: boolean }> => {
+  await api.delete(`/flota/transportistas/${id}`);
+  return { success: true };
+};
+
+// ── Conductores ─────────────────────────────────────────────────────────────
+
+export interface Conductor {
+  conductor_id: number;
+  nombre: string;
+  rut: string;
+  transportista_id: number;
+}
+
+export const getConductoresPorTransportista = async (
+  transportistaId: number
+): Promise<Conductor[]> => {
+  const response = await api.get<BackendPaginated<Conductor>>(
+    `/flota/transportistas/${transportistaId}/conductores`,
+    { params: { limit: 200, offset: 0 } }
+  );
+  return response.data.data;
+};
+
+export const createConductor = async (data: {
+  nombre: string;
+  rut: string;
+  transportista_id: number;
+}): Promise<Conductor> => {
+  const response = await api.post<Conductor>(`/flota/conductores`, data);
+  return response.data;
+};
+
+export const updateConductor = async (
+  id: number,
+  data: { nombre?: string; rut?: string }
+): Promise<Conductor> => {
+  const response = await api.patch<Conductor>(`/flota/conductores/${id}`, data);
+  return response.data;
+};
+
+export const deleteConductor = async (id: number): Promise<{ success: boolean }> => {
+  await api.delete(`/flota/conductores/${id}`);
+  return { success: true };
+};
+
+// ── Vehículos ───────────────────────────────────────────────────────────────
+
+export interface Vehiculo {
+  vehiculo_id: number;
+  patente: string;
+  tipo_transporte_id: number;
+  transportista_id: number;
+  nombre_tipo_transporte?: string;
+}
+
+export const getVehiculosPorTransportista = async (
+  transportistaId: number
+): Promise<Vehiculo[]> => {
+  const response = await api.get<BackendPaginated<Vehiculo>>(
+    `/flota/transportistas/${transportistaId}/vehiculos`,
+    { params: { limit: 200, offset: 0 } }
+  );
+  return response.data.data;
+};
+
+export const createVehiculo = async (data: {
+  patente: string;
+  tipo_transporte_id: number;
+  transportista_id: number;
+}): Promise<Vehiculo> => {
+  const response = await api.post<Vehiculo>(`/flota/vehiculos`, data);
+  return response.data;
+};
+
+export const updateVehiculo = async (
+  id: number,
+  data: { patente?: string; tipo_transporte_id?: number }
+): Promise<Vehiculo> => {
+  const response = await api.patch<Vehiculo>(`/flota/vehiculos/${id}`, data);
+  return response.data;
+};
+
+export const deleteVehiculo = async (id: number): Promise<{ success: boolean }> => {
+  await api.delete(`/flota/vehiculos/${id}`);
+  return { success: true };
+};
+
+export const getTarifasByContrato = async (
+  contratoId: number,
+  limit: number = 10,
+  offset: number = 0
+): Promise<TarifasResponse> => {
+  const response = await api.get<BackendPaginated<TarifaContrato>>(
+    `/contratos/${contratoId}/tarifario`,
+    { params: { limit, offset } }
+  );
+  return {
+    data: response.data.data,
+    pagination: toPaginationInfo(response.data),
+  };
 };
 
 export const getTiposTransporte = async (): Promise<TipoTransporte[]> => {
-  const response = await api.get(`/tiposTransporte`);
-  const tiposTransporte = response.data.map((tipo: any): TipoTransporte => ({
-    tipo_transporte_id: tipo.id || tipo.tipo_transporte_id,
-    nombre_tipo_transporte: tipo.nombre || tipo.nombre_tipo_transporte
+  const response = await api.get(`/flota/tipos-transporte`);
+  const raw = response.data?.data ?? response.data ?? [];
+  const tiposTransporte = (raw as any[]).map((tipo): TipoTransporte => ({
+    tipo_transporte_id: tipo.tipo_transporte_id ?? tipo.id,
+    nombre_tipo_transporte: tipo.nombre_tipo_transporte ?? tipo.nombre,
   }));
   return tiposTransporte;
 };
 
 export const getTarifaById = async (tarifaId: number): Promise<TarifaContrato> => {
-  const response = await api.get<TarifaContrato>(`/tarifario_contrato/${tarifaId}`);
+  const response = await api.get<TarifaContrato>(`/contratos/tarifario/${tarifaId}`);
   return response.data;
 };
 
@@ -199,31 +363,52 @@ export const createTarifa = async (tarifaData: {
   tipo_transporte_id: number;
   tarifa_inicial: number;
   fecha_inicio_vigencia: string;
-  fecha_fin_vigencia: string | null;
+  fecha_fin_vigencia?: string | null;
+  unidad_costo_id?: number;
+  codigo_moneda?: string;
 }): Promise<TarifaContrato> => {
-  const response = await api.post<TarifaContrato>(`/tarifario_contrato`, tarifaData, {
-    headers: { 'Content-Type': 'application/json' }
-  });
+  // Si el form no pasa unidad_costo_id, tomamos la primera unidad disponible.
+  let unidad_costo_id = tarifaData.unidad_costo_id;
+  if (!unidad_costo_id) {
+    try {
+      const res = await api.get('/operaciones/unidades-referenciales');
+      const list: any[] = res.data?.data ?? [];
+      unidad_costo_id = list[0]?.unidad_medida_id;
+    } catch {
+      // noop — si falla, el backend devolverá 400 y lo mostramos
+    }
+  }
+
+  const { fecha_fin_vigencia: _ignored, ...rest } = tarifaData;
+  const body = {
+    ...rest,
+    unidad_costo_id,
+    codigo_moneda: tarifaData.codigo_moneda ?? 'CLP',
+  };
+
+  const response = await api.post<TarifaContrato>(`/contratos/tarifario`, body);
   return response.data;
 };
 
-export const updateTarifa = async (tarifaId: number, tarifaData: Partial<TarifaContrato>): Promise<TarifaContrato> => {
-  const response = await api.put<TarifaContrato>(`/tarifario_contrato/${tarifaId}`, tarifaData, {
-    headers: { 'Content-Type': 'application/json' }
-  });
+export const updateTarifa = async (
+  tarifaId: number,
+  tarifaData: Partial<TarifaContrato>
+): Promise<TarifaContrato> => {
+  const response = await api.put<TarifaContrato>(`/contratos/tarifario/${tarifaId}`, tarifaData);
   return response.data;
 };
 
 export const deleteTarifa = async (tarifaId: number): Promise<{ success: boolean }> => {
-  const response = await api.delete<{ success: boolean }>(`/tarifario_contrato/${tarifaId}`);
-  return response.data;
+  await api.delete(`/contratos/tarifario/${tarifaId}`);
+  return { success: true };
 };
 
-export const getAsignacionesByTarifa = async (tarifaId: number, limit: number = 10, offset: number = 0): Promise<AsignacionesResponse> => {
-  const response = await api.get<AsignacionesResponse>(`/tarifario_contrato/${tarifaId}/asignaciones`, {
-    params: { limit, offset }
-  });
-  return response.data;
+export const getAsignacionesByTarifa = async (
+  tarifaId: number,
+  limit: number = 10,
+  offset: number = 0
+): Promise<AsignacionesResponse> => {
+  return getAsignacionesManualesByTarifario(tarifaId, limit, offset);
 };
 
 export const getAsignacionesManualesByTarifario = async (
@@ -231,47 +416,65 @@ export const getAsignacionesManualesByTarifario = async (
   limit: number = 10,
   offset: number = 0
 ): Promise<AsignacionesResponse> => {
-  const response = await api.get<AsignacionesResponse>(`/asignaciones_manuales_tarifas/tarifario/${tarifarioId}`, {
-    params: { limit, offset }
-  });
-  return response.data;
+  const response = await api.get<BackendPaginated<AsignacionManualTarifa>>(
+    `/contratos/asignaciones`,
+    { params: { tarifario_contrato_id: tarifarioId, limit, offset } }
+  );
+  return {
+    data: response.data.data,
+    pagination: toPaginationInfo(response.data),
+  };
 };
 
-export const deleteAsignacionManual = async (asignacionId: number): Promise<{ success: boolean }> => {
-  const response = await api.delete<{ success: boolean }>(`/asignaciones_manuales_tarifas/${asignacionId}`);
-  return response.data;
+export const deleteAsignacionManual = async (
+  asignacionId: number
+): Promise<{ success: boolean }> => {
+  await api.delete(`/contratos/asignaciones/${asignacionId}`);
+  return { success: true };
 };
 
 export const createAsignacionTarifa = async (data: AsignacionTarifaData): Promise<any> => {
-  const response = await api.post(`/asignaciones_manuales_tarifas`, data, {
-    headers: { 'Content-Type': 'application/json' }
-  });
+  const response = await api.post(`/contratos/asignaciones`, data);
   return response.data;
 };
 
 export const getClientesAsociados = async (q: string = ''): Promise<ClienteAsociado[]> => {
-  const response = await api.get(`/usuarios/clientes/asociados`, {
-    params: { limit: 10, offset: 0, q }
-  });
+  const trimmed = q.trim();
 
-  let clientesList: any[] = [];
+  // Sin término: listar clientes asignados al usuario
+  // Con término: usar endpoint de búsqueda
+  const response = trimmed.length < 1
+    ? await api.get(`/clientes/clientes`, { params: { limit: 50, offset: 0 } })
+    : await api.get(`/clientes/clientes/buscar`, { params: { q: trimmed, limit: 20 } });
+
   const data = response.data;
+  let clientesList: any[] = [];
 
   if (Array.isArray(data)) {
     clientesList = data;
   } else if (data && typeof data === 'object') {
-    clientesList = data.clientes || data.data || [];
+    clientesList = data.data || data.clientes || [];
   }
 
-  return clientesList;
+  return clientesList.map((c: any) => ({
+    codigo_cliente_kunnr: c.codigo_cliente_kunnr,
+    nombre_name1: c.nombre_name1,
+    sucursal_name2: c.sucursal_name2,
+  }));
 };
 
-export const getDireccionesCliente = async (codigo_cliente_kunnr: number): Promise<DireccionCliente[]> => {
-  const response = await api.get(`/direcciones_cliente/cliente/${codigo_cliente_kunnr}`);
-  return response.data;
+export const getDireccionesCliente = async (
+  codigo_cliente_kunnr: number
+): Promise<DireccionCliente[]> => {
+  const response = await api.get(`/clientes/clientes/${codigo_cliente_kunnr}/direcciones`);
+  return response.data?.data ?? [];
 };
 
-export const getMaterialesCliente = async (codigo_cliente_kunnr: number): Promise<MaterialServicio[]> => {
-  const response = await api.get(`/materiales_cotizados/servicios/cliente/${codigo_cliente_kunnr}`);
-  return response.data;
+export const getMaterialesCliente = async (
+  _codigo_cliente_kunnr: number
+): Promise<MaterialServicio[]> => {
+  // El backend v2 ya no expone materiales por cliente directamente;
+  // los materiales se derivan a través de la solicitud. Devolver lista vacía
+  // para no romper la UI; el flujo de asignación manual se maneja en otro paso.
+  return [];
 };

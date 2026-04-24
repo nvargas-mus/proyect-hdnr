@@ -1,7 +1,17 @@
-import React, { useState } from 'react';
-import { Button, Card, Row, Col, Form, InputGroup } from 'react-bootstrap';
-import { FaFilter, FaSearch, FaCalendarAlt } from 'react-icons/fa';
-import '../styles/FiltroSolicitudes.css';
+import { useState } from 'react';
+import { Calendar, Filter, RotateCcw, Search } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 interface FiltersState {
   cliente: string;
@@ -17,221 +27,193 @@ interface FiltrosSolicitudesProps {
   onApplyFilters: (filters: Record<string, any>) => void;
 }
 
-const FiltrosSolicitudes: React.FC<FiltrosSolicitudesProps> = ({ onApplyFilters }) => {
-  const [showFilters, setShowFilters] = useState<boolean>(false);
-  const [filters, setFilters] = useState<FiltersState>({
-    cliente: "",          
-    estado: [],
-    centro: "",
-    usuario: "",          
-    fechaDesde: "",
-    fechaHasta: "",
-    requiereTransporte: ""
-  });
-  
-  const estadoOptions = [
-  { value: "Incompleta", label: "Incompleta" },
-  { value: "Pendiente", label: "Pendiente" },
-  { value: "Agendado", label: "Agendado" },
-  { value: "Completado", label: "Completado" },
-  { value: "Cancelado", label: "Cancelado" }
+const ESTADO_OPTIONS = [
+  { value: 'Incompleta', label: 'Incompleta' },
+  { value: 'Pendiente', label: 'Pendiente' },
+  { value: 'Agendado', label: 'Agendado' },
+  { value: 'Completado', label: 'Completado' },
+  { value: 'Cancelado', label: 'Cancelado' },
 ];
 
-  const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFilters({
+const FiltrosSolicitudes: React.FC<FiltrosSolicitudesProps> = ({ onApplyFilters }) => {
+  const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState<FiltersState>({
+    cliente: '',
+    estado: [],
+    centro: '',
+    usuario: '',
+    fechaDesde: '',
+    fechaHasta: '',
+    requiereTransporte: '',
+  });
+
+  const handleApply = () => {
+    const formatted: Record<string, any> = {
       ...filters,
-      [name]: value
-    });
-  };
-  
-  const handleEstadoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { value, checked } = e.target;
-    if (checked) {
-      setFilters({
-        ...filters,
-        estado: [...filters.estado, value]
-      });
-    } else {
-      setFilters({
-        ...filters,
-        estado: filters.estado.filter(estado => estado !== value)
-      });
-    }
-  };
-  
-  const handleTransporteChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setFilters({
-      ...filters,
-      requiereTransporte: e.target.value
-    });
-  };
-  
-  const handleApplyFilters = () => {
-    const formattedFilters: Record<string, any> = {
-      ...filters,
-      estado: filters.estado.length > 0 ? filters.estado.join(',') : undefined
+      estado: filters.estado.length > 0 ? filters.estado.join(',') : undefined,
     };
-    
-    Object.keys(formattedFilters).forEach(key => {
-      if (formattedFilters[key] === "" || formattedFilters[key] === undefined) {
-        delete formattedFilters[key];
-      }
+    Object.keys(formatted).forEach((k) => {
+      if (formatted[k] === '' || formatted[k] === undefined) delete formatted[k];
     });
-    
-    onApplyFilters(formattedFilters);
+    onApplyFilters(formatted);
   };
-  
-  const handleResetFilters = () => {
+
+  const handleReset = () => {
     setFilters({
-      cliente: "",
+      cliente: '',
       estado: [],
-      centro: "",
-      usuario: "",
-      fechaDesde: "",
-      fechaHasta: "",
-      requiereTransporte: ""
+      centro: '',
+      usuario: '',
+      fechaDesde: '',
+      fechaHasta: '',
+      requiereTransporte: '',
     });
     onApplyFilters({});
   };
 
+  const activeCount =
+    (filters.cliente ? 1 : 0) +
+    (filters.estado.length > 0 ? 1 : 0) +
+    (filters.centro ? 1 : 0) +
+    (filters.usuario ? 1 : 0) +
+    (filters.fechaDesde ? 1 : 0) +
+    (filters.fechaHasta ? 1 : 0) +
+    (filters.requiereTransporte ? 1 : 0);
+
   return (
-    <Card className="mb-4">
-      <Card.Header className="d-flex justify-content-between align-items-center bg-light filtros-header">
-        <div className="d-flex align-items-center">
-          <FaFilter className="me-2" />
-          <h5 className="mb-0">Filtros</h5>
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between gap-2 pb-3">
+        <div className="flex items-center gap-2">
+          <Filter className="h-4 w-4 text-muted-foreground" />
+          <span className="font-semibold">Filtros</span>
+          {activeCount > 0 && (
+            <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-semibold text-primary-foreground">
+              {activeCount}
+            </span>
+          )}
         </div>
-        <Button 
-          variant="link" 
-          onClick={() => setShowFilters(!showFilters)}
-          className="text-dark"
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setShowFilters((s) => !s)}
         >
-          {showFilters ? 'Ocultar filtros' : 'Mostrar filtros'}
+          {showFilters ? 'Ocultar' : 'Mostrar'}
         </Button>
-      </Card.Header>
-      
+      </CardHeader>
+
       {showFilters && (
-        <Card.Body>
-          <Row className="g-3">
-            <Col md={6} lg={3}>
-              <Form.Group>
-                <Form.Label>Código Cliente</Form.Label>
-                <Form.Control
-                  type="text"
-                  name="cliente"
-                  value={filters.cliente}
-                  onChange={handleFilterChange}
-                  placeholder="Ej: 600141"
-                />
-              </Form.Group>
-            </Col>
-            
-            <Col md={6} lg={3}>
-              <Form.Group>
-                <Form.Label>Centro</Form.Label>
-                <Form.Control
-                  type="text"
-                  name="centro"
-                  value={filters.centro}
-                  onChange={handleFilterChange}
-                  placeholder="Ingrese centro"
-                />
-              </Form.Group>
-            </Col>
-            
-            <Col md={6} lg={3}>
-              <Form.Group>
-                <Form.Label>ID Usuario</Form.Label>
-                <Form.Control
-                  type="text"
-                  name="usuario"
-                  value={filters.usuario}
-                  onChange={handleFilterChange}
-                  placeholder="Ej: 14"
-                />
-              </Form.Group>
-            </Col>
-            
-            <Col md={6} lg={3}>
-              <Form.Group>
-                <Form.Label>Transporte</Form.Label>
-                <Form.Select
-                  name="requiereTransporte"
-                  value={filters.requiereTransporte}
-                  onChange={handleTransporteChange}
-                >
-                  <option value="">Todos</option>
-                  <option value="true">Con transporte</option>
-                  <option value="false">Sin transporte</option>
-                </Form.Select>
-              </Form.Group>
-            </Col>
-            
-            <Col md={6}>
-              <Form.Group>
-                <Form.Label>Estado</Form.Label>
-                <div className="d-flex flex-wrap gap-3">
-                  {estadoOptions.map(option => (
-                    <Form.Check
-                      key={option.value}
-                      type="checkbox"
-                      id={`estado-${option.value}`}
-                      label={option.label}
-                      value={option.value}
-                      checked={filters.estado.includes(option.value)}
-                      onChange={handleEstadoChange}
+        <CardContent className="space-y-5">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <div className="space-y-2.5">
+              <Label htmlFor="cliente">Código cliente</Label>
+              <Input
+                id="cliente"
+                placeholder="Ej: 100001"
+                value={filters.cliente}
+                onChange={(e) => setFilters((p) => ({ ...p, cliente: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-2.5">
+              <Label htmlFor="centro">Centro</Label>
+              <Input
+                id="centro"
+                placeholder="Ej: 1000"
+                value={filters.centro}
+                onChange={(e) => setFilters((p) => ({ ...p, centro: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-2.5">
+              <Label htmlFor="usuario">ID usuario</Label>
+              <Input
+                id="usuario"
+                placeholder="Ej: 14"
+                value={filters.usuario}
+                onChange={(e) => setFilters((p) => ({ ...p, usuario: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-2.5">
+              <Label>Transporte</Label>
+              <Select
+                value={filters.requiereTransporte}
+                onValueChange={(v) =>
+                  setFilters((p) => ({ ...p, requiereTransporte: v === '__all' ? '' : v }))
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Todos" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all">Todos</SelectItem>
+                  <SelectItem value="true">Con transporte</SelectItem>
+                  <SelectItem value="false">Sin transporte</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div className="space-y-2.5">
+              <Label>Estado</Label>
+              <div className="flex flex-wrap gap-3 rounded-md border border-border bg-muted/30 p-3">
+                {ESTADO_OPTIONS.map((o) => (
+                  <label key={o.value} className="flex items-center gap-2">
+                    <Checkbox
+                      checked={filters.estado.includes(o.value)}
+                      onCheckedChange={(v) => {
+                        setFilters((p) => ({
+                          ...p,
+                          estado:
+                            v === true
+                              ? [...p.estado, o.value]
+                              : p.estado.filter((e) => e !== o.value),
+                        }));
+                      }}
                     />
-                  ))}
+                    <span className="text-sm">{o.label}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+            <div className="space-y-2.5">
+              <Label>Rango de fechas</Label>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                <div className="relative">
+                  <Calendar className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    type="date"
+                    className="pl-10"
+                    value={filters.fechaDesde}
+                    onChange={(e) =>
+                      setFilters((p) => ({ ...p, fechaDesde: e.target.value }))
+                    }
+                  />
                 </div>
-              </Form.Group>
-            </Col>
-            
-            <Col md={6}>
-              <Form.Label>Rango de Fechas</Form.Label>
-              <Row>
-                <Col>
-                  <InputGroup className="mb-2">
-                    <InputGroup.Text>
-                      <FaCalendarAlt />
-                    </InputGroup.Text>
-                    <Form.Control
-                      type="date"
-                      name="fechaDesde"
-                      value={filters.fechaDesde}
-                      onChange={handleFilterChange}
-                      placeholder="Desde"
-                    />
-                  </InputGroup>
-                </Col>
-                <Col>
-                  <InputGroup>
-                    <InputGroup.Text>
-                      <FaCalendarAlt />
-                    </InputGroup.Text>
-                    <Form.Control
-                      type="date"
-                      name="fechaHasta"
-                      value={filters.fechaHasta}
-                      onChange={handleFilterChange}
-                      placeholder="Hasta"
-                    />
-                  </InputGroup>
-                </Col>
-              </Row>
-            </Col>
-          </Row>
-          
-          <div className="d-flex justify-content-end gap-2 mt-3">
-            <Button variant="outline-secondary" onClick={handleResetFilters}>
-              Limpiar filtros
+                <div className="relative">
+                  <Calendar className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    type="date"
+                    className="pl-10"
+                    value={filters.fechaHasta}
+                    onChange={(e) =>
+                      setFilters((p) => ({ ...p, fechaHasta: e.target.value }))
+                    }
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="outline" onClick={handleReset}>
+              <RotateCcw className="h-4 w-4" />
+              Limpiar
             </Button>
-            <Button className="form-button-primary" onClick={handleApplyFilters}>
-              <FaSearch className="me-2" />
+            <Button onClick={handleApply}>
+              <Search className="h-4 w-4" />
               Aplicar filtros
             </Button>
           </div>
-        </Card.Body>
+        </CardContent>
       )}
     </Card>
   );

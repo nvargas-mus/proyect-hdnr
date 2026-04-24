@@ -36,3 +36,15 @@ public/
 # OS-specific files
 Thumbs.db
 
+
+# Backend (se mantiene en repo aparte)
+backend/
+
+# Script de desarrollo local
+dev.sh
+
+# Capturas de pantalla
+Captura de pantalla*.png
+
+# Variantes de .env
+.env.mobile

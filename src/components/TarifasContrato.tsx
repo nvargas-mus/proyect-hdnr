@@ -1,18 +1,58 @@
-import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { Modal, Button, Spinner } from 'react-bootstrap';
-import { 
-  getTarifasByContrato, 
-  getContratoById,
-  deleteTarifa,
+import { useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import {
+  ArrowLeft,
+  ChevronLeft,
+  ChevronRight,
+  FileText,
+  Link2,
+  List,
+  Loader2,
+  Pencil,
+  Plus,
+  Trash2,
+} from 'lucide-react';
+import {
   createTarifa,
+  deleteTarifa,
+  getContratoById,
+  getTarifasByContrato,
   getTiposTransporte,
-  Contrato, 
-  TarifaContrato, 
+  Contrato,
   PaginationInfo,
-  TipoTransporte
+  TarifaContrato,
+  TipoTransporte,
 } from '../services/adminService';
-import '../styles/AdminStyle.css';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 
 interface TarifaFormData {
   contrato_id: number;
@@ -26,7 +66,7 @@ interface TarifaFormData {
 const TarifasContrato = () => {
   const { contratoId } = useParams<{ contratoId: string }>();
   const navigate = useNavigate();
-  
+
   const [contrato, setContrato] = useState<Contrato | null>(null);
   const [tarifas, setTarifas] = useState<TarifaContrato[]>([]);
   const [pagination, setPagination] = useState<PaginationInfo>({
@@ -38,9 +78,7 @@ const TarifasContrato = () => {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [shareMessage, setShareMessage] = useState<string | null>(null);
-  
-  // Estados para el modal y formulario
+
   const [showModal, setShowModal] = useState(false);
   const [tiposTransporte, setTiposTransporte] = useState<TipoTransporte[]>([]);
   const [formData, setFormData] = useState<TarifaFormData>({
@@ -49,42 +87,31 @@ const TarifasContrato = () => {
     tipo_transporte_id: 0,
     tarifa_inicial: 0,
     fecha_inicio_vigencia: '',
-    fecha_fin_vigencia: null
+    fecha_fin_vigencia: null,
   });
-  const [formErrors, setFormErrors] = useState<Partial<Record<keyof TarifaFormData, string>>>({});
   const [submitting, setSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const fetchContratoDetails = async () => {
     if (!contratoId) return;
-
     try {
-      const contratoData = await getContratoById(parseInt(contratoId));
-      setContrato(contratoData);
-    } catch (err) {
-      console.error('Error fetching contrato details:', err);
-      setError('Error al obtener detalles del contrato. Por favor, intenta nuevamente.');
+      const data = await getContratoById(parseInt(contratoId));
+      setContrato(data);
+    } catch {
+      setError('Error al obtener los detalles del contrato.');
     }
   };
 
   const fetchTarifas = async (limit: number, offset: number) => {
     if (!contratoId) return;
-    
     setLoading(true);
     setError(null);
-
     try {
-      const tarifasResponse = await getTarifasByContrato(
-        parseInt(contratoId),
-        limit,
-        offset
-      );
-      
-      setTarifas(tarifasResponse.data);
-      setPagination(tarifasResponse.pagination);
-    } catch (err) {
-      console.error('Error fetching tarifas:', err);
-      setError('Error al obtener las tarifas del contrato. Por favor, intenta nuevamente.');
+      const res = await getTarifasByContrato(parseInt(contratoId), limit, offset);
+      setTarifas(res.data);
+      setPagination(res.pagination);
+    } catch {
+      setError('No se pudieron obtener las tarifas.');
     } finally {
       setLoading(false);
     }
@@ -94,15 +121,11 @@ const TarifasContrato = () => {
     try {
       const tipos = await getTiposTransporte();
       setTiposTransporte(tipos);
-      
       if (tipos.length > 0) {
-        setFormData(prev => ({
-          ...prev,
-          tipo_transporte_id: tipos[0].tipo_transporte_id
-        }));
+        setFormData((p) => ({ ...p, tipo_transporte_id: tipos[0].tipo_transporte_id }));
       }
-    } catch (err) {
-      console.error('Error fetching tipos de transporte:', err);
+    } catch {
+      // silencioso
     }
   };
 
@@ -114,552 +137,505 @@ const TarifasContrato = () => {
     }
   }, [contratoId]);
 
-  useEffect(() => {
-    if (showModal) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'auto';
+  const handleDelete = async (id: number) => {
+    if (!window.confirm('¿Seguro que deseas eliminar esta tarifa?')) return;
+    try {
+      await deleteTarifa(id);
+      fetchTarifas(pagination.limit, pagination.offset);
+    } catch {
+      setError('Error al eliminar la tarifa.');
     }
-    
-    return () => {
-      document.body.style.overflow = 'auto';
-    };
-  }, [showModal]);
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && showModal) {
-        closeModal();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [showModal]);
-
-  const handlePrevPage = () => {
-    if (pagination.prevOffset !== null) {
-      fetchTarifas(pagination.limit, pagination.prevOffset);
-    }
-  };
-
-  const handleNextPage = () => {
-    if (pagination.nextOffset !== null) {
-      fetchTarifas(pagination.limit, pagination.nextOffset);
-    }
-  };
-
-  const handleDelete = async (tarifaId: number) => {
-    if (window.confirm('¿Está seguro de que desea eliminar esta tarifa?')) {
-      try {
-        await deleteTarifa(tarifaId);
-        fetchTarifas(pagination.limit, pagination.offset);
-      } catch (err) {
-        console.error('Error eliminando tarifa:', err);
-        alert('Error al eliminar la tarifa');
-      }
-    }
-  };
-
-  const verAsignaciones = (tarifaId: number) => {
-    navigate(`/admin/asignaciones-tarifa/${tarifaId}`);
-  };
-
-  const compartirTarifa = (tarifaId: number) => {
-    navigate(`/admin/asignar-tarifa/${tarifaId}`);
-  };
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('es-CL', { 
-      style: 'decimal',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(value);
-  };
-
-  const formatDate = (dateString: string | null) => {
-    if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleDateString();
-  };
-
-  const volverAContratos = () => {
-    navigate('/admin/contratos');
   };
 
   const openModal = () => {
     setFormData({
       contrato_id: parseInt(contratoId || '0'),
       descripcion_tarifa: '',
-      tipo_transporte_id: tiposTransporte.length > 0 ? tiposTransporte[0].tipo_transporte_id : 0,
+      tipo_transporte_id:
+        tiposTransporte.length > 0 ? tiposTransporte[0].tipo_transporte_id : 0,
       tarifa_inicial: 0,
       fecha_inicio_vigencia: new Date().toISOString().split('T')[0],
-      fecha_fin_vigencia: null
+      fecha_fin_vigencia: null,
     });
-    setFormErrors({});
     setSuccessMessage(null);
     setError(null);
     setShowModal(true);
   };
 
-  const closeModal = () => {
-    setShowModal(false);
-  };
-
-  // Manejar cambios en el formulario
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    const { name, value, type } = e.target;
-    
-    let parsedValue: string | number | null = value;
-    
-    if (name === 'tarifa_inicial' && type === 'number') {
-      parsedValue = value === '' ? 0 : parseFloat(value);
-    }
-    
-    if (name === 'tipo_transporte_id') {
-      parsedValue = parseInt(value);
-    }
-
-    if (name === 'fecha_fin_vigencia' && value === '') {
-      parsedValue = null;
-    }
-    
-    setFormData(prev => ({
-      ...prev,
-      [name]: parsedValue
-    }));
-    
-    if (formErrors[name as keyof TarifaFormData]) {
-      setFormErrors(prev => ({
-        ...prev,
-        [name]: undefined
-      }));
-    }
-  };
-
-  const validateForm = (): boolean => {
-    const errors: Partial<Record<keyof TarifaFormData, string>> = {};
-    
-    if (!formData.descripcion_tarifa.trim()) {
-      errors.descripcion_tarifa = 'La descripción es obligatoria';
-    }
-    
-    if (!formData.tipo_transporte_id) {
-      errors.tipo_transporte_id = 'Debe seleccionar un tipo de transporte';
-    }
-    
-    if (!formData.tarifa_inicial || formData.tarifa_inicial <= 0) {
-      errors.tarifa_inicial = 'La tarifa debe ser mayor que 0';
-    }
-    
-    if (!formData.fecha_inicio_vigencia) {
-      errors.fecha_inicio_vigencia = 'La fecha de inicio es obligatoria';
-    }
-    
-    if (formData.fecha_fin_vigencia && 
-        new Date(formData.fecha_fin_vigencia) <= new Date(formData.fecha_inicio_vigencia)) {
-      errors.fecha_fin_vigencia = 'La fecha de fin debe ser posterior a la fecha de inicio';
-    }
-    
-    setFormErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!validateForm()) {
+    if (!formData.descripcion_tarifa.trim() || formData.tarifa_inicial <= 0) {
+      setError('Descripción y tarifa son obligatorias.');
       return;
     }
-    
     setSubmitting(true);
     setError(null);
-    
     try {
       await createTarifa(formData);
-      setSuccessMessage('¡Tarifa creada exitosamente!');
-      
+      setSuccessMessage('Tarifa creada exitosamente');
       setTimeout(() => {
         fetchTarifas(pagination.limit, pagination.offset);
-        closeModal();
-      }, 1500);
-      
+        setShowModal(false);
+      }, 1000);
     } catch (err: any) {
-      console.error('Error creating tarifa:', err);
-      setError('Error al crear la tarifa: ' + (err.message || 'Por favor, intenta nuevamente.'));
+      const backendErr = err?.response?.data?.error;
+      const msg =
+        (typeof backendErr === 'string' ? backendErr : backendErr?.message) ||
+        err?.message ||
+        'Intenta de nuevo.';
+      setError('Error al crear la tarifa: ' + msg);
     } finally {
       setSubmitting(false);
     }
   };
 
+  const formatCurrency = (v: number) =>
+    new Intl.NumberFormat('es-CL', {
+      style: 'currency',
+      currency: 'CLP',
+      maximumFractionDigits: 0,
+    }).format(v);
+
+  const formatDate = (s: string | null) => {
+    if (!s) return '—';
+    try {
+      return new Intl.DateTimeFormat('es-CL', {
+        timeZone: 'America/Santiago',
+        dateStyle: 'medium',
+      }).format(new Date(s));
+    } catch {
+      return s;
+    }
+  };
+
   return (
-    <div className="tarifas-container">
-      <div className="d-flex justify-content-between align-items-center mb-3">
-        <h2>Tarifas del Contrato - ID {contratoId}</h2>
+    <div className="space-y-6">
+      <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
         <div>
-          <button 
-            className="btn form-button-outline mr-2" 
-            onClick={volverAContratos}
-          >
-            <i className="fa fa-arrow-left mr-1"></i> Volver a Contratos
-          </button>
-          <button 
-            className="btn form-button-primary" 
-            onClick={openModal}
-          >
-            <i className="fa fa-plus mr-1"></i> Agregar Nueva Tarifa
-          </button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/admin/contratos')}
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Contratos
+            </Button>
+          </div>
+          <h1 className="mt-2 text-2xl font-bold tracking-tight">
+            Tarifas del contrato #{contratoId}
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Gestiona las tarifas vigentes y su aplicación a clientes
+          </p>
         </div>
+        <Button onClick={openModal}>
+          <Plus className="h-4 w-4" />
+          Nueva tarifa
+        </Button>
       </div>
-      
-      {shareMessage && (
-        <div className="alert alert-success alert-dismissible fade show" role="alert">
-          {shareMessage}
-          <button type="button" className="close" onClick={() => setShareMessage(null)}>
-            <span aria-hidden="true">&times;</span>
-          </button>
-        </div>
+
+      {error && (
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
       )}
-      
-      {/* Tarjeta de detalles del contrato */}
+
       {contrato && (
-        <div className="card contrato-details-card mb-4">
-          <div className="card-header">
-            <h5 className="mb-0">Detalles del Contrato</h5>
-          </div>
-          <div className="card-body">
-            <div className="row">
-              <div className="col-md-6 col-lg-3 mb-3 mb-lg-0">
-                <div className="detail-item">
-                  <span className="detail-label">ID:</span>
-                  <span className="detail-value">{contrato.contrato_id}</span>
-                </div>
-                <div className="detail-item">
-                  <span className="detail-label">Tipo:</span>
-                  <span className="detail-value">{contrato.es_spot ? 'Spot' : 'Regular'}</span>
-                </div>
-              </div>
-              
-              <div className="col-md-6 col-lg-3 mb-3 mb-lg-0">
-                <div className="detail-item">
-                  <span className="detail-label">Transportista:</span>
-                  <span className="detail-value">{contrato.nombre_transportista || 'N/A'}</span>
-                </div>
-                <div className="detail-item">
-                  <span className="detail-label">Fecha Fin:</span>
-                  <span className="detail-value">{formatDate(contrato.fecha_fin)}</span>
-                </div>
-              </div>
-              
-              <div className="col-md-6 col-lg-3 mb-3 mb-md-0">
-                <div className="detail-item">
-                  <span className="detail-label">Tipo Reajuste:</span>
-                  <span className="detail-value">{contrato.tipo_reajuste || 'N/A'}</span>
-                </div>
-                <div className="detail-item">
-                  <span className="detail-label">Frecuencia:</span>
-                  <span className="detail-value">{contrato.frecuencia_reajuste || 'N/A'}</span>
-                </div>
-              </div>
-              
-              <div className="col-md-6 col-lg-3">
-                <div className="detail-item">
-                  <span className="detail-label">Próx. Reajuste:</span>
-                  <span className="detail-value">{formatDate(contrato.fecha_proximo_reajuste)}</span>
-                </div>
-                <div className="detail-item">
-                  <span className="detail-label">Estado:</span>
-                  <span className={`detail-value status-badge ${
-                    !contrato.fecha_fin ? 'status-active' : 
-                    new Date(contrato.fecha_fin) < new Date() ? 'status-expired' : 'status-active'
-                  }`}>
-                    {!contrato.fecha_fin ? 'Activo' : 
-                     new Date(contrato.fecha_fin) < new Date() ? 'Vencido' : 'Activo'}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-      
-      {error && <div className="alert alert-danger">{error}</div>}
-      
-      {loading ? (
-        <div className="text-center py-4">
-          <p>Cargando tarifas...</p>
-        </div>
-      ) : (
-        <>
-          <div className="table-responsive">
-            <table className="custom-table">
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Descripción</th>
-                  <th>Tipo Transporte</th>
-                  <th>Transportista</th>
-                  <th>Tarifa Inicial</th>
-                  <th>Tarifa Actual</th>
-                  <th>Inicio Vigencia</th>
-                  <th>Fin Vigencia</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {tarifas.length > 0 ? (
-                  tarifas.map((tarifa) => (
-                    <tr key={tarifa.tarifario_contrato_id}>
-                      <td>{tarifa.tarifario_contrato_id}</td>
-                      <td>{tarifa.descripcion_tarifa}</td>
-                      <td>{tarifa.nombre_tipo_transporte}</td>
-                      <td>{tarifa.nombre_transportista || 'N/A'}</td>
-                      <td className="text-right">${formatCurrency(tarifa.tarifa_inicial)}</td>
-                      <td className="text-right">${formatCurrency(tarifa.tarifa_actual)}</td>
-                      <td>{formatDate(tarifa.fecha_inicio_vigencia_actual)}</td>
-                      <td>{formatDate(tarifa.fecha_fin_vigencia_actual)}</td>
-                      <td>
-                        <div className="d-flex justify-content-around action-buttons">
-                          {/* Botón Editar */}
-                          <button
-                            title="Editar tarifa"
-                            className="btn-action btn-edit"
-                            disabled
-                          >
-                            <i className="fa fa-edit"></i>
-                          </button>
-
-                          
-                          {/* Botón Ver Asignaciones */}
-                          <button
-                            title="Ver asignaciones de tarifa"
-                            className="btn-action btn-list"
-                            onClick={() => verAsignaciones(tarifa.tarifario_contrato_id)}
-                          >
-                            <i className="fa fa-list"></i>
-                          </button>
-                          
-                          {/* Botón Asignar a Cliente */}
-                          <button
-                            title="Asignar tarifa a cliente"
-                            className="btn-action btn-share"
-                            onClick={() => compartirTarifa(tarifa.tarifario_contrato_id)}
-                          >
-                            <i className="fa fa-link"></i>
-                          </button>
-                          
-                          {/* Botón Eliminar */}
-                          <button
-                            title="Eliminar tarifa"
-                            className="btn-action btn-delete"
-                            onClick={() => handleDelete(tarifa.tarifario_contrato_id)}
-                          >
-                            <i className="fa fa-trash"></i>
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={9} className="text-center">
-                      No hay tarifas disponibles para este contrato
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-          
-          {tarifas.length > 0 && (
-            <div className="d-flex justify-content-between pagination-buttons mt-3">
-              <button
-                className="btn form-button-outline"
-                disabled={pagination.prevOffset === null}
-                onClick={handlePrevPage}
-              >
-                <i className="fa fa-chevron-left mr-1"></i> Anterior
-              </button>
-              <div className="pagination-info">
-                Mostrando {tarifas.length} de {pagination.total} tarifas
-              </div>
-              <button
-                className="btn form-button-outline"
-                disabled={pagination.nextOffset === null}
-                onClick={handleNextPage}
-              >
-                Siguiente <i className="fa fa-chevron-right ml-1"></i>
-              </button>
-            </div>
-          )}
-        </>
-      )}
-      
-     <Modal show={showModal} onHide={closeModal} centered backdrop="static">
-        <Modal.Header closeButton>
-          <Modal.Title>Agregar Nueva Tarifa</Modal.Title>
-        </Modal.Header>
-
-        <Modal.Body>
-          {successMessage && (
-            <div className="alert alert-success">
-              {successMessage}
-            </div>
-          )}
-          
-          {error && (
-            <div className="alert alert-danger">
-              {error}
-            </div>
-          )}
-          
-          <form>
-            {/* Descripción */}
-            <div className="form-group">
-              <label className="form-label" htmlFor="descripcion_tarifa">
-                Descripción <span className="text-danger">*</span>
-              </label>
-              <textarea
-                id="descripcion_tarifa"
-                name="descripcion_tarifa"
-                className={`form-control ${formErrors.descripcion_tarifa ? 'error' : ''}`}
-                value={formData.descripcion_tarifa}
-                onChange={handleInputChange}
-                rows={2}
-                placeholder="Ej: Rampla Santiago Centro -> Planta Pudahuel"
+        <Card>
+          <CardHeader>
+            <CardTitle>Detalle del contrato</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+              <InfoField label="ID" value={`#${contrato.contrato_id}`} />
+              <InfoField
+                label="Tipo"
+                value={
+                  contrato.es_spot ? (
+                    <Badge variant="warning">Spot</Badge>
+                  ) : (
+                    <Badge variant="secondary">Regular</Badge>
+                  )
+                }
               />
-              {formErrors.descripcion_tarifa && (
-                <div className="invalid-feedback" style={{display: 'block'}}>
-                  {formErrors.descripcion_tarifa}
+              <InfoField
+                label="Transportista"
+                value={contrato.nombre_transportista || '—'}
+              />
+              <InfoField label="Fin vigencia" value={formatDate(contrato.fecha_fin)} />
+              <InfoField label="Tipo reajuste" value={contrato.tipo_reajuste || '—'} />
+              <InfoField
+                label="Frecuencia"
+                value={contrato.frecuencia_reajuste || '—'}
+              />
+              <InfoField
+                label="Próx. reajuste"
+                value={formatDate(contrato.fecha_proximo_reajuste)}
+              />
+              <InfoField
+                label="Estado"
+                value={
+                  !contrato.fecha_fin || new Date(contrato.fecha_fin) > new Date() ? (
+                    <Badge variant="success">Vigente</Badge>
+                  ) : (
+                    <Badge variant="destructive">Vencido</Badge>
+                  )
+                }
+              />
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      <Card>
+        <CardContent className="p-0">
+          {loading ? (
+            <div className="flex items-center justify-center py-16">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : tarifas.length === 0 ? (
+            <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+                <FileText className="h-6 w-6 text-muted-foreground" />
+              </div>
+              <p className="font-medium">No hay tarifas</p>
+              <p className="text-sm text-muted-foreground">
+                Agrega la primera tarifa para este contrato
+              </p>
+              <Button onClick={openModal}>
+                <Plus className="h-4 w-4" />
+                Agregar tarifa
+              </Button>
+            </div>
+          ) : (
+            <>
+            {/* Cards en mobile */}
+            <div className="divide-y divide-border md:hidden">
+              {tarifas.map((t) => (
+                <div
+                  key={`m-${t.tarifario_contrato_id}`}
+                  className="space-y-3 p-4"
+                >
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="rounded-md bg-muted px-1.5 py-0.5 text-xs font-mono font-semibold">
+                        #{t.tarifario_contrato_id}
+                      </span>
+                    </div>
+                    <p className="mt-1 line-clamp-2 font-medium">
+                      {t.descripcion_tarifa}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {t.nombre_tipo_transporte}
+                      {t.nombre_transportista && ` · ${t.nombre_transportista}`}
+                    </p>
+                  </div>
+                  <div className="flex items-baseline justify-between rounded-md bg-muted/40 px-3 py-2">
+                    <span className="text-xs text-muted-foreground">
+                      Tarifa actual
+                    </span>
+                    <span className="font-mono text-sm font-semibold">
+                      {formatCurrency(t.tarifa_actual)}
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        navigate(
+                          `/admin/asignaciones-tarifa/${t.tarifario_contrato_id}`
+                        )
+                      }
+                    >
+                      <List className="h-3.5 w-3.5" />
+                      Asignaciones
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        navigate(
+                          `/admin/asignar-tarifa/${t.tarifario_contrato_id}`
+                        )
+                      }
+                    >
+                      <Link2 className="h-3.5 w-3.5" />
+                      Asignar
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-destructive hover:text-destructive"
+                      onClick={() => handleDelete(t.tarifario_contrato_id)}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
                 </div>
-              )}
+              ))}
             </div>
 
-            {/* Tipo Transporte */}
-            <div className="form-group">
-              <label className="form-label" htmlFor="tipo_transporte_id">
-                Tipo de Transporte <span className="text-danger">*</span>
-              </label>
-              <select
-                id="tipo_transporte_id"
-                name="tipo_transporte_id"
-                className={`form-control ${formErrors.tipo_transporte_id ? 'error' : ''}`}
-                value={formData.tipo_transporte_id}
-                onChange={handleInputChange}
-              >
-                <option value="">Seleccione un tipo de transporte</option>
-                {tiposTransporte.map(tipo => (
-                  <option key={tipo.tipo_transporte_id} value={tipo.tipo_transporte_id}>
-                    {tipo.nombre_tipo_transporte}
-                  </option>
+            {/* Tabla en desktop */}
+            <div className="hidden md:block">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>ID</TableHead>
+                  <TableHead>Descripción</TableHead>
+                  <TableHead>Tipo transporte</TableHead>
+                  <TableHead>Transportista</TableHead>
+                  <TableHead className="text-right">Inicial</TableHead>
+                  <TableHead className="text-right">Actual</TableHead>
+                  <TableHead>Inicio vigencia</TableHead>
+                  <TableHead>Fin vigencia</TableHead>
+                  <TableHead className="text-right">Acciones</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {tarifas.map((t) => (
+                  <TableRow key={t.tarifario_contrato_id}>
+                    <TableCell className="font-medium">
+                      #{t.tarifario_contrato_id}
+                    </TableCell>
+                    <TableCell className="max-w-xs">
+                      <span className="line-clamp-2">{t.descripcion_tarifa}</span>
+                    </TableCell>
+                    <TableCell>{t.nombre_tipo_transporte}</TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {t.nombre_transportista || '—'}
+                    </TableCell>
+                    <TableCell className="text-right font-mono text-sm">
+                      {formatCurrency(t.tarifa_inicial)}
+                    </TableCell>
+                    <TableCell className="text-right font-mono text-sm font-semibold">
+                      {formatCurrency(t.tarifa_actual)}
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {formatDate(t.fecha_inicio_vigencia_actual)}
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {formatDate(t.fecha_fin_vigencia_actual)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-1">
+                        <Button variant="ghost" size="icon" title="Editar" disabled>
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          title="Ver asignaciones"
+                          onClick={() =>
+                            navigate(
+                              `/admin/asignaciones-tarifa/${t.tarifario_contrato_id}`
+                            )
+                          }
+                        >
+                          <List className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          title="Asignar a cliente"
+                          onClick={() =>
+                            navigate(
+                              `/admin/asignar-tarifa/${t.tarifario_contrato_id}`
+                            )
+                          }
+                        >
+                          <Link2 className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          title="Eliminar"
+                          className="text-destructive hover:text-destructive"
+                          onClick={() => handleDelete(t.tarifario_contrato_id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </select>
-              {formErrors.tipo_transporte_id && (
-                <div className="invalid-feedback" style={{display: 'block'}}>
-                  {formErrors.tipo_transporte_id}
-                </div>
-              )}
+              </TableBody>
+            </Table>
             </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
 
-            {/* Tarifa inicial */}
-            <div className="form-group">
-              <label className="form-label" htmlFor="tarifa_inicial">
-                Tarifa Inicial (CLP) <span className="text-danger">*</span>
-              </label>
-              <input
-                type="number"
-                id="tarifa_inicial"
-                name="tarifa_inicial"
-                className={`form-control ${formErrors.tarifa_inicial ? 'error' : ''}`}
-                value={formData.tarifa_inicial || ''}
-                onChange={handleInputChange}
-                min="0"
-                step="1"
-                placeholder="Ej: 15000"
+      {tarifas.length > 0 && (
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-muted-foreground">
+            Mostrando {tarifas.length} de {pagination.total} tarifas
+          </p>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                pagination.prevOffset !== null &&
+                fetchTarifas(pagination.limit, pagination.prevOffset)
+              }
+              disabled={pagination.prevOffset === null}
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Anterior
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                pagination.nextOffset !== null &&
+                fetchTarifas(pagination.limit, pagination.nextOffset)
+              }
+              disabled={pagination.nextOffset === null}
+            >
+              Siguiente
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Modal nueva tarifa */}
+      <Dialog open={showModal} onOpenChange={setShowModal}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Nueva tarifa</DialogTitle>
+            <DialogDescription>Crea una nueva tarifa para este contrato.</DialogDescription>
+          </DialogHeader>
+          {successMessage && (
+            <Alert variant="success">
+              <AlertDescription>{successMessage}</AlertDescription>
+            </Alert>
+          )}
+          {error && (
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2.5">
+              <Label htmlFor="descripcion_tarifa">Descripción</Label>
+              <Textarea
+                id="descripcion_tarifa"
+                rows={2}
+                placeholder="Ej: Rampla Santiago Centro → Planta Pudahuel"
+                value={formData.descripcion_tarifa}
+                onChange={(e) =>
+                  setFormData({ ...formData, descripcion_tarifa: e.target.value })
+                }
               />
-              {formErrors.tarifa_inicial && (
-                <div className="invalid-feedback" style={{display: 'block'}}>
-                  {formErrors.tarifa_inicial}
-                </div>
-              )}
             </div>
 
-            {/* Fechas */}
-            <div className="row">
-              <div className="col-md-6 form-group">
-                <label className="form-label" htmlFor="fecha_inicio_vigencia">
-                  Fecha Inicio Vigencia <span className="text-danger">*</span>
-                </label>
-                <input
-                  type="date"
+            <div className="space-y-2.5">
+              <Label>Tipo de transporte</Label>
+              <Select
+                value={String(formData.tipo_transporte_id)}
+                onValueChange={(v) =>
+                  setFormData({ ...formData, tipo_transporte_id: Number(v) })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccionar…" />
+                </SelectTrigger>
+                <SelectContent>
+                  {tiposTransporte.map((t) => (
+                    <SelectItem key={t.tipo_transporte_id} value={String(t.tipo_transporte_id)}>
+                      {t.nombre_tipo_transporte}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2.5">
+              <Label htmlFor="tarifa_inicial">Tarifa inicial (CLP)</Label>
+              <Input
+                id="tarifa_inicial"
+                type="number"
+                min={0}
+                step={1}
+                placeholder="15000"
+                value={formData.tarifa_inicial || ''}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    tarifa_inicial: e.target.value === '' ? 0 : Number(e.target.value),
+                  })
+                }
+              />
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="space-y-2.5">
+                <Label htmlFor="fecha_inicio_vigencia">Inicio vigencia</Label>
+                <Input
                   id="fecha_inicio_vigencia"
-                  name="fecha_inicio_vigencia"
-                  className={`form-control ${formErrors.fecha_inicio_vigencia ? 'error' : ''}`}
-                  value={formData.fecha_inicio_vigencia}
-                  onChange={handleInputChange}
-                />
-                {formErrors.fecha_inicio_vigencia && (
-                  <div className="invalid-feedback" style={{display: 'block'}}>
-                    {formErrors.fecha_inicio_vigencia}
-                  </div>
-                )}
-              </div>
-
-              <div className="col-md-6 form-group">
-                <label className="form-label" htmlFor="fecha_fin_vigencia">
-                  Fecha Fin Vigencia <small>(Opcional)</small>
-                </label>
-                <input
                   type="date"
-                  id="fecha_fin_vigencia"
-                  name="fecha_fin_vigencia"
-                  className={`form-control ${formErrors.fecha_fin_vigencia ? 'error' : ''}`}
-                  value={formData.fecha_fin_vigencia || ''}
-                  onChange={handleInputChange}
+                  value={formData.fecha_inicio_vigencia}
+                  onChange={(e) =>
+                    setFormData({ ...formData, fecha_inicio_vigencia: e.target.value })
+                  }
                 />
-                {formErrors.fecha_fin_vigencia && (
-                  <div className="invalid-feedback" style={{display: 'block'}}>
-                    {formErrors.fecha_fin_vigencia}
-                  </div>
-                )}
+              </div>
+              <div className="space-y-2.5">
+                <Label htmlFor="fecha_fin_vigencia">Fin vigencia (opcional)</Label>
+                <Input
+                  id="fecha_fin_vigencia"
+                  type="date"
+                  value={formData.fecha_fin_vigencia ?? ''}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      fecha_fin_vigencia: e.target.value || null,
+                    })
+                  }
+                />
               </div>
             </div>
+
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowModal(false)}
+                disabled={submitting}
+              >
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={submitting}>
+                {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
+                Guardar tarifa
+              </Button>
+            </DialogFooter>
           </form>
-        </Modal.Body>
-
-        <Modal.Footer>
-          <Button
-            variant="secondary"
-            onClick={closeModal}
-            disabled={submitting}
-          >
-            Cancelar
-          </Button>
-          <Button
-            variant="primary"
-            onClick={handleSubmit}
-            disabled={submitting}
-          >
-            {submitting ? (
-              <>
-                <Spinner
-                  as="span"
-                  animation="border"
-                  size="sm"
-                  role="status"
-                  aria-hidden="true"
-                  className="me-2"
-                />
-                Guardando...
-              </>
-            ) : 'Guardar Tarifa'}
-          </Button>
-        </Modal.Footer>
-      </Modal>
-
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
+
+function InfoField({
+  label,
+  value,
+}: {
+  label: string;
+  value: React.ReactNode;
+}) {
+  return (
+    <div>
+      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        {label}
+      </p>
+      <div className="mt-1 text-sm font-medium">{value}</div>
+    </div>
+  );
+}
 
 export default TarifasContrato;
